@@ -1,0 +1,244 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id        Int       @id @default(autoincrement())
+  email     String    @unique
+  username  String    @unique
+  password  String
+  displayName String  @default("")
+  bio       String    @default("")
+  avatar    String    @default("")
+  role      String    @default("user") // user | admin
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  posts     Post[]
+  comments  Comment[]
+  media     Media[]
+}
+
+model Post {
+  id          Int       @id @default(autoincrement())
+  title       String
+  slug        String    @unique
+  content     String    @default("")
+  excerpt     String    @default("")
+  featuredImage String  @default("")
+  status      String    @default("draft") // draft | published
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  viewCount   Int       @default(0)
+
+  authorId    Int
+  author      User      @relation(fields: [authorId], references: [id])
+
+  categoryId  Int?
+  category    Category? @relation(fields: [categoryId], references: [id])
+
+  tags        PostTag[]
+  comments    Comment[]
+
+  seoTitle       String @default("")
+  seoDescription String @default("")
+  aiGenerated    Boolean @default(false)
+  aiPrompt       String  @default("")
+}
+
+model Category {
+  id        Int       @id @default(autoincrement())
+  name      String    @unique
+  slug      String    @unique
+  description String  @default("")
+  color     String    @default("#6366f1")
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  posts     Post[]
+}
+
+model Tag {
+  id        Int       @id @default(autoincrement())
+  name      String    @unique
+  slug      String    @unique
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  posts     PostTag[]
+}
+
+model PostTag {
+  postId Int
+  tagId  Int
+  post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  tag    Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([postId, tagId])
+}
+
+model Comment {
+  id        Int       @id @default(autoincrement())
+  content   String
+  status    String    @default("approved") // approved | pending | spam
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  postId    Int
+  post      Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  authorId  Int
+  author    User      @relation(fields: [authorId], references: [id])
+
+  parentId  Int?
+  parent    Comment?  @relation("CommentReplies", fields: [parentId], references: [id])
+  replies   Comment[] @relation("CommentReplies")
+}
+
+model Media {
+  id          Int       @id @default(autoincrement())
+  filename    String
+  originalName String
+  mimeType    String
+  size        Int
+  url         String
+  altText     String    @default("")
+  createdAt   DateTime  @default(now())
+
+  uploaderId  Int
+  uploader    User      @relation(fields: [uploaderId], references: [id])
+}
+
+model CrawlSource {
+  id         Int      @id @default(autoincrement())
+  name       String
+  url        String
+  interval   Int      // minutes between runs
+  status     String   @default("active") // active | paused
+  lastRunAt  DateTime?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  articles   CrawledArticle[]
+}
+
+model CrawledArticle {
+  id             Int         @id @default(autoincrement())
+  sourceId       Int
+  source         CrawlSource @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  sourceUrl      String      @unique
+  title          String
+  content        String
+  excerpt        String      @default("")
+  authorName     String      @default("")
+  publishedDate  DateTime?
+  imageUrl       String      @default("")
+  isProcessed    Boolean     @default(false) // has been polished by AI
+  isPublished    Boolean     @default(false) // has been saved as a Post
+  postId         Int?        // linked Post id after publication
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+}
+
+model Banner {
+  id          Int       @id @default(autoincrement())
+  title       String    @default("")
+  subtitle    String    @default("")
+  imageUrl    String
+  linkUrl     String    @default("")
+  postId      Int?      // link to featured post
+  sortOrder   Int       @default(0)
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model ChatMessage {
+  id          Int       @id @default(autoincrement())
+  sessionId   String    // anonymous session identifier
+  role        String    // user | assistant
+  content     String
+  createdAt   DateTime  @default(now())
+}
+
+model Feedback {
+  id          Int       @id @default(autoincrement())
+  sessionId   String
+  name        String    @default("")
+  email       String    @default("")
+  message     String
+  pageUrl     String    @default("")
+  isRead      Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+}
+
+// ─── SEO Module ──────────────────────────────────────────────
+
+model SeoKeyword {
+  id          Int       @id @default(autoincrement())
+  keyword     String
+  source      String    @default("manual") // manual | ai-suggested | google | baidu
+  volume      Int       @default(0)       // search volume estimate
+  difficulty  Int       @default(0)       // 0-100 ranking difficulty
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  rankings    SeoKeywordRanking[]
+}
+
+model SeoKeywordRanking {
+  id          Int       @id @default(autoincrement())
+  keywordId   Int
+  keyword     SeoKeyword @relation(fields: [keywordId], references: [id], onDelete: Cascade)
+  position    Int       @default(0)       // 0 = not ranked
+  page        String    @default("")      // URL path where keyword is tracked
+  source      String    @default("manual") // google | baidu | manual
+  checkedAt   DateTime  @default(now())
+}
+
+model SeoAudit {
+  id          Int       @id @default(autoincrement())
+  postId      Int?
+  pageUrl     String    @default("")        // URL audited
+  score       Int       @default(0)         // 0-100 SEO score
+  title       String    @default("")
+  titleLength Int       @default(0)
+  description String    @default("")
+  descLength  Int       @default(0)
+  wordCount   Int       @default(0)
+  hasImage    Boolean   @default(false)
+  imageAlt    String    @default("")
+  hasCanonical Boolean  @default(false)
+  hasOgTags   Boolean   @default(false)
+  hasTwitterCard Boolean @default(false)
+  hasJsonLd   Boolean   @default(false)
+  hasH1       Boolean   @default(false)
+  h1Count     Int       @default(0)
+  keywordDensity Float   @default(0.0)
+  readability Float    @default(0.0)      // Flesch-Kincaid score
+  suggestions String    @default("")      // JSON array of suggestions
+  createdAt   DateTime  @default(now())
+}
+
+model SeoIndexStatus {
+  id          Int       @id @default(autoincrement())
+  pageUrl     String    @unique
+  googleIndexed Boolean  @default(false)
+  baiduIndexed  Boolean  @default(false)
+  lastChecked  DateTime  @default(now())
+  errors      String    @default("")      // JSON array of indexing errors
+}
+
+model SeoClick {
+  id          Int       @id @default(autoincrement())
+  postId      Int?
+  pageUrl     String    @default("")
+  source      String    @default("direct") // google | baidu | direct | social | other
+  clicks      Int       @default(0)
+  impressions Int       @default(0)
+  ctr         Float     @default(0.0)
+  avgPosition Float     @default(0.0)
+  recordedAt  DateTime  @default(now())
+}
