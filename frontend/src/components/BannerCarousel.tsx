@@ -77,6 +77,8 @@ export default function BannerCarousel() {
               src={b.imageUrl}
               alt={b.title || 'Banner'}
               className="w-full h-full object-cover"
+              loading={i === current ? 'eager' : 'lazy'}
+              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
             />
             {/* Gradient overlay for text readability */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />

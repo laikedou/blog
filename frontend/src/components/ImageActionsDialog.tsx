@@ -5,6 +5,7 @@ import { ai as aiApi } from '@/lib/api';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { toast } from 'sonner';
 import MediaPickerDialog from './MediaPickerDialog';
 import { Sparkles, Image, Loader2, Wand2 } from 'lucide-react';
 
@@ -28,7 +29,7 @@ export default function ImageActionsDialog({ open, onOpenChange, imageUrl, onRep
       onReplace(r.url);
       onOpenChange(false);
     } catch (err: any) {
-      alert(err.message || 'Failed to generate image');
+      toast.error(err.message || 'Failed to generate image');
     }
     setGenerating(false);
   };

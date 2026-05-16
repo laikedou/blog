@@ -5,6 +5,7 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        // Custom brand colors
         cream: {
           50: '#fdfbf7',
           100: '#fbf8f0',

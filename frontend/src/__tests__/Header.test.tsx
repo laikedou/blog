@@ -16,7 +16,7 @@ jest.mock('next/link', () => {
 
 // Mock auth context
 const mockLogout = jest.fn();
-let mockAuthState = { user: null, isAuthenticated: false, logout: mockLogout };
+let mockAuthState: { user: { displayName: string; email: string } | null; isAuthenticated: boolean; logout: jest.Mock } = { user: null, isAuthenticated: false, logout: mockLogout };
 jest.mock('@/lib/auth', () => ({
   useAuth: () => mockAuthState,
 }));

@@ -7,8 +7,11 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Plus, Edit, Trash2 } from 'lucide-react';
+import { useConfirm } from '@/lib/confirm-dialog';
+import { toast } from 'sonner';
 
 export default function AdminPostsPage() {
+  const { confirm } = useConfirm();
   const [posts, setPosts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -25,8 +28,10 @@ export default function AdminPostsPage() {
   useEffect(() => { fetchPosts(); }, [page, statusFilter]);
 
   const deletePost = async (id: number) => {
-    if (!confirm('Delete this post?')) return;
+    const ok = await confirm({ title: 'Delete Post', message: 'Are you sure you want to delete this post? This action cannot be undone.', confirmLabel: 'Delete', variant: 'destructive' });
+    if (!ok) return;
     await postsApi.delete(id);
+    toast.success('Post deleted');
     fetchPosts();
   };
 

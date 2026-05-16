@@ -107,3 +107,79 @@ export interface Feedback {
   isRead: boolean;
   createdAt: string;
 }
+
+// ─── Visualization ─────────────────────────────────────────────
+
+export interface Visualization {
+  id: number;
+  title: string;
+  subject: 'math' | 'physics';
+  description: string;
+  introduction: string;
+  detailedExplanation: string;
+  knowledgeSummary: string;
+  tags: string;
+  featuredImage: string;
+  htmlContent: string;
+  prompt: string;
+  status: 'draft' | 'published';
+  version: number;
+  viewCount: number;
+  interactCount: number;
+  likesCount: number;
+  author: { id: number; username: string; displayName: string };
+  versions?: VisualizationVersion[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface VisualizationVersion {
+  id: number;
+  visualizationId: number;
+  htmlContent: string;
+  prompt: string;
+  changeNote: string;
+  version: number;
+  createdAt: string;
+}
+
+export interface VisualizationStat {
+  id: number;
+  visualizationId: number;
+  action: string;
+  metadata: string;
+  createdAt: string;
+}
+
+export interface VisualizationStats {
+  viewCount: number;
+  interactCount: number;
+  actions: Record<string, number>;
+  dailyStats: { date: string; action: string; count: number }[];
+}
+
+export interface VisualizationAggregatedStats {
+  totalViews: number;
+  totalInteracts: number;
+  bySubject: { subject: string; _count: number }[];
+  byStatus: { status: string; _count: number }[];
+  recent30Days: { date: string; count: number }[];
+  totalVisualizations: number;
+}
+
+export interface VisualizationLikeStatus {
+  liked: boolean;
+  likesCount: number;
+}
+
+export interface VisualizationComment {
+  id: number;
+  content: string;
+  visualizationId: number;
+  authorId: number;
+  author: { id: number; username: string; displayName: string; avatar: string };
+  parentId: number | null;
+  replies?: VisualizationComment[];
+  createdAt: string;
+  updatedAt: string;
+}

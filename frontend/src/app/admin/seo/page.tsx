@@ -10,8 +10,11 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { Search, TrendingUp, Globe, CheckCircle, XCircle, AlertTriangle, Lightbulb, Plus, Trash2, BarChart3, RefreshCw } from 'lucide-react';
+import { toast } from 'sonner';
+import { useConfirm } from '@/lib/confirm-dialog';
 
 export default function AdminSeoPage() {
+  const { confirm } = useConfirm();
   const [dashboard, setDashboard] = useState<any>(null);
   const [keywords, setKeywords] = useState<any[]>([]);
   const [indexStatus, setIndexStatus] = useState<any[]>([]);
@@ -43,26 +46,27 @@ export default function AdminSeoPage() {
       await seoApi.keywords.create({ keyword: newKeyword.trim(), source: 'manual' });
       setNewKeyword('');
       fetchData();
-    } catch (err: any) { alert(err.message); }
+    } catch (err: any) { toast.error(err.message); }
   };
 
   const handleDeleteKeyword = async (id: number) => {
-    if (!confirm('Delete this keyword and its ranking history?')) return;
+    const ok = await confirm({ title: 'Delete Keyword', message: 'Delete this keyword and its ranking history?', confirmLabel: 'Delete', variant: 'destructive' });
+    if (!ok) return;
     try {
       await seoApi.keywords.delete(id);
       fetchData();
-    } catch (err: any) { alert(err.message); }
+    } catch (err: any) { toast.error(err.message); }
   };
 
   const handleAuditPost = async () => {
     if (!auditPostId.trim()) return;
     const id = Number(auditPostId);
-    if (isNaN(id)) { alert('Please enter a valid post ID'); return; }
+    if (isNaN(id)) { toast.error('Please enter a valid post ID'); return; }
     setAuditLoading(true);
     try {
       const result = await seoApi.auditPost(id);
       setAuditResult(result);
-    } catch (err: any) { alert(err.message); }
+    } catch (err: any) { toast.error(err.message); }
     setAuditLoading(false);
   };
 

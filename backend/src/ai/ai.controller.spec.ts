@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AiController } from './ai.controller';
 import { AiService } from './ai.service';
 import { CloudflareAiService } from '../common/cloudflare-ai.service';
+import { GrokImageService } from '../common/grok-image.service';
 
 describe('AiController', () => {
   let controller: AiController;
@@ -25,12 +26,22 @@ describe('AiController', () => {
     transformImage: jest.fn(),
   };
 
+  const mockGrokImage = {
+    buildCoverPrompt: jest.fn(),
+    generateCover: jest.fn(),
+    buildBannerPrompt: jest.fn(),
+    generateBanner: jest.fn(),
+    generateLogo: jest.fn(),
+    saveSvg: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AiController],
       providers: [
         { provide: AiService, useValue: mockAiService },
         { provide: CloudflareAiService, useValue: mockCloudflareAi },
+        { provide: GrokImageService, useValue: mockGrokImage },
       ],
     }).compile();
 
@@ -39,14 +50,16 @@ describe('AiController', () => {
     cloudflareAi = module.get<CloudflareAiService>(CloudflareAiService);
   });
 
+  const mockReq = { user: { id: 1 } };
+
   afterEach(() => jest.clearAllMocks());
 
   describe('generatePost', () => {
     it('should call aiService.generatePost', async () => {
       const dto = { topic: 'AI', style: 'professional', wordCount: 500 };
       mockAiService.generatePost.mockResolvedValue({ title: 'AI', content: '<p>Content</p>' });
-      const result = await controller.generatePost(dto);
-      expect(mockAiService.generatePost).toHaveBeenCalledWith(dto);
+      const result = await controller.generatePost(dto, mockReq);
+      expect(mockAiService.generatePost).toHaveBeenCalledWith(dto, 1);
       expect(result.title).toBe('AI');
     });
   });
@@ -55,8 +68,8 @@ describe('AiController', () => {
     it('should call aiService.enhanceContent', async () => {
       const dto = { content: '<p>Test</p>', mode: 'improve-grammar' };
       mockAiService.enhanceContent.mockResolvedValue({ enhancedContent: '<p>Enhanced</p>' });
-      const result = await controller.enhanceContent(dto);
-      expect(mockAiService.enhanceContent).toHaveBeenCalledWith(dto);
+      const result = await controller.enhanceContent(dto, mockReq);
+      expect(mockAiService.enhanceContent).toHaveBeenCalledWith(dto, 1);
       expect(result.enhancedContent).toBe('<p>Enhanced</p>');
     });
   });
@@ -65,8 +78,8 @@ describe('AiController', () => {
     it('should call aiService.generateSeo', async () => {
       const dto = { title: 'Test', content: '<p>Content</p>' };
       mockAiService.generateSeo.mockResolvedValue({ seoTitle: 'SEO Title', seoDescription: 'Desc' });
-      const result = await controller.generateSeo(dto);
-      expect(mockAiService.generateSeo).toHaveBeenCalledWith(dto);
+      const result = await controller.generateSeo(dto, mockReq);
+      expect(mockAiService.generateSeo).toHaveBeenCalledWith(dto, 1);
       expect(result.seoTitle).toBe('SEO Title');
     });
   });
@@ -75,8 +88,8 @@ describe('AiController', () => {
     it('should call aiService.suggestTags', async () => {
       const dto = { content: 'AI post', maxTags: 5 };
       mockAiService.suggestTags.mockResolvedValue({ tags: ['AI', 'ML'], category: 'Technology' });
-      const result = await controller.suggestTags(dto);
-      expect(mockAiService.suggestTags).toHaveBeenCalledWith(dto);
+      const result = await controller.suggestTags(dto, mockReq);
+      expect(mockAiService.suggestTags).toHaveBeenCalledWith(dto, 1);
       expect(result.tags).toContain('AI');
     });
   });
@@ -85,8 +98,8 @@ describe('AiController', () => {
     it('should call aiService.chat', async () => {
       const messages = [{ role: 'user', content: 'Hello' }];
       mockAiService.chat.mockResolvedValue({ reply: 'Hi there' });
-      const result = await controller.chat({ messages });
-      expect(mockAiService.chat).toHaveBeenCalledWith(messages);
+      const result = await controller.chat({ messages }, mockReq);
+      expect(mockAiService.chat).toHaveBeenCalledWith(messages, 1);
       expect(result.reply).toBe('Hi there');
     });
   });

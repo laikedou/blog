@@ -1,13 +1,22 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AiService } from './ai.service';
+import { AiUsageService } from '../ai-usage/ai-usage.service';
 
 describe('AiService', () => {
   let service: AiService;
 
+  const mockAiUsage = {
+    log: jest.fn().mockResolvedValue(undefined),
+  };
+
   beforeEach(async () => {
     process.env.DEEPSEEK_API_KEY = '';
+    jest.clearAllMocks();
     const module: TestingModule = await Test.createTestingModule({
-      providers: [AiService],
+      providers: [
+        AiService,
+        { provide: AiUsageService, useValue: mockAiUsage },
+      ],
     }).compile();
     service = module.get<AiService>(AiService);
   });

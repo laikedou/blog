@@ -52,6 +52,7 @@ export default function PostCard({ post }: PostCardProps) {
               alt={post.excerpt ? `${post.title} — ${post.excerpt.substring(0, 100)}` : post.title}
               className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-700 ease-out"
               loading="lazy"
+              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
             />
           </figure>
         ) : (

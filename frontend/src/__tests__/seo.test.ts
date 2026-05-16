@@ -97,19 +97,20 @@ describe('generatePostMetadata', () => {
 
   it('should set article Open Graph type', () => {
     const metadata = generatePostMetadata(mockPost);
-    expect(metadata.openGraph?.type).toBe('article');
-    expect(metadata.openGraph?.publishedTime).toBeDefined();
-    expect(metadata.openGraph?.authors).toContain('John Doe');
+    const og = metadata.openGraph as any;
+    expect(og.type).toBe('article');
+    expect(og.publishedTime).toBeDefined();
+    expect(og.authors).toContain('John Doe');
   });
 
   it('should include tags in OG metadata', () => {
     const metadata = generatePostMetadata(mockPost);
-    expect(metadata.openGraph?.tags).toContain('JavaScript');
+    expect((metadata.openGraph as any).tags).toContain('JavaScript');
   });
 
   it('should set twitter card to summary_large_image', () => {
     const metadata = generatePostMetadata(mockPost);
-    expect(metadata.twitter?.card).toBe('summary_large_image');
+    expect((metadata.twitter as any).card).toBe('summary_large_image');
   });
 
   it('should use fallback image when no featured image', () => {
@@ -125,7 +126,7 @@ describe('generateListMetadata', () => {
     expect(metadata.title).toBe('Category Page');
     expect(metadata.description).toBe('Category description');
     expect(metadata.alternates?.canonical).toContain('/category/tech');
-    expect(metadata.openGraph?.type).toBe('website');
+    expect((metadata.openGraph as any).type).toBe('website');
   });
 });
 
@@ -145,7 +146,7 @@ describe('articleJsonLd', () => {
   };
 
   it('should generate valid BlogPosting schema', () => {
-    const schema = articleJsonLd(mockPost);
+    const schema = articleJsonLd(mockPost) as any;
     expect(schema['@type']).toBe('BlogPosting');
     expect(schema.headline).toBe('Test Article');
     expect(schema.author).toEqual({ '@type': 'Person', name: 'John Doe' });
@@ -154,12 +155,12 @@ describe('articleJsonLd', () => {
   });
 
   it('should include category as articleSection', () => {
-    const schema = articleJsonLd(mockPost);
+    const schema = articleJsonLd(mockPost) as any;
     expect(schema.articleSection).toBe('Tech');
   });
 
   it('should include datePublished and dateModified', () => {
-    const schema = articleJsonLd(mockPost);
+    const schema = articleJsonLd(mockPost) as any;
     expect(schema.datePublished).toBeDefined();
     expect(schema.dateModified).toBeDefined();
   });
@@ -172,7 +173,7 @@ describe('breadcrumbJsonLd', () => {
       { name: 'Category', url: 'https://example.com/category/tech' },
       { name: 'Post', url: 'https://example.com/posts/test' },
     ];
-    const schema = breadcrumbJsonLd(items);
+    const schema = breadcrumbJsonLd(items) as any;
 
     expect(schema['@type']).toBe('BreadcrumbList');
     expect(schema.itemListElement).toHaveLength(3);
@@ -185,7 +186,7 @@ describe('breadcrumbJsonLd', () => {
 
 describe('websiteJsonLd', () => {
   it('should generate valid WebSite schema with SearchAction', () => {
-    const schema = websiteJsonLd();
+    const schema = websiteJsonLd() as any;
     expect(schema['@type']).toBe('WebSite');
     expect(schema.potentialAction).toBeDefined();
     expect(schema.potentialAction['@type']).toBe('SearchAction');
@@ -196,7 +197,7 @@ describe('websiteJsonLd', () => {
 
 describe('organizationJsonLd', () => {
   it('should generate valid Organization schema', () => {
-    const schema = organizationJsonLd();
+    const schema = organizationJsonLd() as any;
     expect(schema['@type']).toBe('Organization');
     expect(schema.name).toBeDefined();
     expect(schema.url).toBeDefined();

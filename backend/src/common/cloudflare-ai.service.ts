@@ -184,6 +184,18 @@ export class CloudflareAiService {
   }
 
   /**
+   * Build a cover image prompt for visualizations from title and subject.
+   */
+  buildVisualizationCoverPrompt(title: string, subject: string, description: string = ''): string {
+    const keywords = [title, description]
+      .filter(Boolean)
+      .join(', ')
+      .substring(0, 300);
+
+    return `Interactive ${subject} visualization: ${keywords}. Clean modern educational illustration, abstract ${subject} concept with vibrant colors, suitable for a technology blog card cover, 16:9 aspect ratio, no text, no watermark`;
+  }
+
+  /**
    * Generate a banner image at 1920px width with custom height.
    * Uses Cloudflare text-to-image (Stable Diffusion XL).
    */

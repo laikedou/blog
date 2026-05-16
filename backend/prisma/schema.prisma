@@ -21,6 +21,9 @@ model User {
   posts     Post[]
   comments  Comment[]
   media     Media[]
+  visualizations Visualization[]
+  visualizationLikes VisualizationLike[]
+  visualizationComments VisualizationComment[]
 }
 
 model Post {
@@ -241,4 +244,136 @@ model SeoClick {
   ctr         Float     @default(0.0)
   avgPosition Float     @default(0.0)
   recordedAt  DateTime  @default(now())
+}
+
+// ─── Site Configuration (Singleton) ─────────────────────────
+
+model SiteConfig {
+  id              Int      @id @default(autoincrement())
+  siteTitle       String   @default("AI Blog")
+  siteTagline     String   @default("")
+  siteDescription String   @default("")
+  adminTitle      String   @default("Blog Admin")
+  logoUrl         String   @default("")
+  faviconUrl      String   @default("")
+  footerText      String   @default("")
+  copyrightText   String   @default("")
+  contactEmail    String   @default("")
+  socialLinks     String   @default("{}")        // JSON: { "twitter": "...", "github": "...", ... }
+  seoHomeTitle    String   @default("")
+  seoHomeDescription String @default("")
+  postsPerPage    Int      @default(10)
+  enableComments  Boolean  @default(true)
+  customHeadHtml        String   @default("")
+  privacyPolicyContent  String   @default("")
+  termsOfUseContent     String   @default("")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+// ─── Error Log ──────────────────────────────────────────────
+
+model ErrorLog {
+  id         Int       @id @default(autoincrement())
+  method     String    // GET | POST | PUT | DELETE | PATCH
+  url        String    // request path
+  statusCode Int       // HTTP status code
+  message    String    // error message
+  stack      String    @default("") // stack trace (truncated)
+  body       String    @default("") // request body (JSON string, truncated)
+  userId     Int?      // authenticated user id if available
+  createdAt  DateTime  @default(now())
+}
+
+// ─── Visualization (AI-generated interactive animations) ─────
+
+model Visualization {
+  id                  Int       @id @default(autoincrement())
+  title               String
+  subject             String    // math | physics
+  description         String    @default("")
+  introduction        String    @default("")       // brief introduction/overview of the concept
+  detailedExplanation String    @default("")       // in-depth explanation of the visualization topic
+  knowledgeSummary    String    @default("")       // key knowledge points summary
+  tags                String    @default("")       // comma-separated
+  featuredImage       String    @default("")       // AI-generated cover image URL
+  htmlContent         String                      // the generated HTML code
+  prompt              String    @default("")       // the original user prompt
+  status              String    @default("draft")  // draft | published
+  version             Int       @default(1)
+  viewCount           Int       @default(0)
+  interactCount       Int       @default(0)
+  likesCount          Int       @default(0)
+
+  authorId    Int
+  author      User      @relation(fields: [authorId], references: [id])
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  versions    VisualizationVersion[]
+  stats       VisualizationStat[]
+  likes       VisualizationLike[]
+  comments    VisualizationComment[]
+}
+
+model VisualizationVersion {
+  id              Int            @id @default(autoincrement())
+  visualizationId Int
+  visualization   Visualization @relation(fields: [visualizationId], references: [id], onDelete: Cascade)
+  htmlContent       String
+  prompt          String         @default("")
+  changeNote      String         @default("")
+  version         Int
+  createdAt       DateTime       @default(now())
+}
+
+model VisualizationStat {
+  id               Int            @id @default(autoincrement())
+  visualizationId  Int
+  visualization    Visualization @relation(fields: [visualizationId], references: [id], onDelete: Cascade)
+  action           String         // view | interact | share
+  metadata         String         @default("{}") // JSON metadata
+  createdAt        DateTime       @default(now())
+}
+
+model VisualizationLike {
+  id               Int            @id @default(autoincrement())
+  visualizationId  Int
+  visualization    Visualization @relation(fields: [visualizationId], references: [id], onDelete: Cascade)
+  userId           Int
+  user             User          @relation(fields: [userId], references: [id])
+  createdAt        DateTime      @default(now())
+
+  @@unique([visualizationId, userId])
+}
+
+model VisualizationComment {
+  id               Int            @id @default(autoincrement())
+  content          String
+  visualizationId  Int
+  visualization    Visualization @relation(fields: [visualizationId], references: [id], onDelete: Cascade)
+  authorId         Int
+  author           User          @relation(fields: [authorId], references: [id])
+  parentId         Int?
+  parent           VisualizationComment? @relation("CommentReplies", fields: [parentId], references: [id])
+  replies          VisualizationComment[] @relation("CommentReplies")
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+}
+
+
+model AiUsageLog {
+  id               Int       @id @default(autoincrement())
+  provider         String
+  model            String
+  feature          String
+  promptTokens     Int       @default(0)
+  completionTokens Int       @default(0)
+  totalTokens      Int       @default(0)
+  durationMs       Int       @default(0)
+  status           String    @default("success")
+  errorMessage     String?
+  userId           Int?
+  createdAt        DateTime  @default(now())
 }

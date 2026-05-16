@@ -6,8 +6,11 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Upload, Copy, Trash2, File } from 'lucide-react';
+import { toast } from 'sonner';
+import { useConfirm } from '@/lib/confirm-dialog';
 
 export default function AdminMediaPage() {
+  const { confirm } = useConfirm();
   const [media, setMedia] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -26,17 +29,18 @@ export default function AdminMediaPage() {
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]; if (!file) return;
     setUploading(true);
-    try { await mediaApi.upload(file); fetchMedia(); } catch (err: any) { alert(err.message); }
+    try { await mediaApi.upload(file); fetchMedia(); } catch (err: any) { toast.error(err.message); }
     setUploading(false);
     if (fileRef.current) fileRef.current.value = '';
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Delete this file?')) return;
+    const ok = await confirm({ title: 'Delete File', message: 'Delete this file permanently?', confirmLabel: 'Delete', variant: 'destructive' });
+    if (!ok) return;
     await mediaApi.delete(id); fetchMedia();
   };
 
-  const copyUrl = async (url: string) => { await navigator.clipboard.writeText(url); alert('URL copied!'); };
+  const copyUrl = async (url: string) => { await navigator.clipboard.writeText(url); toast.success('URL copied!'); };
 
   return (
     <div>
@@ -61,7 +65,7 @@ export default function AdminMediaPage() {
               <Card key={item.id} className="overflow-hidden group shadow-card">
                 <div className="h-32 bg-cream-200 relative overflow-hidden">
                   {item.mimeType?.startsWith('image/') ? (
-                    <img src={item.url} alt={item.originalName} className="w-full h-full object-cover" />
+                    <img src={item.url} alt={item.originalName} className="w-full h-full object-cover" loading="lazy" onError={(e) => { (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect fill="%23f0ebe3" width="100" height="100"/><text fill="%238a8478" font-size="10" x="50" y="55" text-anchor="middle">Broken</text></svg>'; }} />
                   ) : (
                     <div className="flex items-center justify-center h-full text-ink-muted"><File className="h-8 w-8" /></div>
                   )}

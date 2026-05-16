@@ -322,4 +322,163 @@ describe('API Client', () => {
       expect(result.url).toBe('/uploads/banner.png');
     });
   });
+
+  describe('visualizations API', () => {
+    it('visualizations.list builds query params', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: [], total: 0 }),
+      });
+
+      const { visualizations } = require('../lib/api');
+      await visualizations.list({ subject: 'math', status: 'published', page: 1 });
+
+      const calledUrl = mockFetch.mock.calls[0][0];
+      expect(calledUrl).toContain('subject=math');
+      expect(calledUrl).toContain('status=published');
+      expect(calledUrl).toContain('page=1');
+    });
+
+    it('visualizations.listPublished calls published endpoint', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: [], total: 0 }),
+      });
+
+      const { visualizations } = require('../lib/api');
+      await visualizations.listPublished({ subject: 'physics' });
+
+      expect(mockFetch.mock.calls[0][0]).toContain('/visualizations/published');
+    });
+
+    it('visualizations.get fetches by id', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ id: 1, title: 'Pythagorean Theorem', htmlContent: 'fn(){}' }),
+      });
+
+      const { visualizations } = require('../lib/api');
+      const result = await visualizations.get(1);
+
+      expect(mockFetch).toHaveBeenCalledWith('/api/visualizations/1', expect.any(Object));
+      expect(result.title).toBe('Pythagorean Theorem');
+    });
+
+    it('visualizations.generate sends POST', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ id: 1, htmlContent: 'fn(){}' }),
+      });
+
+      const { visualizations } = require('../lib/api');
+      await visualizations.generate({ prompt: 'test', subject: 'math', provider: 'gemini' });
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        '/api/visualizations/generate',
+        expect.objectContaining({ method: 'POST' }),
+      );
+    });
+
+    it('visualizations.refine sends POST', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ id: 1, version: 2, htmlContent: 'refined' }),
+      });
+
+      const { visualizations } = require('../lib/api');
+      const result = await visualizations.refine({ visualizationId: 1, feedback: 'fix it' });
+
+      expect(mockFetch.mock.calls[0][1].method).toBe('POST');
+      expect(result.version).toBe(2);
+    });
+
+    it('visualizations.getProviders fetches providers', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ providers: ['gemini', 'grok'], default: 'gemini' }),
+      });
+
+      const { visualizations } = require('../lib/api');
+      const result = await visualizations.getProviders();
+
+      expect(mockFetch).toHaveBeenCalledWith('/api/visualizations/providers', expect.any(Object));
+      expect(result.default).toBe('gemini');
+    });
+
+    it('visualizations.create sends POST', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ id: 1, title: 'Manual' }),
+      });
+
+      const { visualizations } = require('../lib/api');
+      await visualizations.create({ title: 'Manual', subject: 'physics', htmlContent: '<div>fn()</div>' });
+
+      expect(mockFetch.mock.calls[0][1].method).toBe('POST');
+    });
+
+    it('visualizations.update sends PUT', async () => {
+      mockFetch.mockResolvedValueOnce({ ok: true, json: async () => ({ id: 1 }) });
+
+      const { visualizations } = require('../lib/api');
+      await visualizations.update(1, { title: 'Updated' });
+
+      expect(mockFetch.mock.calls[0][1].method).toBe('PUT');
+    });
+
+    it('visualizations.publish sends PUT', async () => {
+      mockFetch.mockResolvedValueOnce({ ok: true, json: async () => ({ id: 1, status: 'published' }) });
+
+      const { visualizations } = require('../lib/api');
+      await visualizations.publish(1, 'published');
+
+      expect(mockFetch.mock.calls[0][0]).toContain('/publish');
+      expect(mockFetch.mock.calls[0][1].method).toBe('PUT');
+    });
+
+    it('visualizations.delete sends DELETE', async () => {
+      mockFetch.mockResolvedValueOnce({ ok: true, json: async () => ({ deleted: true }) });
+
+      const { visualizations } = require('../lib/api');
+      await visualizations.delete(1);
+
+      expect(mockFetch.mock.calls[0][1].method).toBe('DELETE');
+    });
+
+    it('visualizations.recordStat sends POST', async () => {
+      mockFetch.mockResolvedValueOnce({ ok: true, json: async () => ({ id: 1 }) });
+
+      const { visualizations } = require('../lib/api');
+      await visualizations.recordStat(1, 'view', { source: 'test' });
+
+      expect(mockFetch.mock.calls[0][1].method).toBe('POST');
+      expect(JSON.parse(mockFetch.mock.calls[0][1].body).action).toBe('view');
+    });
+
+    it('visualizations.getStats fetches stats', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ viewCount: 10, interactCount: 5 }),
+      });
+
+      const { visualizations } = require('../lib/api');
+      const result = await visualizations.getStats(1);
+
+      expect(mockFetch).toHaveBeenCalledWith('/api/visualizations/1/stats', expect.any(Object));
+      expect(result.viewCount).toBe(10);
+    });
+
+    it('visualizations.getAggregatedStats fetches aggregated stats', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ totalViews: 100, totalVisualizations: 10 }),
+      });
+
+      const { visualizations } = require('../lib/api');
+      const result = await visualizations.getAggregatedStats();
+
+      expect(mockFetch).toHaveBeenCalledWith('/api/visualizations/stats/aggregated', expect.any(Object));
+      expect(result.totalVisualizations).toBe(10);
+    });
+  });
 });

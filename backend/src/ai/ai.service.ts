@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { GeneratePostDto, EnhanceContentDto, GenerateSeoDto, SuggestTagsDto, AiImagePromptDto } from './dto/ai.dto';
+import { AiUsageService } from '../ai-usage/ai-usage.service';
 
 @Injectable()
 export class AiService {
@@ -7,7 +8,7 @@ export class AiService {
   private baseUrl: string;
   private model: string;
 
-  constructor() {
+  constructor(private readonly aiUsage: AiUsageService) {
     this.apiKey = process.env.DEEPSEEK_API_KEY || '';
     this.baseUrl = process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com/v1';
     this.model = process.env.DEEPSEEK_MODEL || 'deepseek-chat';
@@ -17,10 +18,15 @@ export class AiService {
     return !!this.apiKey;
   }
 
-  private async callDeepSeek(systemPrompt: string, userMessage: string, maxTokens = 2000): Promise<string> {
+  private async callDeepSeek(systemPrompt: string, userMessage: string, maxTokens = 2000, feature = 'unknown', userId?: number): Promise<string> {
     if (!this.isConfigured()) {
       return this.fallbackResponse(systemPrompt, userMessage);
     }
+
+    const startTime = Date.now();
+    let status = 'success';
+    let errorMessage: string | undefined;
+    let usage: { promptTokens: number; completionTokens: number; totalTokens: number } | undefined;
 
     try {
       const response = await fetch(`${this.baseUrl}/chat/completions`, {
@@ -42,14 +48,41 @@ export class AiService {
       if (!response.ok) {
         const errorText = await response.text();
         console.error('DeepSeek API error:', response.status, errorText);
+        status = 'error';
+        errorMessage = `HTTP ${response.status}: ${errorText.substring(0, 200)}`;
         return this.fallbackResponse(systemPrompt, userMessage);
       }
 
       const data = await response.json();
-      return data.choices?.[0]?.message?.content || this.fallbackResponse(systemPrompt, userMessage);
+      const content = data.choices?.[0]?.message?.content;
+      if (content) {
+        usage = data.usage ? {
+          promptTokens: data.usage.prompt_tokens ?? 0,
+          completionTokens: data.usage.completion_tokens ?? 0,
+          totalTokens: data.usage.total_tokens ?? 0,
+        } : undefined;
+        return content;
+      }
+      return this.fallbackResponse(systemPrompt, userMessage);
     } catch (error) {
       console.error('DeepSeek call failed:', error.message);
+      status = 'error';
+      errorMessage = error.message;
       return this.fallbackResponse(systemPrompt, userMessage);
+    } finally {
+      const durationMs = Date.now() - startTime;
+      await this.aiUsage.log({
+        provider: 'deepseek',
+        model: this.model,
+        feature,
+        promptTokens: usage?.promptTokens ?? 0,
+        completionTokens: usage?.completionTokens ?? 0,
+        totalTokens: usage?.totalTokens ?? 0,
+        durationMs,
+        status,
+        errorMessage,
+        userId,
+      }).catch(() => {});
     }
   }
 
@@ -118,7 +151,7 @@ export class AiService {
 <p>In conclusion, ${topic} represents a fascinating and important area of study and practice. As we continue to learn and evolve, the insights gained from exploring this subject will undoubtedly prove valuable.</p>`;
   }
 
-  async generatePost(dto: GeneratePostDto): Promise<any> {
+  async generatePost(dto: GeneratePostDto, userId?: number): Promise<any> {
     const systemPrompt = `You are a professional blog writer. Generate a complete blog post in HTML format.
 Return ONLY a JSON object with these exact fields: title, slug, content (full HTML), excerpt (1-2 sentences).
 Content must be well-structured with h2, h3, p, ul/li tags.
@@ -127,7 +160,7 @@ CRITICAL: Generate the post in the SAME language as the topic. If the topic is C
 
     const userMessage = `Topic: ${dto.topic}${dto.keywords ? '\nKeywords: ' + dto.keywords.join(', ') : ''}`;
 
-    const result = await this.callDeepSeek(systemPrompt, userMessage, 3000);
+    const result = await this.callDeepSeek(systemPrompt, userMessage, 3000, 'generatePost', userId);
     try {
       const cleaned = result.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
       return JSON.parse(cleaned);
@@ -141,7 +174,7 @@ CRITICAL: Generate the post in the SAME language as the topic. If the topic is C
     }
   }
 
-  async enhanceContent(dto: EnhanceContentDto): Promise<any> {
+  async enhanceContent(dto: EnhanceContentDto, userId?: number): Promise<any> {
     const instructions: Record<string, string> = {
       'improve-grammar': 'Fix grammar, spelling, and improve readability. Preserve original meaning and HTML structure. CRITICAL: Preserve the original language — do not translate.',
       'summarize': 'Summarize to ~1/3 length while keeping key points. Preserve HTML structure. CRITICAL: Preserve the original language — do not translate.',
@@ -153,17 +186,17 @@ CRITICAL: Generate the post in the SAME language as the topic. If the topic is C
     const systemPrompt = `You are a professional blog editor and writing assistant. ${instructions[mode] || instructions['improve-grammar']}
 Return only the processed HTML content, no markdown, no code fences.`;
 
-    const result = await this.callDeepSeek(systemPrompt, `Content to ${mode}:\n\n${dto.content}`, mode === 'rewrite' || mode === 'polish' ? 6000 : 4000);
+    const result = await this.callDeepSeek(systemPrompt, `Content to ${mode}:\n\n${dto.content}`, mode === 'rewrite' || mode === 'polish' ? 6000 : 4000, 'enhanceContent', userId);
     return { enhancedContent: result };
   }
 
-  async generateSeo(dto: GenerateSeoDto): Promise<any> {
+  async generateSeo(dto: GenerateSeoDto, userId?: number): Promise<any> {
     const systemPrompt = `You are an SEO expert. Generate SEO metadata for a blog post.
 Return ONLY valid JSON: { "seoTitle": "under 60 chars", "seoDescription": "under 160 chars", "slug": "url-friendly-string" }
 CRITICAL: Match the language of the content. If the content is in Chinese, generate Chinese SEO metadata. Never translate.`;
 
     const content = (dto.content || '').replace(/<[^>]*>/g, '').substring(0, 1000);
-    const result = await this.callDeepSeek(systemPrompt, `Title: ${dto.title}\n\nContent: ${content}`);
+    const result = await this.callDeepSeek(systemPrompt, `Title: ${dto.title}\n\nContent: ${content}`, 2000, 'generateSeo', userId);
     try {
       return JSON.parse(result.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim());
     } catch {
@@ -175,13 +208,13 @@ CRITICAL: Match the language of the content. If the content is in Chinese, gener
     }
   }
 
-  async suggestTags(dto: SuggestTagsDto): Promise<any> {
+  async suggestTags(dto: SuggestTagsDto, userId?: number): Promise<any> {
     const max = dto.maxTags || 5;
     const systemPrompt = `You are a content categorization expert. Suggest relevant tags and a category.
 Return ONLY valid JSON: { "tags": ["tag1","tag2",...] (${max} tags), "category": "single category name" }`;
 
     const plain = dto.content.replace(/<[^>]*>/g, '').substring(0, 1500);
-    const result = await this.callDeepSeek(systemPrompt, plain);
+    const result = await this.callDeepSeek(systemPrompt, plain, 2000, 'suggestTags', userId);
     try {
       return JSON.parse(result.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim());
     } catch {
@@ -189,12 +222,12 @@ Return ONLY valid JSON: { "tags": ["tag1","tag2",...] (${max} tags), "category":
     }
   }
 
-  async generateImagePrompt(dto: AiImagePromptDto): Promise<any> {
+  async generateImagePrompt(dto: AiImagePromptDto, userId?: number): Promise<any> {
     const systemPrompt = `You generate image search queries for blog post featured images.
 Return ONLY valid JSON: { "imagePrompt": "search query", "keywords": ["keyword1","keyword2"] }
 CRITICAL: Match the language of the content. If the content is in Chinese, generate Chinese image prompts. Never translate.`;
 
-    const result = await this.callDeepSeek(systemPrompt, dto.postContent.replace(/<[^>]*>/g, '').substring(0, 800));
+    const result = await this.callDeepSeek(systemPrompt, dto.postContent.replace(/<[^>]*>/g, '').substring(0, 800), 2000, 'generateImagePrompt', userId);
     try {
       return JSON.parse(result.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim());
     } catch {
@@ -202,7 +235,7 @@ CRITICAL: Match the language of the content. If the content is in Chinese, gener
     }
   }
 
-  async analyzeSeo(dto: { title: string; content?: string; seoTitle?: string; seoDescription?: string; targetEngine?: string }) {
+  async analyzeSeo(dto: { title: string; content?: string; seoTitle?: string; seoDescription?: string; targetEngine?: string }, userId?: number) {
     const systemPrompt = `你是专业的SEO优化专家，精通Google和百度搜索引擎优化。
 
 你将对博客文章进行全面的SEO分析并返回JSON格式的结果。
@@ -236,7 +269,7 @@ SEO描述: ${dto.seoDescription || '未设置'}
 目标引擎: ${dto.targetEngine || 'google'}
 内容: ${plainContent}`;
 
-    const result = await this.callDeepSeek(systemPrompt, userMessage, 3000);
+    const result = await this.callDeepSeek(systemPrompt, userMessage, 3000, 'analyzeSeo', userId);
     try {
       const cleaned = result.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
       return JSON.parse(cleaned);
@@ -255,7 +288,7 @@ SEO描述: ${dto.seoDescription || '未设置'}
     }
   }
 
-  async chat(messages: { role: string; content: string }[]): Promise<any> {
+  async chat(messages: { role: string; content: string }[], userId?: number): Promise<any> {
     if (!this.isConfigured()) {
       return { reply: 'AI assistant is not configured. Set DEEPSEEK_API_KEY in .env to enable AI features.' };
     }
@@ -267,6 +300,11 @@ SEO描述: ${dto.seoDescription || '未设置'}
 - Providing feedback on content
 Keep responses concise and practical.
 CRITICAL: Always respond in the SAME language as the user's message. Never translate.`;
+
+    const startTime = Date.now();
+    let status = 'success';
+    let errorMessage: string | undefined;
+    let usage: { promptTokens: number; completionTokens: number; totalTokens: number } | undefined;
 
     try {
       const response = await fetch(`${this.baseUrl}/chat/completions`, {
@@ -290,9 +328,30 @@ CRITICAL: Always respond in the SAME language as the user's message. Never trans
       }
 
       const data = await response.json();
+      usage = data.usage ? {
+        promptTokens: data.usage.prompt_tokens ?? 0,
+        completionTokens: data.usage.completion_tokens ?? 0,
+        totalTokens: data.usage.total_tokens ?? 0,
+      } : undefined;
       return { reply: data.choices?.[0]?.message?.content || 'No response from AI.' };
     } catch (error) {
+      status = 'error';
+      errorMessage = error.message;
       return { reply: `AI chat error: ${error.message}. Please check your API key and try again.` };
+    } finally {
+      const durationMs = Date.now() - startTime;
+      await this.aiUsage.log({
+        provider: 'deepseek',
+        model: this.model,
+        feature: 'chat',
+        promptTokens: usage?.promptTokens ?? 0,
+        completionTokens: usage?.completionTokens ?? 0,
+        totalTokens: usage?.totalTokens ?? 0,
+        durationMs,
+        status,
+        errorMessage,
+        userId,
+      }).catch(() => {});
     }
   }
 
@@ -302,7 +361,7 @@ CRITICAL: Always respond in the SAME language as the user's message. Never trans
    * Analyze a blog listing page to determine pagination structure and article count.
    * Uses DeepSeek AI. Falls back to conservative single-page result.
    */
-  async analyzeListingPage(dto: { html: string; url: string }): Promise<{
+  async analyzeListingPage(dto: { html: string; url: string }, userId?: number): Promise<{
     totalArticles: number;
     currentPage: number;
     totalPages: number;
@@ -328,7 +387,7 @@ The paginationPattern should use {page} as a placeholder for the page number, e.
 Base URL: ${dto.url}`;
 
     const userMessage = dto.html.substring(0, 8000);
-    const result = await this.callDeepSeek(systemPrompt, userMessage, 1500);
+    const result = await this.callDeepSeek(systemPrompt, userMessage, 1500, 'analyzeListingPage', userId);
 
     try {
       const cleaned = result.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
@@ -348,7 +407,7 @@ Base URL: ${dto.url}`;
    * Rewrite article content for quality and engagement using AI.
    * Preserves all HTML structure. Falls back to returning input unchanged.
    */
-  async rewriteArticle(dto: { title: string; content: string; excerpt: string; sourceName?: string }): Promise<{
+  async rewriteArticle(dto: { title: string; content: string; excerpt: string; sourceName?: string }, userId?: number): Promise<{
     title: string;
     content: string;
     excerpt: string;
@@ -372,7 +431,7 @@ Source blog: ${dto.sourceName || 'Unknown'}
 CRITICAL: Preserve the original language — do not translate. If the article is in Chinese, keep it Chinese; if English, keep it English.`;
 
     const userMessage = `Title: ${dto.title}\n\nExcerpt: ${dto.excerpt}\n\nContent:\n${dto.content.substring(0, 6000)}`;
-    const result = await this.callDeepSeek(systemPrompt, userMessage, 4000);
+    const result = await this.callDeepSeek(systemPrompt, userMessage, 4000, 'rewriteArticle', userId);
 
     try {
       const cleaned = result.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
@@ -389,5 +448,63 @@ CRITICAL: Preserve the original language — do not translate. If the article is
 
   private fallbackAnalyzeListingPage() {
     return { totalArticles: 0, currentPage: 1, totalPages: 1, paginationPattern: null };
+  }
+
+  async generateSvg(systemPrompt: string, brandName: string, userId?: number): Promise<string | null> {
+    if (!this.isConfigured()) {
+      return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="6" fill="#1a1a2e"/><circle cx="16" cy="16" r="8" fill="#c84b31"/></svg>`;
+    }
+    return this.callDeepSeek(systemPrompt, `Brand: ${brandName}. Generate a minimal favicon SVG.`, 2000, 'generateSvg', userId);
+  }
+
+  async generateLegalPolicy(dto: { type: 'privacy' | 'terms'; siteName: string; siteUrl: string; siteEmail: string }, userId?: number): Promise<string> {
+    const { type, siteName, siteUrl, siteEmail } = dto;
+    const name = siteName || 'Our Website';
+    const url = siteUrl || 'https://example.com';
+    const email = siteEmail || 'contact@example.com';
+
+    const systemPrompt = `You are a legal content writer specializing in website policies. Generate a professional, comprehensive ${type === 'privacy' ? 'Privacy Policy' : 'Terms of Use'} in Markdown format.
+
+Requirements:
+- Use proper Markdown headings (#, ##, ###), bullet lists, bold text
+- Be professional, thorough, and legally robust
+- Write in clear English suitable for a technology blog/website
+- Cover all standard legal sections expected for a modern website
+- Include placeholders in [brackets] where the user needs to fill in specific details
+- The document should be ready to use with minimal edits
+- Use the provided site name "${name}", URL "${url}", and contact email "${email}" throughout
+
+${type === 'privacy' ? `
+Generate a Privacy Policy with these sections:
+1. Introduction - brief overview of privacy practices
+2. Information We Collect - personal information, usage data, cookies
+3. How We Use Your Information
+4. Data Sharing and Disclosure
+5. Cookies and Tracking Technologies
+6. Data Security
+7. Your Rights - GDPR, CCPA, etc.
+8. Third-Party Services
+9. Children's Privacy
+10. Changes to This Policy
+11. Contact Information` : `
+Generate Terms of Use with these sections:
+1. Acceptance of Terms
+2. Description of Service
+3. User Responsibilities
+4. Intellectual Property Rights - content ownership, user-generated content
+5. User Accounts and Registration
+6. Prohibited Conduct
+7. Third-Party Links
+8. Limitation of Liability
+9. Disclaimer of Warranties
+10. Termination
+11. Governing Law
+12. Changes to Terms
+13. Contact Information`}
+
+Return ONLY the raw Markdown content, no explanations, no code fences.`;
+
+    const result = await this.callDeepSeek(systemPrompt, `Generate a ${type === 'privacy' ? 'Privacy Policy' : 'Terms of Use'} for "${name}" (${url}).`, 4000, 'generateLegalPolicy', userId);
+    return result;
   }
 }

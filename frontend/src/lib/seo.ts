@@ -142,7 +142,7 @@ export function breadcrumbJsonLd(items: { name: string; url: string }[]): WithCo
   };
 }
 
-export function websiteJsonLd(): WithContext<WebSite> {
+export function websiteJsonLd(): Record<string, unknown> {
   return {
     '@context': 'https://schema.org',
     '@type': 'WebSite',

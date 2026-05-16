@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
+import { toast } from 'sonner';
 import Footer from '@/components/Footer';
 import { posts as postsApi, comments as commentsApi } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
@@ -62,7 +63,7 @@ export default function PostDetailClient({ post: initialPost, notFound: initialN
       setCommentText('');
       const updated = await postsApi.getBySlug(post.slug);
       setPost(updated);
-    } catch (err: any) { alert(err.message); }
+    } catch (err: any) { toast.error(err.message); }
     setSubmitting(false);
   };
 

@@ -1,5 +1,13 @@
 const API_BASE = '/api';
 
+// SSE streaming must bypass Next.js dev server rewrite proxy, which buffers
+// streaming responses. Use the backend URL directly when available.
+const SSE_BASE = typeof process !== 'undefined' && process.env.NEXT_PUBLIC_API_URL
+  ? `${process.env.NEXT_PUBLIC_API_URL}/api`
+  : API_BASE;
+
+const DEFAULT_TIMEOUT = 120_000; // 2 minutes — AI generation can be slow
+
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
 
@@ -17,8 +25,15 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
     delete headers['Content-Type'];
   }
 
+  // Add timeout if not already set via options.signal
+  const controls: { signal?: AbortSignal } = {};
+  if (!options.signal) {
+    controls.signal = AbortSignal.timeout(DEFAULT_TIMEOUT);
+  }
+
   const res = await fetch(`${API_BASE}${endpoint}`, {
     ...options,
+    ...controls,
     headers,
   });
 
@@ -227,6 +242,120 @@ export const chat = {
     request<any>(`/chat/feedback/${id}/read`, { method: 'PUT' }),
 };
 
+export interface SSEStreamCallbacks {
+  onInit?: (data: { id: number; title: string }) => void;
+  onChunk?: (text: string) => void;
+  onDone?: (data: { id: number; htmlContent: string; raw: string; title: string; status: string }) => void;
+  onError?: (message: string) => void;
+}
+
+// Visualizations
+export const visualizations = {
+  generate: (data: { prompt: string; subject: string; provider?: string; title?: string }) =>
+    request<any>('/visualizations/generate', { method: 'POST', body: JSON.stringify(data) }),
+  generateStream: (data: { prompt: string; subject: string; provider?: string; title?: string }, callbacks: SSEStreamCallbacks, signal?: AbortSignal) => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    return fetch(`${SSE_BASE}/visualizations/generate-stream`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(data),
+      signal,
+    }).then(async (res) => {
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({ message: 'Generation failed' }));
+        throw new Error(errBody.message || `HTTP ${res.status}`);
+      }
+
+      const reader = res.body?.getReader();
+      if (!reader) throw new Error('No response body');
+
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let currentEvent = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (trimmed.startsWith('event: ')) {
+            currentEvent = trimmed.slice(7).trim();
+          } else if (trimmed.startsWith('data: ')) {
+            const payload = trimmed.slice(6).trim();
+            try {
+              const parsed = JSON.parse(payload);
+              switch (currentEvent) {
+                case 'init':
+                  callbacks.onInit?.(parsed);
+                  break;
+                case 'chunk':
+                  callbacks.onChunk?.(parsed.text);
+                  break;
+                case 'done':
+                  callbacks.onDone?.(parsed);
+                  break;
+                case 'error':
+                  callbacks.onError?.(parsed.message);
+                  break;
+              }
+            } catch {
+              // skip malformed JSON
+            }
+          }
+        }
+      }
+    });
+  },
+  refine: (data: { visualizationId: number; feedback: string }) =>
+    request<any>('/visualizations/refine', { method: 'POST', body: JSON.stringify(data) }),
+  fixError: (data: { visualizationId: number; error: string }) =>
+    request<any>('/visualizations/fix-error', { method: 'POST', body: JSON.stringify(data) }),
+  getProviders: () => request<{ providers: string[]; default: string }>('/visualizations/providers'),
+  list: (params?: Record<string, any>) => {
+    const sp = new URLSearchParams();
+    if (params) Object.entries(params).forEach(([k, v]) => { if (v !== undefined && v !== '') sp.set(k, String(v)); });
+    return request<any>(`/visualizations?${sp}`);
+  },
+  listPublished: (params?: Record<string, any>) => {
+    const sp = new URLSearchParams();
+    if (params) Object.entries(params).forEach(([k, v]) => { if (v !== undefined) sp.set(k, String(v)); });
+    return request<any>(`/visualizations/published?${sp}`);
+  },
+  get: (id: number) => request<any>(`/visualizations/${id}`),
+  create: (data: any) =>
+    request<any>('/visualizations', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id: number, data: any) =>
+    request<any>(`/visualizations/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  publish: (id: number, status: string) =>
+    request<any>(`/visualizations/${id}/publish`, { method: 'PUT', body: JSON.stringify({ status }) }),
+  generateCover: (id: number) =>
+    request<any>(`/visualizations/${id}/generate-cover`, { method: 'POST' }),
+  generateMetadata: (id: number) =>
+    request<{ introduction: string; detailedExplanation: string; knowledgeSummary: string }>(`/visualizations/${id}/generate-metadata`, { method: 'POST' }),
+  delete: (id: number) =>
+    request<any>(`/visualizations/${id}`, { method: 'DELETE' }),
+  recordStat: (id: number, action: string, metadata?: any) =>
+    request<any>(`/visualizations/${id}/stats`, { method: 'POST', body: JSON.stringify({ action, metadata }) }),
+  getStats: (id: number) => request<any>(`/visualizations/${id}/stats`),
+  getAggregatedStats: () => request<any>('/visualizations/stats/aggregated'),
+  like: (id: number) => request<{ liked: boolean; likesCount: number }>(`/visualizations/${id}/like`, { method: 'POST' }),
+  getLikeStatus: (id: number) => request<{ liked: boolean; likesCount: number }>(`/visualizations/${id}/like-status`),
+  getComments: (id: number) => request<any[]>(`/visualizations/${id}/comments`),
+  createComment: (id: number, data: { content: string; parentId?: number }) =>
+    request<any>(`/visualizations/${id}/comments`, { method: 'POST', body: JSON.stringify(data) }),
+  deleteComment: (commentId: number) =>
+    request<any>(`/visualizations/comments/${commentId}`, { method: 'DELETE' }),
+  getRelated: (id: number) => request<any[]>(`/visualizations/${id}/related`),
+};
+
 // AI
 export const ai = {
   generatePost: (data: any) =>
@@ -241,12 +370,47 @@ export const ai = {
     request<any>('/ai/image-prompt', { method: 'POST', body: JSON.stringify(data) }),
   chat: (messages: { role: string; content: string }[]) =>
     request<any>('/ai/chat', { method: 'POST', body: JSON.stringify({ messages }) }),
-  generateCover: (data: { title: string; excerpt?: string }) =>
-    request<{ url: string; prompt: string }>('/ai/generate-cover', { method: 'POST', body: JSON.stringify(data) }),
-  generateBanner: (data: { title: string; subtitle?: string; height?: number }) =>
-    request<{ url: string; prompt: string }>('/ai/generate-banner', { method: 'POST', body: JSON.stringify(data) }),
+  generateCover: (data: { title: string; excerpt?: string; provider?: string }) =>
+    request<{ url: string; prompt: string; provider?: string }>('/ai/generate-cover', { method: 'POST', body: JSON.stringify(data) }),
+  generateBanner: (data: { title: string; subtitle?: string; height?: number; provider?: string }) =>
+    request<{ url: string; prompt: string; provider?: string }>('/ai/generate-banner', { method: 'POST', body: JSON.stringify(data) }),
   transformImage: (data: { imageUrl: string; prompt?: string }) =>
     request<{ url: string }>('/ai/transform-image', { method: 'POST', body: JSON.stringify(data) }),
   analyzeSeo: (data: { title: string; content?: string; seoTitle?: string; seoDescription?: string; targetEngine?: string }) =>
     request<any>('/ai/analyze-seo', { method: 'POST', body: JSON.stringify(data) }),
+  generateLogo: (data: { brandName: string; tagline?: string }) =>
+    request<{ url: string; format: string; provider: string | null }>('/ai/generate-logo', { method: 'POST', body: JSON.stringify(data) }),
+  generateFavicon: (data: { brandName: string }) =>
+    request<{ url: string; format: string; provider: string | null }>('/ai/generate-favicon', { method: 'POST', body: JSON.stringify(data) }),
+  generateLegalPolicy: (data: { type: 'privacy' | 'terms'; siteName: string; siteUrl: string; siteEmail: string }) =>
+    request<{ content: string }>('/ai/generate-legal-policy', { method: 'POST', body: JSON.stringify(data) }),
+};
+
+// Site Config
+export const siteConfig = {
+  get: () => request<any>('/site-config'),
+  update: (data: any) =>
+    request<any>('/site-config', { method: 'PUT', body: JSON.stringify(data) }),
+};
+
+// Error Logs
+export const logs = {
+  list: (params?: Record<string, any>) => {
+    const sp = new URLSearchParams();
+    if (params) Object.entries(params).forEach(([k, v]) => { if (v !== undefined && v !== null && v !== '') sp.set(k, String(v)); });
+    return request<any>(`/logs?${sp}`);
+  },
+  stats: () => request<any>('/logs/stats'),
+  get: (id: number) => request<any>(`/logs/${id}`),
+  clear: () => request<any>('/logs', { method: 'DELETE' }),
+};
+
+// AI Usage
+export const aiUsage = {
+  list: (params?: Record<string, any>) => {
+    const sp = new URLSearchParams();
+    if (params) Object.entries(params).forEach(([k, v]) => { if (v !== undefined && v !== null && v !== '') sp.set(k, String(v)); });
+    return request<any>(`/ai-usage?${sp}`);
+  },
+  stats: () => request<any>('/ai-usage/stats'),
 };

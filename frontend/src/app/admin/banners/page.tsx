@@ -9,14 +9,19 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Plus, Sparkles, Trash2, GripVertical, ArrowUp, ArrowDown } from 'lucide-react';
+import { toast } from 'sonner';
+import { useConfirm } from '@/lib/confirm-dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function AdminBannersPage() {
+  const { confirm } = useConfirm();
   const [banners, setBanners] = useState<any[]>([]);
   const [posts, setPosts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [generating, setGenerating] = useState(false);
+  const [aiProvider, setAiProvider] = useState('grok');
   const [form, setForm] = useState({
     title: '', subtitle: '', imageUrl: '', linkUrl: '', postId: '', sortOrder: 0, isActive: true,
   });
@@ -40,15 +45,26 @@ export default function AdminBannersPage() {
     setForm({ title: '', subtitle: '', imageUrl: '', linkUrl: '', postId: '', sortOrder: 0, isActive: true });
     setEditingId(null);
     setShowForm(false);
+    setAiProvider('grok');
   };
 
   const handleGenerateImage = async () => {
-    if (!form.title.trim()) { alert('Please enter a title first'); return; }
+    if (!form.title.trim()) { toast.error('Please enter a title first'); return; }
     setGenerating(true);
     try {
-      const { url } = await aiApi.generateBanner({ title: form.title, subtitle: form.subtitle, height: 400 });
-      handleChange('imageUrl', url);
-    } catch (err: any) { alert(err.message || 'Failed to generate banner image'); }
+      const { url } = await aiApi.generateBanner({
+        title: form.title,
+        subtitle: form.subtitle,
+        height: 400,
+        provider: aiProvider,
+      });
+      if (url) {
+        handleChange('imageUrl', url);
+        toast.success(`Image generated via ${aiProvider === 'grok' ? 'Grok' : 'Cloudflare'}`);
+      } else {
+        toast.error('Image generation returned no URL. Try the other provider.');
+      }
+    } catch (err: any) { toast.error(err.message || 'Failed to generate banner image'); }
     setGenerating(false);
   };
 
@@ -63,7 +79,7 @@ export default function AdminBannersPage() {
         sortOrder: form.sortOrder,
         isActive: form.isActive,
       };
-      if (form.postId) payload.postId = Number(form.postId);
+      if (form.postId && form.postId !== 'none') payload.postId = Number(form.postId);
 
       if (editingId) {
         await bannersApi.update(editingId, payload);
@@ -72,7 +88,7 @@ export default function AdminBannersPage() {
       }
       resetForm();
       fetchBanners();
-    } catch (err: any) { alert(err.message); }
+    } catch (err: any) { toast.error(err.message); }
   };
 
   const editBanner = (banner: any) => {
@@ -86,7 +102,8 @@ export default function AdminBannersPage() {
   };
 
   const deleteBanner = async (id: number) => {
-    if (!confirm('Delete this banner?')) return;
+    const ok = await confirm({ title: 'Delete Banner', message: 'Delete this banner permanently?', confirmLabel: 'Delete', variant: 'destructive' });
+    if (!ok) return;
     await bannersApi.delete(id);
     fetchBanners();
   };
@@ -133,12 +150,20 @@ export default function AdminBannersPage() {
                 <label className="block text-body-sm text-ink-soft mb-1.5">Image URL (1920x400 recommended)</label>
                 <div className="flex gap-2">
                   <Input value={form.imageUrl} onChange={e => handleChange('imageUrl', e.target.value)} placeholder="https://..." className="flex-1" required />
+                  <select
+                    value={aiProvider}
+                    onChange={e => setAiProvider(e.target.value)}
+                    className="h-9 rounded-editorial-sm border border-border bg-surface px-3 text-body-sm text-ink focus:outline-none focus:ring-2 focus:ring-clay"
+                  >
+                    <option value="grok">Grok</option>
+                    <option value="cloudflare">Cloudflare</option>
+                  </select>
                   <Button type="button" variant="outline" onClick={handleGenerateImage} disabled={generating}>
-                    <Sparkles className="h-4 w-4 mr-2" />{generating ? '...' : 'AI Generate'}
+                    <Sparkles className="h-4 w-4 mr-2" />{generating ? 'Generating...' : 'AI Generate'}
                   </Button>
                 </div>
                 {form.imageUrl && (
-                  <img src={form.imageUrl} alt="" className="mt-3 rounded-editorial w-full h-32 object-cover" />
+                  <img src={form.imageUrl} alt="" className="mt-3 rounded-editorial w-full h-32 object-cover" loading="lazy" />
                 )}
               </div>
 
@@ -149,10 +174,13 @@ export default function AdminBannersPage() {
                 </div>
                 <div>
                   <label className="block text-body-sm text-ink-soft mb-1.5">Link to Post (optional)</label>
-                  <select value={form.postId} onChange={e => handleChange('postId', e.target.value)} className="flex h-11 w-full rounded-editorial-sm border border-border bg-surface px-4 py-2.5 text-body">
-                    <option value="">No link</option>
-                    {posts.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}
-                  </select>
+                  <Select value={form.postId} onValueChange={val => handleChange('postId', val)}>
+                    <SelectTrigger><SelectValue placeholder="No link" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">No link</SelectItem>
+                      {posts.map(p => <SelectItem key={p.id} value={String(p.id)}>{p.title}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div>
                   <label className="block text-body-sm text-ink-soft mb-1.5">Sort Order</label>
@@ -161,10 +189,16 @@ export default function AdminBannersPage() {
               </div>
 
               <div className="flex items-center gap-3">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" checked={form.isActive} onChange={e => handleChange('isActive', e.target.checked)} className="rounded border-border" />
-                  <span className="text-body-sm text-ink-soft">Active</span>
-                </label>
+                <button
+                  type="button"
+                  onClick={() => handleChange('isActive', !form.isActive)}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-clay/30 ${form.isActive ? 'bg-teal' : 'bg-cream-300'}`}
+                  role="switch"
+                  aria-checked={form.isActive}
+                >
+                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform shadow-sm ${form.isActive ? 'translate-x-6' : 'translate-x-1'}`} />
+                </button>
+                <span className="text-body-sm text-ink-soft">Active</span>
               </div>
 
               <div className="flex gap-2 pt-2">
@@ -197,7 +231,7 @@ export default function AdminBannersPage() {
                     <ArrowDown className="h-3.5 w-3.5" />
                   </button>
                 </div>
-                <img src={banner.imageUrl} alt="" className="w-48 h-24 object-cover rounded-editorial-sm shrink-0" />
+                <img src={banner.imageUrl} alt="" className="w-48 h-24 object-cover rounded-editorial-sm shrink-0" loading="lazy" />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <p className="text-body font-medium text-ink truncate">{banner.title || 'Untitled'}</p>

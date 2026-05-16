@@ -7,13 +7,17 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Edit2, Trash2, Plus } from 'lucide-react';
+import { toast } from 'sonner';
+import { useConfirm } from '@/lib/confirm-dialog';
 
 export default function AdminTagsPage() {
+  const { confirm } = useConfirm();
   const [tags, setTags] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [name, setName] = useState('');
   const [editing, setEditing] = useState<any>(null);
   const [saving, setSaving] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const fetchTags = () => {
     tagsApi.list().then(setTags).finally(() => setLoading(false));
@@ -27,16 +31,19 @@ export default function AdminTagsPage() {
     try {
       if (editing) await tagsApi.update(editing.id, { name });
       else await tagsApi.create({ name });
+      toast.success(editing ? 'Tag updated' : 'Tag created');
       setName(''); setEditing(null);
       fetchTags();
-    } catch (err: any) { alert(err.message); }
+    } catch (err: any) { toast.error(err.message); }
     setSaving(false);
   };
 
   const handleEdit = (tag: any) => { setEditing(tag); setName(tag.name); };
   const handleDelete = async (id: number) => {
-    if (!confirm('Delete this tag?')) return;
+    const ok = await confirm({ title: 'Delete Tag', message: 'Are you sure you want to delete this tag? Posts tagged with it will no longer have this tag.', confirmLabel: 'Delete', variant: 'destructive' });
+    if (!ok) return;
     await tagsApi.delete(id);
+    toast.success('Tag deleted');
     fetchTags();
   };
 
@@ -63,8 +70,26 @@ export default function AdminTagsPage() {
             {loading ? (
               <div className="p-6 space-y-3">{[1,2,3].map(i => <Skeleton key={i} className="h-12 w-full" />)}</div>
             ) : (
-              <div className="flex flex-wrap gap-2 p-6">
-                {tags.map((tag: any) => (
+              <>
+                {tags.length > 6 && (
+                  <div className="px-6 pt-4 pb-2">
+                    <Input
+                      value={searchQuery}
+                      onChange={e => setSearchQuery(e.target.value)}
+                      placeholder="Search tags..."
+                      className="h-9"
+                    />
+                  </div>
+                )}
+                {tags.filter(t => t.name.toLowerCase().includes(searchQuery.toLowerCase())).length === 0 ? (
+                  <div className="p-8 text-center">
+                    <p className="text-body-sm text-ink-muted">
+                      {searchQuery ? `No tags matching "${searchQuery}"` : 'No tags yet'}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap gap-2 p-6">
+                    {tags.filter(t => t.name.toLowerCase().includes(searchQuery.toLowerCase())).map((tag: any) => (
                   <div key={tag.id} className="flex items-center gap-2 bg-cream-200 rounded-full px-4 py-2">
                     <span className="text-body-sm text-ink font-medium">#{tag.name}</span>
                     <span className="text-caption-sm text-ink-muted">({tag.postCount || 0})</span>
@@ -77,6 +102,8 @@ export default function AdminTagsPage() {
                   </div>
                 ))}
               </div>
+            )}
+              </>
             )}
           </CardContent>
         </Card>

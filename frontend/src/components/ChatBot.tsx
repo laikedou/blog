@@ -3,6 +3,10 @@
 import { useState, useRef, useEffect } from 'react';
 import { chat as chatApi } from '@/lib/api';
 import { MessageSquare, X, Send, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 
 interface Message {
   id: string;
@@ -136,7 +140,7 @@ export default function ChatBot() {
         setFeedbackForm({ name: '', email: '', message: '' });
       }, 2000);
     } catch (err: any) {
-      alert(err.message || 'Failed to submit feedback');
+      toast.error(err.message || 'Failed to submit feedback');
     }
   };
 
@@ -204,42 +208,39 @@ export default function ChatBot() {
                     <p className="text-body-sm text-ink-muted">
                       Help me improve the blog! Share your thoughts or report an issue.
                     </p>
-                    <input
+                    <Input
                       value={feedbackForm.name}
                       onChange={e => setFeedbackForm(prev => ({ ...prev, name: e.target.value }))}
                       placeholder="Your name (optional)"
-                      className="flex h-10 w-full rounded-editorial-sm border border-border bg-surface px-3 py-2 text-body-sm"
                     />
-                    <input
+                    <Input
                       value={feedbackForm.email}
                       onChange={e => setFeedbackForm(prev => ({ ...prev, email: e.target.value }))}
                       placeholder="Your email (optional)"
                       type="email"
-                      className="flex h-10 w-full rounded-editorial-sm border border-border bg-surface px-3 py-2 text-body-sm"
                     />
-                    <textarea
+                    <Textarea
                       value={feedbackForm.message}
                       onChange={e => setFeedbackForm(prev => ({ ...prev, message: e.target.value }))}
                       placeholder="Your message..."
                       required
                       rows={4}
-                      className="flex w-full rounded-editorial-sm border border-border bg-surface px-3 py-2 text-body-sm resize-none"
                     />
                     <div className="flex gap-2">
-                      <button
+                      <Button
                         type="submit"
                         disabled={!feedbackForm.message.trim()}
-                        className="flex-1 h-10 bg-clay text-white rounded-editorial-sm text-body-sm font-medium hover:bg-clay-dark disabled:opacity-50 transition-colors"
+                        className="flex-1"
                       >
                         Send Feedback
-                      </button>
-                      <button
+                      </Button>
+                      <Button
                         type="button"
+                        variant="outline"
                         onClick={() => { setShowFeedback(false); setFeedbackForm({ name: '', email: '', message: '' }); }}
-                        className="px-4 h-10 border border-border rounded-editorial-sm text-body-sm text-ink-soft hover:bg-cream-200 transition-colors"
                       >
                         Cancel
-                      </button>
+                      </Button>
                     </div>
                   </form>
                 )}
@@ -265,20 +266,21 @@ export default function ChatBot() {
           {!showFeedback && (
             <form onSubmit={handleSubmit} className="shrink-0 border-t border-border bg-surface px-4 py-3">
               <div className="flex items-center gap-2">
-                <input
+                <Input
                   value={input}
                   onChange={e => setInput(e.target.value)}
                   placeholder="Ask about blog content..."
-                  className="flex-1 h-10 rounded-editorial-sm border border-border bg-cream-50 px-4 py-2 text-body-sm focus:outline-none focus:ring-2 focus:ring-clay/20 focus:border-clay transition-all"
                   disabled={isLoading}
+                  className="flex-1"
                 />
-                <button
+                <Button
                   type="submit"
                   disabled={isLoading || !input.trim()}
-                  className="h-10 w-10 rounded-full bg-clay text-white flex items-center justify-center hover:bg-clay-dark disabled:opacity-50 transition-colors shrink-0"
+                  size="icon"
+                  className="h-10 w-10 shrink-0"
                 >
                   {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                </button>
+                </Button>
               </div>
             </form>
           )}

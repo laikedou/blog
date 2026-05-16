@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { DM_Serif_Display, Sora } from 'next/font/google';
 import { AuthProvider } from '@/lib/auth';
 import ChatBot from '@/components/ChatBot';
+import { CustomHeadInjector } from '@/components/CustomHeadInjector';
 import { SITE_CONFIG, websiteJsonLd, organizationJsonLd } from '@/lib/seo';
 import './globals.css';
 
@@ -132,6 +133,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             {children}
           </div>
           <ChatBot />
+          <CustomHeadInjector />
         </AuthProvider>
       </body>
     </html>

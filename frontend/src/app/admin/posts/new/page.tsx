@@ -6,10 +6,12 @@ import dynamic from 'next/dynamic';
 import { posts as postsApi, categories as categoriesApi, tags as tagsApi, ai as aiApi } from '@/lib/api';
 import AITools from '@/components/AITools';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const RichEditor = dynamic(() => import('@/components/RichEditor'), { ssr: false });
 
@@ -29,6 +31,15 @@ export default function NewPostPage() {
     categoriesApi.list().then(setCategories);
     tagsApi.list().then(setAllTags);
   }, []);
+
+  // Warn about unsaved changes
+  useEffect(() => {
+    const hasContent = form.title || form.content || form.excerpt;
+    if (!hasContent) return;
+    const handler = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = ''; };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [form.title, form.content, form.excerpt]);
 
   const handleChange = (field: string, value: any) => setForm(prev => ({ ...prev, [field]: value }));
   const toggleTag = (tagId: number) => setForm(prev => ({
@@ -50,12 +61,12 @@ export default function NewPostPage() {
   };
 
   const handleGenerateCover = async () => {
-    if (!form.title.trim()) { alert('Please enter a title first'); return; }
+    if (!form.title.trim()) { toast.error('Please enter a title first'); return; }
     setGeneratingCover(true);
     try {
       const { url } = await aiApi.generateCover({ title: form.title, excerpt: form.excerpt });
       handleChange('featuredImage', url);
-    } catch (err: any) { alert(err.message || 'Failed to generate cover'); }
+    } catch (err: any) { toast.error(err.message || 'Failed to generate cover'); }
     setGeneratingCover(false);
   };
 
@@ -71,11 +82,11 @@ export default function NewPostPage() {
         status: form.status,
         tagIds: form.tagIds,
       };
-      if (form.categoryId) payload.categoryId = Number(form.categoryId);
+      if (form.categoryId && form.categoryId !== 'none') payload.categoryId = Number(form.categoryId);
       if (form.featuredImage) payload.featuredImage = form.featuredImage;
       const post = await postsApi.create(payload);
       router.push(`/admin/posts/${post.id}/edit`);
-    } catch (err: any) { alert(err.message); }
+    } catch (err: any) { toast.error(err.message); }
     setSaving(false);
   };
 
@@ -97,17 +108,24 @@ export default function NewPostPage() {
 
           <div className="space-y-4">
             <Card><CardHeader><CardTitle>Publish</CardTitle></CardHeader><CardContent className="space-y-3">
-              <select value={form.status} onChange={e => handleChange('status', e.target.value)} className="flex h-11 w-full rounded-editorial-sm border border-border bg-surface px-4 py-2.5 text-body">
-                <option value="draft">Draft</option><option value="published">Published</option>
-              </select>
+              <Select value={form.status} onValueChange={val => handleChange('status', val)}>
+                <SelectTrigger><SelectValue placeholder="Select status" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="draft">Draft</SelectItem>
+                  <SelectItem value="published">Published</SelectItem>
+                </SelectContent>
+              </Select>
               <Button type="submit" disabled={saving} className="w-full">{saving ? 'Saving...' : form.status === 'published' ? 'Publish' : 'Save Draft'}</Button>
             </CardContent></Card>
 
             <Card><CardHeader><CardTitle>Category</CardTitle></CardHeader><CardContent>
-              <select value={form.categoryId} onChange={e => handleChange('categoryId', e.target.value)} className="flex h-11 w-full rounded-editorial-sm border border-border bg-surface px-4 py-2.5 text-body">
-                <option value="">Uncategorized</option>
-                {categories.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
-              </select>
+              <Select value={form.categoryId} onValueChange={val => handleChange('categoryId', val)}>
+                <SelectTrigger><SelectValue placeholder="Uncategorized" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Uncategorized</SelectItem>
+                  {categories.map(cat => <SelectItem key={cat.id} value={String(cat.id)}>{cat.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </CardContent></Card>
 
             <Card><CardHeader><CardTitle>Tags</CardTitle></CardHeader><CardContent>
@@ -129,7 +147,7 @@ export default function NewPostPage() {
               <Button type="button" variant="outline" onClick={handleGenerateCover} disabled={generatingCover} className="w-full">
                 {generatingCover ? 'Generating...' : 'Generate Cover with AI'}
               </Button>
-              {form.featuredImage && <img src={form.featuredImage} alt="" className="mt-3 rounded-editorial w-full h-32 object-cover" />}
+              {form.featuredImage && <img src={form.featuredImage} alt="" className="mt-3 rounded-editorial w-full h-32 object-cover" loading="lazy" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />}
             </CardContent></Card>
           </div>
         </div>

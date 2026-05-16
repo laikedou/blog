@@ -8,7 +8,8 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PostsTimelineChart, CategoryPieChart, TopPostsChart } from '@/components/DashboardCharts';
-import { ArrowRight, Eye, MessageSquare, FileText, Users } from 'lucide-react';
+import { VisualizationStatsOverview } from '@/components/Visualizations/VisualizationStats';
+import { ArrowRight, Eye, MessageSquare, FileText, Users, BarChart3 } from 'lucide-react';
 
 export default function AdminDashboard() {
   const [data, setData] = useState<any>(null);
@@ -93,6 +94,17 @@ export default function AdminDashboard() {
             <p className="text-ink-muted">{overview.totalDrafts || 0} drafts waiting</p>
           </CardContent>
         </Card>
+      </div>
+
+      {/* Visualization Analytics */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-display text-display-sm text-ink">Visualization Analytics</h2>
+          <Link href="/admin/visualizations/stats" className="text-body-sm text-clay hover:text-clay-dark transition-colors">
+            View Details →
+          </Link>
+        </div>
+        <VisualizationStatsOverview />
       </div>
     </div>
   );

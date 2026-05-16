@@ -18,7 +18,12 @@ import { ChatModule } from './chat/chat.module';
 import { BannersModule } from './banners/banners.module';
 import { HealthModule } from './health/health.module';
 import { SeoModule } from './seo/seo.module';
+import { VisualizationModule } from './visualization/visualization.module';
+import { LogsModule } from './logs/logs.module';
+import { AiUsageModule } from './ai-usage/ai-usage.module';
+import { SiteConfigModule } from './site-config/site-config.module';
 import { CloudflareAiModule } from './common/cloudflare-ai.module';
+import { GrokImageModule } from './common/grok-image.module';
 import { NotificationsModule } from './common/notifications.module';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 
@@ -44,7 +49,12 @@ import { AllExceptionsFilter } from './common/filters/http-exception.filter';
     BannersModule,
     HealthModule,
     SeoModule,
+    VisualizationModule,
+    LogsModule,
+    AiUsageModule,
+    SiteConfigModule,
     CloudflareAiModule,
+    GrokImageModule,
     NotificationsModule,
   ],
   providers: [

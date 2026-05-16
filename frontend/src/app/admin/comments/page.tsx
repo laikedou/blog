@@ -7,8 +7,11 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Trash2, Check, Flag } from 'lucide-react';
+import { useConfirm } from '@/lib/confirm-dialog';
+import { toast } from 'sonner';
 
 export default function AdminCommentsPage() {
+  const { confirm } = useConfirm();
   const [comments, setComments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -23,13 +26,16 @@ export default function AdminCommentsPage() {
   useEffect(() => { fetchComments(); }, [page]);
 
   const deleteComment = async (id: number) => {
-    if (!confirm('Delete this comment?')) return;
+    const ok = await confirm({ title: 'Delete Comment', message: 'Delete this comment permanently?', confirmLabel: 'Delete', variant: 'destructive' });
+    if (!ok) return;
     await commentsApi.delete(id);
+    toast.success('Comment deleted');
     fetchComments();
   };
 
   const updateStatus = async (id: number, status: string) => {
     await commentsApi.update(id, { status });
+    toast.success(`Comment ${status === 'approved' ? 'approved' : 'marked as spam'}`);
     fetchComments();
   };
 

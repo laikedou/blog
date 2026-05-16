@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth';
+import { useSiteConfig } from '@/lib/use-site-config';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -17,6 +18,7 @@ import { Menu, X, LayoutDashboard, FileText, Home, LogOut } from 'lucide-react';
 
 const NAV_ITEMS = [
   { href: '/', label: 'Home' },
+  { href: '/visualizations', label: 'Learn' },
   { href: '/category/ai', label: 'AI' },
   { href: '/category/web3', label: 'Web3' },
   { href: '/category/blockchain', label: 'Blockchain' },
@@ -25,6 +27,7 @@ const NAV_ITEMS = [
 
 export default function Header() {
   const { user, isAuthenticated, logout } = useAuth();
+  const { config } = useSiteConfig();
   const [mobileOpen, setMobileOpen] = useState(false);
   const router = useRouter();
 
@@ -33,14 +36,20 @@ export default function Header() {
     router.push('/');
   };
 
+  const siteTitle = config.siteTitle || 'AI Blog';
+
   return (
     <header className="sticky top-0 z-50 bg-cream-100/90 backdrop-blur-md border-b border-border" role="banner">
       <div className="section-container">
         <div className="flex items-center justify-between h-16">
           {/* Logo + Nav */}
           <div className="flex items-center gap-8">
-            <Link href="/" className="font-display text-display-sm text-ink tracking-tight hover:text-clay transition-colors" aria-label="AI Blog Home">
-              AI Blog
+            <Link href="/" className="font-display text-display-sm text-ink tracking-tight hover:text-clay transition-colors" aria-label={`${siteTitle} Home`}>
+              {config.logoUrl ? (
+                <img src={config.logoUrl} alt={siteTitle} className="h-8 w-auto" />
+              ) : (
+                siteTitle
+              )}
             </Link>
             <nav className="hidden md:flex items-center gap-6" aria-label="Main navigation">
               {NAV_ITEMS.map(item => (
