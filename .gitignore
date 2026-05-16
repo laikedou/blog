@@ -18,6 +18,7 @@ coverage/
 # Uploaded files (keep .gitkeep to preserve dir)
 uploads/*
 !uploads/.gitkeep
+backend/uploads/*
 
 # Environment files (keep .env.example as template)
 .env
