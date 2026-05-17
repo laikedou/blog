@@ -69,6 +69,46 @@ npm test:watch     # Watch mode
 npm test:coverage  # With coverage report
 ```
 
+## CI/CD — Automated Docker Builds
+
+Docker images are built automatically via GitHub Actions and published to GitHub Container Registry (ghcr.io).
+
+### How it works
+
+| Trigger | What happens |
+|---------|-------------|
+| Push to `master` | Builds and pushes `ghcr.io/laikedou/blog-backend:latest` and `ghcr.io/laikedou/blog-frontend:latest` |
+| Push a tag `vX.Y.Z` | Builds and pushes versioned images: `ghcr.io/laikedou/blog-backend:X.Y.Z` (and `X.Y`) |
+| Manual trigger | Same as above — via Actions tab "Run workflow" button |
+
+### Creating a Release
+
+```bash
+# One-command release (creates tag, pushes it, triggers Actions)
+chmod +x scripts/release.sh
+./scripts/release.sh 1.0.0
+
+# Or manually:
+git tag -a v1.0.0 -m "Release v1.0.0"
+git push origin v1.0.0
+```
+
+Then monitor build progress at:
+`https://github.com/laikedou/blog/actions`
+
+### Pulling Images on Your Server
+
+```bash
+# Login (token needs read:packages scope)
+echo $GITHUB_TOKEN | docker login ghcr.io -u <your-username> --password-stdin
+
+# Pull and run
+docker pull ghcr.io/laikedou/blog-backend:latest
+docker pull ghcr.io/laikedou/blog-frontend:latest
+```
+
+> **Note**: No additional secrets setup is required. GitHub Actions uses the built-in `GITHUB_TOKEN` which already has `write:packages` permission for the repository.
+
 ## Environment Variables
 
 | Variable | Description | Default |
