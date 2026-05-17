@@ -91,7 +91,7 @@ export class VisualizationAiService {
     return provider;
   }
 
-  async generate(prompt: string, subject: string, providerName?: string, userId?: number): Promise<GenerateResult> {
+  async generate(prompt: string, subject: string, providerName?: string, userId?: number, language?: string): Promise<GenerateResult> {
     const provider = this.getProvider(providerName);
     const startTime = Date.now();
     const feature = 'generateVisualization';
@@ -113,6 +113,7 @@ export class VisualizationAiService {
     subject: string,
     providerName?: string,
     signal?: AbortSignal,
+    language?: string,
   ): Promise<AsyncGenerator<StreamChunk, void, undefined>> {
     const provider = this.getProvider(providerName);
 
@@ -127,8 +128,11 @@ export class VisualizationAiService {
     })();
   }
 
-  async generateMetadata(prompt: string, subject: string, providerName?: string, userId?: number) {
+  async generateMetadata(prompt: string, subject: string, providerName?: string, userId?: number, language?: string) {
     const provider = this.getProvider(providerName);
+    const langInstruction = language
+      ? `\n\nCRITICAL: Generate all content in the language corresponding to locale "${language}". Translate everything.`
+      : '';
     const metaPrompt = `Given the following topic in ${subject}: "${prompt}"
 
 Generate educational content with these three sections:
@@ -143,7 +147,7 @@ Format your response exactly as:
 ===DETAILED===
 <detailed explanation>
 ===SUMMARY===
-<knowledge points, one per line>`;
+<knowledge points, one per line>${langInstruction}`;
 
     const startTime = Date.now();
     const feature = 'generateText';

@@ -15,6 +15,9 @@ import {
   UpdateVisualizationDto,
   PublishVisualizationDto,
   QueryVisualizationDto,
+  RestoreVersionDto,
+  CompareVersionsDto,
+  SuggestTopicsDto,
 } from './dto/visualization.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { Public } from '../common/decorators/public.decorator';
@@ -81,6 +84,7 @@ export class VisualizationController {
         dto.subject,
         dto.provider,
         abortController.signal,
+        dto.language,
       );
 
       let fullRaw = '';
@@ -174,6 +178,16 @@ export class VisualizationController {
     };
   }
 
+  // ── Topic Suggestions ──
+  // NOTE: must be defined BEFORE @Get(':id') to avoid route collision
+
+  @Public()
+  @Get('topics/suggest')
+  @ApiOperation({ summary: 'Get topic suggestions for AI visualizations' })
+  async suggestTopics(@Query() query: SuggestTopicsDto) {
+    return this.service.suggestTopics(query.subject, query.count);
+  }
+
   // ── CRUD ──
 
   @ApiBearerAuth()
@@ -227,6 +241,45 @@ export class VisualizationController {
   @ApiOperation({ summary: 'Delete visualization' })
   async remove(@Param('id') id: string, @Req() req: any) {
     return this.service.remove(+id, req.user.id);
+  }
+
+  // ── Version Management ──
+
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @Get(':id/versions')
+  @ApiOperation({ summary: 'List all versions of a visualization' })
+  async getVersions(@Param('id') id: string) {
+    return this.service.getVersions(+id);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @Get(':id/versions/:versionId')
+  @ApiOperation({ summary: 'Get a specific version detail' })
+  async getVersionDetail(@Param('id') id: string, @Param('versionId') versionId: string) {
+    return this.service.getVersionDetail(+id, +versionId);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @Post(':id/versions/:versionId/restore')
+  @ApiOperation({ summary: 'Restore a previous version' })
+  async restoreVersion(
+    @Param('id') id: string,
+    @Param('versionId') versionId: string,
+    @Body() dto: RestoreVersionDto,
+    @Req() req: any,
+  ) {
+    return this.service.restoreVersion(+id, +versionId, dto.changeNote, req.user.id);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @Post(':id/versions/compare')
+  @ApiOperation({ summary: 'Compare two versions' })
+  async compareVersions(@Param('id') id: string, @Body() dto: CompareVersionsDto) {
+    return this.service.compareVersions(+id, dto.fromVersionId, dto.toVersionId);
   }
 
   // ── Cover Image ──

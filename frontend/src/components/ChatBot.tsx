@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { chat as chatApi } from '@/lib/api';
 import { MessageSquare, X, Send, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -29,6 +30,7 @@ function loadSessionId() {
 }
 
 export default function ChatBot() {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -67,7 +69,7 @@ export default function ChatBot() {
         signal: abortRef.current.signal,
       });
 
-      if (!res.ok) throw new Error('Failed to get response');
+      if (!res.ok) throw new Error(t('chat.feedbackError'));
 
       const reader = res.body?.getReader();
       if (!reader) throw new Error('No response body');
@@ -98,7 +100,7 @@ export default function ChatBot() {
           const updated = [...prev];
           const lastIdx = updated.length - 1;
           if (lastIdx >= 0 && updated[lastIdx].role === 'assistant') {
-            updated[lastIdx] = { ...updated[lastIdx], content: 'Sorry, I encountered an error. Please try again.' };
+            updated[lastIdx] = { ...updated[lastIdx], content: t('chat.errorMessage') };
           }
           return updated;
         });
@@ -140,7 +142,7 @@ export default function ChatBot() {
         setFeedbackForm({ name: '', email: '', message: '' });
       }, 2000);
     } catch (err: any) {
-      toast.error(err.message || 'Failed to submit feedback');
+      toast.error(err.message || t('chat.feedbackError'));
     }
   };
 
@@ -161,7 +163,7 @@ export default function ChatBot() {
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-clay text-white shadow-elevated hover:bg-clay-dark transition-all duration-300 flex items-center justify-center hover:scale-105 active:scale-95"
-        aria-label="Chat with AI"
+        aria-label={t('chat.title')}
       >
         {isOpen ? <X className="h-6 w-6" /> : <MessageSquare className="h-6 w-6" />}
       </button>
@@ -170,8 +172,8 @@ export default function ChatBot() {
         <div className="fixed bottom-24 right-6 z-50 w-[380px] max-w-[calc(100vw-2rem)] h-[560px] max-h-[calc(100vh-8rem)] bg-surface rounded-2xl border border-border shadow-elevated flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-5 duration-200">
           <div className="bg-clay text-white px-5 py-4 flex items-center justify-between shrink-0">
             <div>
-              <h3 className="font-display text-body font-medium">AI Assistant</h3>
-              <p className="text-caption-sm text-white/70">Ask me about blog content</p>
+              <h3 className="font-display text-body font-medium">{t('chat.title')}</h3>
+              <p className="text-caption-sm text-white/70">{t('chat.subtitle')}</p>
             </div>
             <button onClick={() => setIsOpen(false)} className="text-white/60 hover:text-white transition-colors">
               <X className="h-5 w-5" />
@@ -185,13 +187,13 @@ export default function ChatBot() {
                   <MessageSquare className="h-6 w-6 text-clay" />
                 </div>
                 <p className="text-body-sm text-ink-muted">
-                  Hello! I can help you find articles on this blog.
+                  {t('chat.greeting')}
                 </p>
                 <p className="text-caption text-ink-muted mt-2">
-                  Try asking about AI, Web3, blockchain, or frontend development.
+                  {t('chat.suggestion')}
                 </p>
                 <p className="text-caption text-ink-muted mt-1">
-                  Type <kbd className="px-1.5 py-0.5 bg-cream-200 rounded text-body-sm font-mono">/feedback</kbd> to send feedback.
+                  {t('chat.feedbackHint', { key: '/feedback' })}
                 </p>
               </div>
             )}
@@ -200,29 +202,29 @@ export default function ChatBot() {
               <div className="p-4">
                 {feedbackSent ? (
                   <div className="text-center py-6">
-                    <p className="text-body text-teal font-medium">Thank you for your feedback!</p>
+                    <p className="text-body text-teal font-medium">{t('chat.thankYou')}</p>
                   </div>
                 ) : (
                   <form onSubmit={submitFeedback} className="space-y-3">
-                    <h4 className="font-display text-display-sm text-ink">Send Feedback</h4>
+                    <h4 className="font-display text-display-sm text-ink">{t('chat.submitFeedback')}</h4>
                     <p className="text-body-sm text-ink-muted">
-                      Help me improve the blog! Share your thoughts or report an issue.
+                      {t('chat.feedbackDesc')}
                     </p>
                     <Input
                       value={feedbackForm.name}
                       onChange={e => setFeedbackForm(prev => ({ ...prev, name: e.target.value }))}
-                      placeholder="Your name (optional)"
+                      placeholder={t('chat.nameOptional')}
                     />
                     <Input
                       value={feedbackForm.email}
                       onChange={e => setFeedbackForm(prev => ({ ...prev, email: e.target.value }))}
-                      placeholder="Your email (optional)"
+                      placeholder={t('chat.emailOptional')}
                       type="email"
                     />
                     <Textarea
                       value={feedbackForm.message}
                       onChange={e => setFeedbackForm(prev => ({ ...prev, message: e.target.value }))}
-                      placeholder="Your message..."
+                      placeholder={t('chat.messageRequired')}
                       required
                       rows={4}
                     />
@@ -232,14 +234,14 @@ export default function ChatBot() {
                         disabled={!feedbackForm.message.trim()}
                         className="flex-1"
                       >
-                        Send Feedback
+                        {t('chat.submitFeedback')}
                       </Button>
                       <Button
                         type="button"
                         variant="outline"
                         onClick={() => { setShowFeedback(false); setFeedbackForm({ name: '', email: '', message: '' }); }}
                       >
-                        Cancel
+                        {t('common.cancel')}
                       </Button>
                     </div>
                   </form>
@@ -269,7 +271,7 @@ export default function ChatBot() {
                 <Input
                   value={input}
                   onChange={e => setInput(e.target.value)}
-                  placeholder="Ask about blog content..."
+                  placeholder={t('chat.inputPlaceholder')}
                   disabled={isLoading}
                   className="flex-1"
                 />

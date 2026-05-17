@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { media as mediaApi } from '@/lib/api';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -14,6 +15,7 @@ interface MediaPickerDialogProps {
 }
 
 export default function MediaPickerDialog({ open, onOpenChange, onSelect }: MediaPickerDialogProps) {
+  const { t } = useTranslation();
   const [media, setMedia] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -43,7 +45,7 @@ export default function MediaPickerDialog({ open, onOpenChange, onSelect }: Medi
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Select from Media Library</DialogTitle>
+          <DialogTitle>{t('admin.selectFromLibrary')}</DialogTitle>
         </DialogHeader>
 
         {/* Upload bar */}
@@ -51,15 +53,15 @@ export default function MediaPickerDialog({ open, onOpenChange, onSelect }: Medi
           <label className="cursor-pointer">
             <Button variant="outline" disabled={uploading} type="button">
               {uploading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Upload className="h-4 w-4 mr-2" />}
-              {uploading ? 'Uploading...' : 'Upload'}
+              {uploading ? t('admin.uploading') : t('common.uploadLabel')}
             </Button>
             <input ref={fileRef} type="file" className="hidden" onChange={handleUpload} accept="image/*" />
           </label>
           {totalPages > 1 && (
             <div className="flex items-center gap-2 ml-auto text-body-sm text-ink-muted">
-              <Button variant="ghost" size="sm" disabled={page <= 1} onClick={() => setPage(p => p - 1)} type="button">Prev</Button>
+              <Button variant="ghost" size="sm" disabled={page <= 1} onClick={() => setPage(p => p - 1)} type="button">{t('common.prev')}</Button>
               <span>{page} / {totalPages}</span>
-              <Button variant="ghost" size="sm" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)} type="button">Next</Button>
+              <Button variant="ghost" size="sm" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)} type="button">{t('common.next')}</Button>
             </div>
           )}
         </div>
@@ -70,7 +72,7 @@ export default function MediaPickerDialog({ open, onOpenChange, onSelect }: Medi
             <Loader2 className="h-6 w-6 text-clay animate-spin" />
           </div>
         ) : media.length === 0 ? (
-          <p className="text-body-sm text-ink-muted text-center py-16">No media found. Upload some images to get started.</p>
+          <p className="text-body-sm text-ink-muted text-center py-16">{t('admin.noMediaFound')}</p>
         ) : (
           <div className="grid grid-cols-4 gap-3 pt-4">
             {media.map((item: any) => (

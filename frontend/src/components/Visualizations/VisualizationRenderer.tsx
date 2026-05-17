@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useEffect, useState, useCallback, useMemo, memo, useLayoutEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { visualizations } from '@/lib/api';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -25,6 +26,7 @@ interface Props {
  * 3. React never touches the inner content again during re-renders.
  */
 function HtmlVisualizationRendererComponent({ htmlContent, visualizationId, className, onError, onStat }: Props) {
+  const { t } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
   const [renderError, setRenderError] = useState<string | null>(null);
   const [isVisible, setIsVisible] = useState(false);
@@ -67,9 +69,8 @@ function HtmlVisualizationRendererComponent({ htmlContent, visualizationId, clas
     // BUT we must allow re-initialization if the content is different
     // However, the disappearing issue suggests that we need to be very careful.
 
-    // 1. Cleanup previous run and hide content until re-initialization is complete.
+    // 1. Cleanup previous run
     setRenderError(null);
-    setIsVisible(false);
     scriptsRef.current.forEach(s => s.parentNode?.removeChild(s));
     scriptsRef.current = [];
     container.innerHTML = '';
@@ -144,7 +145,7 @@ function HtmlVisualizationRendererComponent({ htmlContent, visualizationId, clas
           <div className="flex items-start gap-3">
             <AlertTriangle className="h-5 w-5 text-clay shrink-0 mt-0.5" />
             <div className="flex-1 min-w-0">
-              <p className="text-body-sm font-medium text-clay mb-1">Render Error</p>
+              <p className="text-body-sm font-medium text-clay mb-1">{t('viz.renderError')}</p>
               <pre className="text-caption-sm text-ink-muted whitespace-pre-wrap font-mono bg-white/60 p-3 rounded-editorial-xs">
                 {renderError}
               </pre>
@@ -152,7 +153,7 @@ function HtmlVisualizationRendererComponent({ htmlContent, visualizationId, clas
                 onClick={handleDismissError}
                 className="mt-2 text-caption-sm text-clay hover:text-clay-dark underline"
               >
-                Dismiss
+                {t('viz.dismiss')}
               </button>
             </div>
           </div>

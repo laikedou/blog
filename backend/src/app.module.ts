@@ -25,6 +25,7 @@ import { SiteConfigModule } from './site-config/site-config.module';
 import { CloudflareAiModule } from './common/cloudflare-ai.module';
 import { GrokImageModule } from './common/grok-image.module';
 import { NotificationsModule } from './common/notifications.module';
+import { I18nModule } from './i18n/i18n.module';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 
 @Module({
@@ -56,6 +57,7 @@ import { AllExceptionsFilter } from './common/filters/http-exception.filter';
     CloudflareAiModule,
     GrokImageModule,
     NotificationsModule,
+    I18nModule,
   ],
   providers: [
     {

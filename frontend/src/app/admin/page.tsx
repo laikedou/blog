@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { useTranslation } from 'react-i18next';
 import { animate, stagger } from 'animejs';
 import { stats as statsApi } from '@/lib/api';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -12,6 +13,7 @@ import { VisualizationStatsOverview } from '@/components/Visualizations/Visualiz
 import { ArrowRight, Eye, MessageSquare, FileText, Users, BarChart3 } from 'lucide-react';
 
 export default function AdminDashboard() {
+  const { t } = useTranslation();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const cardsRef = useRef<HTMLDivElement>(null);
@@ -46,15 +48,15 @@ export default function AdminDashboard() {
 
   const overview = data?.overview || {};
   const cards = [
-    { label: 'Total Posts', value: overview.totalPosts, icon: FileText, href: '/admin/posts', color: 'text-clay' },
-    { label: 'Published', value: overview.totalPublished, icon: FileText, href: '/admin/posts?status=published', color: 'text-teal' },
-    { label: 'Comments', value: overview.totalComments, icon: MessageSquare, href: '/admin/comments', color: 'text-ink-soft' },
-    { label: 'Total Views', value: overview.totalViews, icon: Eye, href: '/admin/posts', color: 'text-ink' },
+    { label: t('admin.totalPosts'), value: overview.totalPosts, icon: FileText, href: '/admin/posts', color: 'text-clay' },
+    { label: t('admin.published'), value: overview.totalPublished, icon: FileText, href: '/admin/posts?status=published', color: 'text-teal' },
+    { label: t('admin.comments'), value: overview.totalComments, icon: MessageSquare, href: '/admin/comments', color: 'text-ink-soft' },
+    { label: t('admin.totalViews'), value: overview.totalViews, icon: Eye, href: '/admin/posts', color: 'text-ink' },
   ];
 
   return (
     <div>
-      <h1 className="font-display text-display-md text-ink mb-8">Dashboard</h1>
+      <h1 className="font-display text-display-md text-ink mb-8">{t('admin.dashboard')}</h1>
 
       {/* Stats cards */}
       <div ref={cardsRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -86,12 +88,12 @@ export default function AdminDashboard() {
         <TopPostsChart data={data?.topPosts || []} />
         <Card>
           <CardHeader className="flex flex-row items-center justify-between border-b border-border pb-4">
-            <CardTitle className="text-body-sm font-medium">Recent Activity</CardTitle>
+            <CardTitle className="text-body-sm font-medium">{t('admin.recentActivity')}</CardTitle>
           </CardHeader>
           <CardContent className="p-6 text-center text-body-sm text-ink-muted">
-            <p className="text-ink-soft">{overview.recent30DaysViews || 0} views in the last 30 days</p>
-            <p className="mt-2 text-ink-muted">{overview.totalUsers || 0} registered users</p>
-            <p className="text-ink-muted">{overview.totalDrafts || 0} drafts waiting</p>
+            <p className="text-ink-soft">{t('admin.viewsLast30Days', { count: overview.recent30DaysViews || 0 })}</p>
+            <p className="mt-2 text-ink-muted">{t('admin.registeredUsers', { count: overview.totalUsers || 0 })}</p>
+            <p className="text-ink-muted">{t('admin.draftsWaiting', { count: overview.totalDrafts || 0 })}</p>
           </CardContent>
         </Card>
       </div>
@@ -99,9 +101,9 @@ export default function AdminDashboard() {
       {/* Visualization Analytics */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-display text-display-sm text-ink">Visualization Analytics</h2>
+          <h2 className="font-display text-display-sm text-ink">{t('admin.visualizationAnalytics')}</h2>
           <Link href="/admin/visualizations/stats" className="text-body-sm text-clay hover:text-clay-dark transition-colors">
-            View Details →
+            {t('admin.viewDetails')} →
           </Link>
         </div>
         <VisualizationStatsOverview />

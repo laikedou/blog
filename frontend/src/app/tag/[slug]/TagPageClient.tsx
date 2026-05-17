@@ -8,11 +8,13 @@ import PostCard from '@/components/PostCard';
 import { posts as postsApi } from '@/lib/api';
 import { Skeleton } from '@/components/ui/skeleton';
 import { animate, stagger } from 'animejs';
+import { useTranslation } from 'react-i18next';
 
 export default function TagPageClient({ slug }: { slug: string }) {
   const [posts, setPosts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const postsRef = useRef<HTMLDivElement>(null);
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (!slug) return;
@@ -42,7 +44,7 @@ export default function TagPageClient({ slug }: { slug: string }) {
           <div className="grain-overlay absolute inset-0" aria-hidden="true" />
           <div className="content-container py-section-sm text-center relative z-10">
             <h1 id="tag-heading" className="font-display text-display-xl text-white mb-3">#{slug}</h1>
-            <p className="text-lead text-cream-400">Posts tagged with this keyword</p>
+            <p className="text-lead text-cream-400">{t('tag.postsWith')}</p>
           </div>
         </section>
 
@@ -58,8 +60,8 @@ export default function TagPageClient({ slug }: { slug: string }) {
               </div>
             ) : posts.length === 0 ? (
               <div className="text-center py-24">
-                <h2 className="font-display text-display-lg text-ink mb-3">No posts with this tag</h2>
-                <Link href="/" className="text-clay hover:text-clay-dark text-body">Back to home</Link>
+                <h2 className="font-display text-display-lg text-ink mb-3">{t('tag.noPosts')}</h2>
+                <Link href="/" className="text-clay hover:text-clay-dark text-body">{t('common.backToHome')}</Link>
               </div>
             ) : (
               <div ref={postsRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16">

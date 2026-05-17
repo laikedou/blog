@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { crawl } from '@/lib/api';
 import { Button } from '@/components/ui/button';
@@ -43,6 +44,7 @@ interface Article {
 const PER_PAGE = 10;
 
 export default function CrawlPage() {
+  const { t } = useTranslation();
   const [sources, setSources] = useState<Source[]>([]);
   const [articles, setArticles] = useState<Article[]>([]);
   const [articleTotal, setArticleTotal] = useState(0);
@@ -87,13 +89,13 @@ export default function CrawlPage() {
 
   const addSource = async () => {
     if (!form.name || !form.url) {
-      toast.warning('Please fill in name and URL');
+      toast.warning(t('admin.crawlFillRequired'));
       return;
     }
     setSubmitting(true);
     try {
       await crawl.sources.create(form);
-      toast.success('Crawl source created');
+      toast.success(t('admin.crawlSourceCreated'));
       setForm({ name: '', url: '', interval: 60 });
       setShowForm(false);
       loadSources();
@@ -107,7 +109,7 @@ export default function CrawlPage() {
   const deleteSource = async (id: number) => {
     try {
       await crawl.sources.delete(id);
-      toast.success('Source deleted');
+      toast.success(t('admin.crawlSourceDeleted'));
       loadSources();
     } catch (e: any) {
       toast.error(e.message || 'Failed to delete source');
@@ -162,16 +164,16 @@ export default function CrawlPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-display text-display-md text-ink">Crawl</h1>
-          <p className="text-body-sm text-ink-muted mt-1">Auto-fetch articles from websites</p>
+          <h1 className="font-display text-display-md text-ink">{t('admin.crawlTitle')}</h1>
+          <p className="text-body-sm text-ink-muted mt-1">{t('admin.crawlDesc')}</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={loadData}>
-            <RefreshCw className="h-3.5 w-3.5 mr-1.5" />Refresh
+            <RefreshCw className="h-3.5 w-3.5 mr-1.5" />{t('common.refresh')}
           </Button>
           {tab === 'sources' && (
             <Button size="sm" onClick={() => setShowForm(!showForm)}>
-              <Plus className="h-3.5 w-3.5 mr-1.5" />Add Source
+              <Plus className="h-3.5 w-3.5 mr-1.5" />{t('admin.crawlAddSource')}
             </Button>
           )}
         </div>
@@ -179,15 +181,15 @@ export default function CrawlPage() {
 
       {/* Tabs */}
       <div className="flex gap-1 bg-cream-300 rounded-pill p-1 w-fit">
-        {(['sources', 'articles'] as const).map(t => (
+        {(['sources', 'articles'] as const).map(tabKey => (
           <button
-            key={t}
-            onClick={() => setTab(t)}
+            key={tabKey}
+            onClick={() => setTab(tabKey)}
             className={`px-4 py-1.5 text-caption-sm font-medium rounded-pill transition-colors ${
-              tab === t ? 'bg-surface text-ink shadow-sm' : 'text-ink-muted hover:text-ink'
+              tab === tabKey ? 'bg-surface text-ink shadow-sm' : 'text-ink-muted hover:text-ink'
             }`}
           >
-            {t === 'sources' ? 'Sources' : `Articles (${articleTotal})`}
+            {tabKey === 'sources' ? t('admin.crawlSources') : t('admin.crawlArticlesCount', { count: articleTotal })}
           </button>
         ))}
       </div>
@@ -201,27 +203,27 @@ export default function CrawlPage() {
           {/* Add Source Form */}
           {showForm && (
             <Card className="border-border shadow-card">
-              <CardHeader><CardTitle className="font-display text-display-sm">New Crawl Source</CardTitle></CardHeader>
+              <CardHeader><CardTitle className="font-display text-display-sm">{t('admin.crawlNewSource')}</CardTitle></CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-1.5">
-                    <label className="text-caption-sm text-ink-muted">Name</label>
-                    <Input placeholder="My Blog" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
+                    <label className="text-caption-sm text-ink-muted">{t('admin.crawlName')}</label>
+                    <Input placeholder={t('admin.crawlName')} value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-caption-sm text-ink-muted">URL</label>
-                    <Input placeholder="https://example.com/blog" value={form.url} onChange={e => setForm(f => ({ ...f, url: e.target.value }))} />
+                    <label className="text-caption-sm text-ink-muted">{t('admin.crawlUrl')}</label>
+                    <Input placeholder={t('admin.crawlUrl')} value={form.url} onChange={e => setForm(f => ({ ...f, url: e.target.value }))} />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-caption-sm text-ink-muted">Interval (min)</label>
+                    <label className="text-caption-sm text-ink-muted">{t('admin.crawlIntervalMin')}</label>
                     <Input type="number" min={10} value={form.interval} onChange={e => setForm(f => ({ ...f, interval: +e.target.value }))} />
                   </div>
                 </div>
                 <div className="flex gap-2 justify-end">
-                  <Button variant="outline" size="sm" onClick={() => setShowForm(false)}>Cancel</Button>
+                  <Button variant="outline" size="sm" onClick={() => setShowForm(false)}>{t('common.cancel')}</Button>
                   <Button size="sm" onClick={addSource} disabled={submitting}>
                     {submitting ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> : <Plus className="h-3.5 w-3.5 mr-1.5" />}
-                    Add Source
+                    {t('admin.crawlAddSource')}
                   </Button>
                 </div>
               </CardContent>
@@ -232,10 +234,10 @@ export default function CrawlPage() {
           {sources.length === 0 ? (
             <div className="text-center py-20 text-ink-muted">
               <Globe className="h-10 w-10 mx-auto mb-3 opacity-40" />
-              <p className="text-body">No crawl sources yet</p>
-              <p className="text-body-sm mt-1">Add a source to start auto-collecting articles</p>
+              <p className="text-body">{t('admin.crawlNoSources')}</p>
+              <p className="text-body-sm mt-1">{t('admin.crawlNoSourcesDesc')}</p>
               <Button variant="outline" size="sm" className="mt-4" onClick={() => setShowForm(true)}>
-                <Plus className="h-3.5 w-3.5 mr-1.5" />Add Source
+                <Plus className="h-3.5 w-3.5 mr-1.5" />{t('admin.crawlAddSource')}
               </Button>
             </div>
           ) : (
@@ -253,9 +255,9 @@ export default function CrawlPage() {
                         </div>
                         <p className="text-body-sm text-ink-muted truncate mt-0.5">{s.url}</p>
                         <div className="flex items-center gap-4 mt-1.5 text-caption-sm text-ink-muted">
-                          <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> Every {s.interval}m</span>
-                          <span className="flex items-center gap-1"><FileText className="h-3 w-3" /> {s._count.articles} articles</span>
-                          <span className="flex items-center gap-1"><RefreshCw className="h-3 w-3" /> Last: {formatDate(s.lastRunAt)}</span>
+                          <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {t('admin.crawlEveryNMin', { interval: s.interval })}</span>
+                          <span className="flex items-center gap-1"><FileText className="h-3 w-3" /> {t('admin.crawlNArticles', { count: s._count.articles })}</span>
+                          <span className="flex items-center gap-1"><RefreshCw className="h-3 w-3" /> {t('admin.crawlLastRun', { date: formatDate(s.lastRunAt) })}</span>
                         </div>
                       </div>
                       <div className="flex items-center gap-1 shrink-0 ml-4">
@@ -279,8 +281,8 @@ export default function CrawlPage() {
           {articles.length === 0 ? (
             <div className="text-center py-20 text-ink-muted">
               <FileText className="h-10 w-10 mx-auto mb-3 opacity-40" />
-              <p className="text-body">No articles yet</p>
-              <p className="text-body-sm mt-1">Run a crawl source to discover articles</p>
+              <p className="text-body">{t('admin.crawlNoArticles')}</p>
+              <p className="text-body-sm mt-1">{t('admin.crawlNoArticlesDesc')}</p>
             </div>
           ) : (
             <>
@@ -293,17 +295,17 @@ export default function CrawlPage() {
                           <div className="flex items-center gap-2">
                             <h3 className="text-body font-medium text-ink truncate">{a.title}</h3>
                             {a.isPublished ? (
-                              <Badge className="text-caption-sm bg-teal-pale text-teal border-none">Published</Badge>
+                              <Badge className="text-caption-sm bg-teal-pale text-teal border-none">{t('admin.crawlPublished')}</Badge>
                             ) : a.isProcessed ? (
-                              <Badge className="text-caption-sm bg-cream-300 text-ink-soft border-none">Processed</Badge>
+                              <Badge className="text-caption-sm bg-cream-300 text-ink-soft border-none">{t('admin.crawlProcessed')}</Badge>
                             ) : (
-                              <Badge className="text-caption-sm bg-clay-subtle text-clay border-none">Draft</Badge>
+                              <Badge className="text-caption-sm bg-clay-subtle text-clay border-none">{t('admin.crawlDraftStatus')}</Badge>
                             )}
                           </div>
-                          <p className="text-body-sm text-ink-muted mt-0.5 line-clamp-1">{a.excerpt || 'No excerpt'}</p>
+                          <p className="text-body-sm text-ink-muted mt-0.5 line-clamp-1">{a.excerpt || t('admin.crawlNoExcerpt')}</p>
                           <div className="flex items-center gap-3 mt-1.5 text-caption-sm text-ink-muted">
                             <span>{a.source.name}</span>
-                            {a.authorName && <span>By {a.authorName}</span>}
+                            {a.authorName && <span>{t('admin.crawlByAuthor', { name: a.authorName })}</span>}
                             <span>{formatDate(a.publishedDate)}</span>
                           </div>
                         </div>
@@ -335,7 +337,7 @@ export default function CrawlPage() {
                     onClick={() => setArticlePage(p => Math.max(1, p - 1))}
                     disabled={articlePage === 1}
                   >
-                    <ChevronLeft className="h-4 w-4 mr-1" /> Previous
+                    <ChevronLeft className="h-4 w-4 mr-1" /> {t('common.previous')}
                   </Button>
                   <div className="flex items-center gap-1.5">
                     {Array.from({ length: Math.min(articleTotalPages, 5) }, (_, i) => {
@@ -369,12 +371,12 @@ export default function CrawlPage() {
                     onClick={() => setArticlePage(p => Math.min(articleTotalPages, p + 1))}
                     disabled={articlePage === articleTotalPages}
                   >
-                    Next <ChevronRight className="h-4 w-4 ml-1" />
+                    {t('common.next')} <ChevronRight className="h-4 w-4 ml-1" />
                   </Button>
                 </nav>
               )}
               <p className="text-center text-caption-sm text-ink-muted">
-                Page {articlePage} of {articleTotalPages} · {articleTotal} total articles
+                {t('admin.crawlArticlesPagination', { page: articlePage, totalPages: articleTotalPages, total: articleTotal })}
               </p>
             </>
           )}

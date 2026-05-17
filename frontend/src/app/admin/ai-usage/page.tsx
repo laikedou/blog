@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { aiUsage as aiUsageApi } from '@/lib/api';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -35,12 +36,14 @@ function ProviderBadge({ provider }: { provider: string }) {
 }
 
 function StatusBadge({ status }: { status: string }) {
+  const { t } = useTranslation();
   return status === 'success'
-    ? <Badge className="bg-green-100 text-green-700 border-green-300">success</Badge>
-    : <Badge className="bg-red-100 text-red-700 border-red-300">error</Badge>;
+    ? <Badge className="bg-green-100 text-green-700 border-green-300">{t('admin.aiUsageSuccess')}</Badge>
+    : <Badge className="bg-red-100 text-red-700 border-red-300">{t('admin.aiUsageError')}</Badge>;
 }
 
 export default function AdminAiUsagePage() {
+  const { t } = useTranslation();
   const [records, setRecords] = useState<any[]>([]);
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -71,7 +74,7 @@ export default function AdminAiUsagePage() {
       setTotal(recordsRes.total);
       setStats(statsRes);
     } catch (err: any) {
-      setError(err.message || 'Failed to load AI usage data');
+      setError(err.message || t('admin.aiUsageFailedLoad'));
     } finally {
       setLoading(false);
     }
@@ -100,7 +103,7 @@ export default function AdminAiUsagePage() {
   if (loading && records.length === 0 && !stats) {
     return (
       <div className="space-y-6">
-        <h1 className="text-heading-sm font-display font-bold text-ink">AI Usage</h1>
+        <h1 className="text-heading-sm font-display font-bold text-ink">{t('admin.aiUsageTitle')}</h1>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {[...Array(4)].map((_, i) => (
             <Card key={i}><CardContent className="p-6"><Skeleton className="h-16 w-full" /></CardContent></Card>
@@ -115,13 +118,13 @@ export default function AdminAiUsagePage() {
   if (error && records.length === 0) {
     return (
       <div className="space-y-6">
-        <h1 className="text-heading-sm font-display font-bold text-ink">AI Usage</h1>
+        <h1 className="text-heading-sm font-display font-bold text-ink">{t('admin.aiUsageTitle')}</h1>
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-16 text-center">
             <AlertCircle className="h-12 w-12 text-red-400 mb-4" />
             <p className="text-body-sm text-ink-muted mb-4">{error}</p>
             <Button onClick={() => fetchData(page)}>
-              <RefreshCw className="h-4 w-4 mr-2" /> Retry
+              <RefreshCw className="h-4 w-4 mr-2" /> {t('common.retry')}
             </Button>
           </CardContent>
         </Card>
@@ -133,10 +136,10 @@ export default function AdminAiUsagePage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-heading-sm font-display font-bold text-ink">AI Usage</h1>
+        <h1 className="text-heading-sm font-display font-bold text-ink">{t('admin.aiUsageTitle')}</h1>
         <Button variant="outline" size="sm" onClick={() => fetchData(page)} disabled={loading}>
           <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-          Refresh
+          {t('common.refresh')}
         </Button>
       </div>
 
@@ -145,7 +148,7 @@ export default function AdminAiUsagePage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card>
             <CardContent className="p-6">
-              <p className="text-caption-sm text-ink-muted uppercase tracking-wider mb-1">Total Tokens</p>
+              <p className="text-caption-sm text-ink-muted uppercase tracking-wider mb-1">{t('admin.aiUsageTotalTokens')}</p>
               <p className="text-heading-sm font-bold font-display">{formatTokens(stats.summary.totalTokens)}</p>
               <div className="flex gap-4 mt-2 text-caption-sm text-ink-muted">
                 <span>P: {formatTokens(stats.summary.totalPromptTokens)}</span>
@@ -155,15 +158,15 @@ export default function AdminAiUsagePage() {
           </Card>
           <Card>
             <CardContent className="p-6">
-              <p className="text-caption-sm text-ink-muted uppercase tracking-wider mb-1">Total Calls</p>
+              <p className="text-caption-sm text-ink-muted uppercase tracking-wider mb-1">{t('admin.aiUsageTotalCalls')}</p>
               <p className="text-heading-sm font-bold font-display">{stats.summary.totalCalls}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-6">
-              <p className="text-caption-sm text-ink-muted uppercase tracking-wider mb-1">Today's Tokens</p>
+              <p className="text-caption-sm text-ink-muted uppercase tracking-wider mb-1">{t('admin.aiUsageTodayTokens')}</p>
               <p className="text-heading-sm font-bold font-display">{formatTokens(stats.summary.todayTokens)}</p>
-              <p className="text-caption-sm text-ink-muted mt-2">{stats.summary.todayCalls} calls today</p>
+              <p className="text-caption-sm text-ink-muted mt-2">{t('admin.aiUsageCallsToday', { count: stats.summary.todayCalls })}</p>
             </CardContent>
           </Card>
           <Card>
@@ -177,7 +180,7 @@ export default function AdminAiUsagePage() {
                   </div>
                 ))}
                 {stats.byProvider.length === 0 && (
-                  <p className="text-caption-sm text-ink-muted">No data</p>
+                  <p className="text-caption-sm text-ink-muted">{t('admin.aiUsageNoData')}</p>
                 )}
               </div>
             </CardContent>
@@ -190,13 +193,13 @@ export default function AdminAiUsagePage() {
         <CardContent className="p-4">
           <div className="flex flex-wrap gap-3 items-end">
             <div className="flex flex-col gap-1">
-              <label className="text-caption-sm text-ink-muted">Provider</label>
+              <label className="text-caption-sm text-ink-muted">{t('admin.aiUsageProvider')}</label>
               <Select value={providerFilter} onValueChange={(v) => { setProviderFilter(v === '__all' ? '' : v); setPage(1); }}>
                 <SelectTrigger className="w-32">
-                  <SelectValue placeholder="All" />
+                  <SelectValue placeholder={t('admin.aiUsageAll')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="__all">All</SelectItem>
+                  <SelectItem value="__all">{t('admin.aiUsageAll')}</SelectItem>
                   <SelectItem value="deepseek">DeepSeek</SelectItem>
                   <SelectItem value="openai">OpenAI</SelectItem>
                   <SelectItem value="claude">Claude</SelectItem>
@@ -206,23 +209,23 @@ export default function AdminAiUsagePage() {
               </Select>
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-caption-sm text-ink-muted">Status</label>
+              <label className="text-caption-sm text-ink-muted">{t('admin.aiUsageStatus')}</label>
               <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v === '__all' ? '' : v); setPage(1); }}>
                 <SelectTrigger className="w-28">
-                  <SelectValue placeholder="All" />
+                  <SelectValue placeholder={t('admin.aiUsageAll')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="__all">All</SelectItem>
+                  <SelectItem value="__all">{t('admin.aiUsageAll')}</SelectItem>
                   <SelectItem value="success">Success</SelectItem>
                   <SelectItem value="error">Error</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-caption-sm text-ink-muted">Feature</label>
+              <label className="text-caption-sm text-ink-muted">{t('admin.aiUsageFeature')}</label>
               <div className="flex gap-1">
                 <Input
-                  placeholder="Search feature..."
+                  placeholder={t('admin.aiUsageSearchFeature')}
                   value={searchInput}
                   onChange={(e) => setSearchInput(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
@@ -235,7 +238,7 @@ export default function AdminAiUsagePage() {
             </div>
             {hasFilters && (
               <Button variant="ghost" size="sm" onClick={clearFilters}>
-                Clear filters
+                {t('admin.aiUsageClearFilters')}
               </Button>
             )}
           </div>
@@ -248,13 +251,13 @@ export default function AdminAiUsagePage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>ID</TableHead>
-                <TableHead>Provider</TableHead>
-                <TableHead>Feature</TableHead>
-                <TableHead>Tokens (P/C/T)</TableHead>
-                <TableHead>Duration</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Time</TableHead>
+                <TableHead>{t('admin.aiUsageId')}</TableHead>
+                <TableHead>{t('admin.aiUsageProvider')}</TableHead>
+                <TableHead>{t('admin.aiUsageFeature')}</TableHead>
+                <TableHead>{t('admin.aiUsageTokensBreakdown')}</TableHead>
+                <TableHead>{t('admin.aiUsageDuration')}</TableHead>
+                <TableHead>{t('admin.aiUsageStatus')}</TableHead>
+                <TableHead>{t('admin.aiUsageTime')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -262,7 +265,7 @@ export default function AdminAiUsagePage() {
                 <TableRow>
                   <TableCell colSpan={7} className="text-center py-12 text-ink-muted">
                     <BarChart3 className="h-8 w-8 mx-auto mb-2 opacity-40" />
-                    No AI usage records found
+                    {t('admin.aiUsageNoRecords')}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -290,7 +293,7 @@ export default function AdminAiUsagePage() {
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex items-center justify-between text-body-sm text-ink-muted">
-          <span>Page {page} of {totalPages} ({total} total)</span>
+          <span>{t('common.pageOfTotal', { page, totalPages, total })}</span>
           <div className="flex gap-2">
             <Button
               variant="outline"
@@ -298,7 +301,7 @@ export default function AdminAiUsagePage() {
               disabled={page <= 1}
               onClick={() => setPage(p => Math.max(1, p - 1))}
             >
-              <ChevronLeft className="h-4 w-4 mr-1" /> Prev
+              <ChevronLeft className="h-4 w-4 mr-1" /> {t('common.prev')}
             </Button>
             <Button
               variant="outline"
@@ -306,7 +309,7 @@ export default function AdminAiUsagePage() {
               disabled={page >= totalPages}
               onClick={() => setPage(p => p + 1)}
             >
-              Next <ChevronRight className="h-4 w-4 ml-1" />
+              {t('common.next')} <ChevronRight className="h-4 w-4 ml-1" />
             </Button>
           </div>
         </div>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { useTranslation } from 'react-i18next';
 import dynamic from 'next/dynamic';
 import { posts as postsApi, categories as categoriesApi, tags as tagsApi, ai as aiApi } from '@/lib/api';
 import AITools from '@/components/AITools';
@@ -18,6 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 const RichEditor = dynamic(() => import('@/components/RichEditor'), { ssr: false });
 
 export default function EditPostPage() {
+  const { t } = useTranslation();
   const { id } = useParams();
   const router = useRouter();
   const [saving, setSaving] = useState(false);
@@ -94,12 +96,12 @@ export default function EditPostPage() {
   };
 
   const handleGenerateCover = async () => {
-    if (!form.title.trim()) { toast.error('Please enter a title first'); return; }
+    if (!form.title.trim()) { toast.error(t('admin.enterTitleFirst')); return; }
     setGeneratingCover(true);
     try {
       const { url } = await aiApi.generateCover({ title: form.title, excerpt: form.excerpt });
       handleChange('featuredImage', url);
-    } catch (err: any) { toast.error(err.message || 'Failed to generate cover'); }
+    } catch (err: any) { toast.error(err.message || t('admin.failedGenerateCover')); }
     setGeneratingCover(false);
   };
 
@@ -133,41 +135,41 @@ export default function EditPostPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-8">
-        <h1 className="font-display text-display-md text-ink">Edit Post</h1>
+        <h1 className="font-display text-display-md text-ink">{t('admin.editPost')}</h1>
       </div>
 
       <form onSubmit={handleSubmit}>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
             <Card ref={editorRef} className="p-6">
-              <Input value={form.title} onChange={e => handleChange('title', e.target.value)} placeholder="Post title" className="font-display text-display-md border-0 border-b-2 border-border rounded-none px-0 pb-3 mb-6 shadow-none focus-visible:ring-0" required />
-              <RichEditor value={form.content} onChange={val => handleChange('content', val)} placeholder="Write your post content here..." />
+              <Input value={form.title} onChange={e => handleChange('title', e.target.value)} placeholder={t('admin.postTitle')} className="font-display text-display-md border-0 border-b-2 border-border rounded-none px-0 pb-3 mb-6 shadow-none focus-visible:ring-0" required />
+              <RichEditor value={form.content} onChange={val => handleChange('content', val)} placeholder={t('admin.writeContent')} />
             </Card>
           </div>
 
           <div className="space-y-4">
-            <Card><CardHeader><CardTitle>Publish</CardTitle></CardHeader><CardContent className="space-y-3">
+            <Card><CardHeader><CardTitle>{t('admin.publish')}</CardTitle></CardHeader><CardContent className="space-y-3">
               <Select value={form.status} onValueChange={val => handleChange('status', val)}>
-                <SelectTrigger><SelectValue placeholder="Select status" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={t('admin.selectStatus')} /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="draft">Draft</SelectItem>
-                  <SelectItem value="published">Published</SelectItem>
+                  <SelectItem value="draft">{t('admin.draft')}</SelectItem>
+                  <SelectItem value="published">{t('admin.published')}</SelectItem>
                 </SelectContent>
               </Select>
-              <Button type="submit" disabled={saving} className="w-full">{saving ? 'Saving...' : 'Update'}</Button>
+              <Button type="submit" disabled={saving} className="w-full">{saving ? t('admin.saving') : t('admin.update')}</Button>
             </CardContent></Card>
 
-            <Card><CardHeader><CardTitle>Category</CardTitle></CardHeader><CardContent>
+            <Card><CardHeader><CardTitle>{t('admin.category')}</CardTitle></CardHeader><CardContent>
               <Select value={form.categoryId} onValueChange={val => handleChange('categoryId', val)}>
-                <SelectTrigger><SelectValue placeholder="Uncategorized" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={t('admin.uncategorized')} /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">Uncategorized</SelectItem>
+                  <SelectItem value="none">{t('admin.uncategorized')}</SelectItem>
                   {categories.map(cat => <SelectItem key={cat.id} value={String(cat.id)}>{cat.name}</SelectItem>)}
                 </SelectContent>
               </Select>
             </CardContent></Card>
 
-            <Card><CardHeader><CardTitle>Tags</CardTitle></CardHeader><CardContent>
+            <Card><CardHeader><CardTitle>{t('admin.tags')}</CardTitle></CardHeader><CardContent>
               <div className="flex flex-wrap gap-1.5">
                 {allTags.map(tag => (
                   <Badge key={tag.id} variant={form.tagIds.includes(tag.id) ? 'default' : 'outline'} className="cursor-pointer" onClick={() => toggleTag(tag.id)}>{tag.name}</Badge>
@@ -175,16 +177,16 @@ export default function EditPostPage() {
               </div>
             </CardContent></Card>
 
-            <Card><CardHeader><CardTitle>SEO</CardTitle></CardHeader><CardContent className="space-y-3">
-              <Input value={form.seoTitle} onChange={e => handleChange('seoTitle', e.target.value)} placeholder="SEO Title" />
-              <Textarea value={form.seoDescription} onChange={e => handleChange('seoDescription', e.target.value)} placeholder="SEO Description" rows={2} />
-              <Input value={form.slug} onChange={e => handleChange('slug', e.target.value)} placeholder="Slug" />
+            <Card><CardHeader><CardTitle>{t('admin.seo')}</CardTitle></CardHeader><CardContent className="space-y-3">
+              <Input value={form.seoTitle} onChange={e => handleChange('seoTitle', e.target.value)} placeholder={t('admin.seoTitle')} />
+              <Textarea value={form.seoDescription} onChange={e => handleChange('seoDescription', e.target.value)} placeholder={t('admin.seoDescription')} rows={2} />
+              <Input value={form.slug} onChange={e => handleChange('slug', e.target.value)} placeholder={t('admin.slug')} />
             </CardContent></Card>
 
-            <Card><CardHeader><CardTitle>Featured Image</CardTitle></CardHeader><CardContent className="space-y-3">
-              <Input value={form.featuredImage} onChange={e => handleChange('featuredImage', e.target.value)} placeholder="https://..." />
+            <Card><CardHeader><CardTitle>{t('admin.featuredImage')}</CardTitle></CardHeader><CardContent className="space-y-3">
+              <Input value={form.featuredImage} onChange={e => handleChange('featuredImage', e.target.value)} placeholder={t('admin.featuredImageUrl')} />
               <Button type="button" variant="outline" onClick={handleGenerateCover} disabled={generatingCover} className="w-full">
-                {generatingCover ? 'Generating...' : 'Generate Cover with AI'}
+                {generatingCover ? t('admin.generating') : t('admin.generateCover')}
               </Button>
               {form.featuredImage && <img src={form.featuredImage} alt="" className="mt-3 rounded-editorial w-full h-32 object-cover" loading="lazy" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />}
             </CardContent></Card>

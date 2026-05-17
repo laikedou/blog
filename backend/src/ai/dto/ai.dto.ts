@@ -1,5 +1,7 @@
-import { IsString, IsOptional, IsArray } from 'class-validator';
+import { IsString, IsOptional, IsArray, IsIn } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+
+export const SUPPORTED_LOCALES = ['zh-CN', 'zh-TW', 'en', 'ja'] as const;
 
 export class GeneratePostDto {
   @ApiProperty({ example: 'The Future of Artificial Intelligence' })
@@ -19,6 +21,11 @@ export class GeneratePostDto {
   @IsOptional()
   @IsArray()
   keywords?: string[];
+
+  @ApiPropertyOptional({ example: 'zh-CN', enum: SUPPORTED_LOCALES })
+  @IsOptional()
+  @IsIn(SUPPORTED_LOCALES)
+  language?: string;
 }
 
 export class EnhanceContentDto {
@@ -30,6 +37,11 @@ export class EnhanceContentDto {
   @IsOptional()
   @IsString()
   mode?: string; // improve-grammar | summarize | expand | translate | polish | rewrite
+
+  @ApiPropertyOptional({ example: 'zh-CN', enum: SUPPORTED_LOCALES })
+  @IsOptional()
+  @IsIn(SUPPORTED_LOCALES)
+  language?: string;
 }
 
 export class GenerateSeoDto {
@@ -41,6 +53,11 @@ export class GenerateSeoDto {
   @IsOptional()
   @IsString()
   content?: string;
+
+  @ApiPropertyOptional({ example: 'zh-CN', enum: SUPPORTED_LOCALES })
+  @IsOptional()
+  @IsIn(SUPPORTED_LOCALES)
+  language?: string;
 }
 
 export class SuggestTagsDto {
@@ -57,6 +74,11 @@ export class AiImagePromptDto {
   @ApiProperty({ example: 'A futuristic city with AI robots' })
   @IsString()
   postContent: string;
+
+  @ApiPropertyOptional({ example: 'zh-CN', enum: SUPPORTED_LOCALES })
+  @IsOptional()
+  @IsIn(SUPPORTED_LOCALES)
+  language?: string;
 }
 
 // ---- Crawl AI Analysis ----

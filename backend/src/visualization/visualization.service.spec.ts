@@ -24,6 +24,8 @@ describe('VisualizationService', () => {
     },
     visualizationVersion: {
       create: jest.fn(),
+      findMany: jest.fn(),
+      findFirst: jest.fn(),
     },
     visualizationStat: {
       create: jest.fn(),
@@ -257,6 +259,101 @@ describe('VisualizationService', () => {
       const result = await service.getAggregatedStats();
       expect(result.totalViews).toBe(100);
       expect(result.totalVisualizations).toBe(10);
+    });
+  });
+
+  describe('Version Management', () => {
+    it('getVersions should throw when visualization not found', async () => {
+      mockPrisma.visualization.findUnique.mockResolvedValue(null);
+      await expect(service.getVersions(999)).rejects.toThrow(NotFoundException);
+    });
+
+    it('getVersions should return version list with isCurrent flag', async () => {
+      mockPrisma.visualization.findUnique.mockResolvedValue({ version: 3 });
+      mockPrisma.visualizationVersion.findMany.mockResolvedValue([
+        { id: 3, version: 3, changeNote: 'Refined', prompt: 'fix it', createdAt: new Date(), isCurrent: true },
+        { id: 2, version: 2, changeNote: 'Refined', prompt: 'make it better', createdAt: new Date(), isCurrent: false },
+        { id: 1, version: 1, changeNote: 'Initial generation', prompt: 'prompt', createdAt: new Date(), isCurrent: false },
+      ]);
+
+      const result = await service.getVersions(1);
+      expect(result).toHaveLength(3);
+      expect(result[0].isCurrent).toBe(true);
+      expect(result[0].version).toBe(3);
+    });
+
+    it('getVersionDetail should return a specific version', async () => {
+      const mockVersion = { id: 2, version: 2, htmlContent: '<div>v2</div>', changeNote: 'Refined', prompt: '', createdAt: new Date() };
+      mockPrisma.visualization.findUnique.mockResolvedValue({ version: 3 });
+      mockPrisma.visualizationVersion.findFirst.mockResolvedValue(mockVersion);
+
+      const result = await service.getVersionDetail(1, 2);
+      expect(result.htmlContent).toBe('<div>v2</div>');
+      expect(result.isCurrent).toBe(false);
+    });
+
+    it('restoreVersion should create a new version with restored content', async () => {
+      mockPrisma.visualization.findFirst.mockResolvedValue({ id: 1, authorId: 1, version: 3 });
+      mockPrisma.visualizationVersion.findFirst.mockResolvedValue({ id: 2, version: 2, htmlContent: '<div>old</div>', prompt: '' });
+      mockPrisma.visualization.update.mockResolvedValue({ id: 1, version: 4, htmlContent: '<div>old</div>' });
+      mockPrisma.visualizationVersion.create.mockResolvedValue({ id: 4 });
+
+      const result = await service.restoreVersion(1, 2, 'Going back', 1);
+      expect(result.version).toBe(4);
+      expect(result.htmlContent).toBe('<div>old</div>');
+      expect(mockPrisma.visualizationVersion.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ version: 4, changeNote: 'Going back' }),
+        }),
+      );
+    });
+
+    it('compareVersions should return both versions', async () => {
+      mockPrisma.visualizationVersion.findFirst
+        .mockResolvedValueOnce({ id: 1, version: 1, htmlContent: '<div>v1</div>', changeNote: 'Initial', createdAt: new Date() })
+        .mockResolvedValueOnce({ id: 2, version: 2, htmlContent: '<div>v2</div>', changeNote: 'Updated', createdAt: new Date() });
+
+      const result = await service.compareVersions(1, 1, 2);
+      expect(result.from.version).toBe(1);
+      expect(result.to.version).toBe(2);
+      expect(result.htmlContentFrom).toBe('<div>v1</div>');
+      expect(result.htmlContentTo).toBe('<div>v2</div>');
+    });
+  });
+
+  describe('Topic Suggestions', () => {
+    it('suggestTopics should return math topics when subject=math', async () => {
+      const result = await service.suggestTopics('math', 3);
+      expect(result).toHaveLength(3);
+      result.forEach(t => expect(t.subject).toBe('math'));
+    });
+
+    it('suggestTopics should return physics topics when subject=physics', async () => {
+      const result = await service.suggestTopics('physics', 4);
+      expect(result).toHaveLength(4);
+      result.forEach(t => expect(t.subject).toBe('physics'));
+    });
+
+    it('suggestTopics should return mixed topics when no subject filter', async () => {
+      const result = await service.suggestTopics(undefined, 10);
+      expect(result).toHaveLength(10);
+      const subjects = [...new Set(result.map(t => t.subject))];
+      expect(subjects).toContain('math');
+      expect(subjects).toContain('physics');
+    });
+
+    it('suggestTopics should respect count param', async () => {
+      const result = await service.suggestTopics('math', 1);
+      expect(result).toHaveLength(1);
+    });
+
+    it('suggestTopics should shuffle results', async () => {
+      const result1 = await service.suggestTopics('math', 12);
+      const result2 = await service.suggestTopics('math', 12);
+      // Results should be in different order due to shuffling
+      const sameOrder = result1.every((t, i) => t.id === result2[i]?.id);
+      // There's a tiny chance of false negative, but with 12 items it's extremely unlikely
+      expect(sameOrder).toBe(false);
     });
   });
 });

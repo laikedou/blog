@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import Link from 'next/link';
 import { banners as bannersApi } from '@/lib/api';
 import { animate } from 'animejs';
@@ -15,6 +16,7 @@ interface Banner {
 }
 
 export default function BannerCarousel() {
+  const { t } = useTranslation();
   const [banners, setBanners] = useState<Banner[]>([]);
   const [current, setCurrent] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -75,7 +77,7 @@ export default function BannerCarousel() {
           >
             <img
               src={b.imageUrl}
-              alt={b.title || 'Banner'}
+              alt={b.title || t('common.bannerAlt')}
               className="w-full h-full object-cover"
               loading={i === current ? 'eager' : 'lazy'}
               onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
@@ -114,7 +116,7 @@ export default function BannerCarousel() {
               className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
                 i === current ? 'bg-white w-6' : 'bg-white/40 hover:bg-white/60'
               }`}
-              aria-label={`Go to slide ${i + 1}`}
+              aria-label={t('common.goToSlide', { number: i + 1 })}
             />
           ))}
         </div>

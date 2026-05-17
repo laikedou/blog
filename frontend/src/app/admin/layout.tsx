@@ -3,18 +3,21 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/lib/auth';
 import { siteConfig as siteConfigApi } from '@/lib/api';
+import LanguageSwitcher from '@/components/ui/language/LanguageSwitcher';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Toaster } from '@/components/Toaster';
 import NotificationBell from '@/components/NotificationBell';
 import { NotificationProvider } from '@/lib/notification-context';
 import { ConfirmProvider } from '@/lib/confirm-dialog';
-import { LayoutDashboard, FileText, FolderTree, Tags, MessageSquare, Image, Globe, LogOut, ExternalLink, Menu, Layout, MessageCircle, BarChart3, Bug, Settings } from 'lucide-react';
+import { LayoutDashboard, FileText, FolderTree, Tags, MessageSquare, Image, Globe, LogOut, ExternalLink, Menu, Layout, MessageCircle, BarChart3, Bug, Settings, Loader2 } from 'lucide-react';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading, user, logout } = useAuth();
+  const { t } = useTranslation();
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [adminTitle, setAdminTitle] = useState('Blog Admin');
@@ -35,16 +38,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }).catch(() => {});
   }, []);
 
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      router.push('/login');
-    }
-  }, [isLoading, isAuthenticated, router]);
-
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-cream-200">
-        <div className="animate-spin rounded-full h-8 w-8 border-2 border-clay border-t-transparent" />
+        <Loader2 className="h-8 w-8 animate-spin text-clay" />
       </div>
     );
   }
@@ -52,20 +49,20 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   if (!isAuthenticated) return null;
 
   const navItems = [
-    { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
-    { href: '/admin/posts', label: 'Posts', icon: FileText },
-    { href: '/admin/visualizations', label: 'Visualizations', icon: BarChart3 },
-    { href: '/admin/banners', label: 'Banners', icon: Layout },
-    { href: '/admin/categories', label: 'Categories', icon: FolderTree },
-    { href: '/admin/tags', label: 'Tags', icon: Tags },
-    { href: '/admin/comments', label: 'Comments', icon: MessageSquare },
-    { href: '/admin/chat-analytics', label: 'Chat Analytics', icon: MessageCircle },
-    { href: '/admin/media', label: 'Media', icon: Image },
-    { href: '/admin/seo', label: 'SEO', icon: BarChart3 },
-    { href: '/admin/crawl', label: 'Crawl', icon: Globe },
-    { href: '/admin/logs', label: 'Error Logs', icon: Bug },
-    { href: '/admin/ai-usage', label: 'AI Usage', icon: BarChart3 },
-    { href: '/admin/settings', label: 'Settings', icon: Settings },
+    { href: '/admin', label: t('admin.dashboard'), icon: LayoutDashboard },
+    { href: '/admin/posts', label: t('admin.posts'), icon: FileText },
+    { href: '/admin/visualizations', label: t('admin.visualizations'), icon: BarChart3 },
+    { href: '/admin/banners', label: t('admin.banners'), icon: Layout },
+    { href: '/admin/categories', label: t('admin.categories'), icon: FolderTree },
+    { href: '/admin/tags', label: t('admin.tags'), icon: Tags },
+    { href: '/admin/comments', label: t('admin.comments'), icon: MessageSquare },
+    { href: '/admin/chat-analytics', label: t('admin.chatAnalytics'), icon: MessageCircle },
+    { href: '/admin/media', label: t('admin.media'), icon: Image },
+    { href: '/admin/seo', label: t('admin.seo'), icon: BarChart3 },
+    { href: '/admin/crawl', label: t('admin.crawl'), icon: Globe },
+    { href: '/admin/logs', label: t('admin.logs'), icon: Bug },
+    { href: '/admin/ai-usage', label: t('admin.aiUsage'), icon: BarChart3 },
+    { href: '/admin/settings', label: t('admin.settings'), icon: Settings },
   ];
 
   return (
@@ -76,7 +73,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           {sidebarOpen && (
             <>
               <Link href="/admin" className="font-display text-display-sm tracking-tight">{logoUrl ? <img src={logoUrl} alt={siteTitle} className="h-7 w-auto inline" /> : siteTitle}</Link>
-              <span className="text-caption-sm text-white/40 ml-auto uppercase tracking-wider">{adminTitle === 'Blog Admin' ? 'Admin' : adminTitle}</span>
+              <span className="text-caption-sm text-white/40 ml-auto uppercase tracking-wider">{adminTitle === 'Blog Admin' ? t('nav.admin') : adminTitle}</span>
             </>
           )}
         </div>
@@ -111,10 +108,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               </div>
               <div className="flex gap-1">
                 <Link href="/" className="flex-1 text-center text-caption-sm text-white/40 hover:text-white py-1.5 rounded-editorial-xs hover:bg-white/10 transition-colors">
-                  <ExternalLink className="h-3 w-3 inline mr-1" />Site
+                  <ExternalLink className="h-3 w-3 inline mr-1" />{t('nav.viewSite')}
                 </Link>
                 <button onClick={logout} className="flex-1 text-center text-caption-sm text-clay/60 hover:text-clay py-1.5 rounded-editorial-xs hover:bg-white/10 transition-colors">
-                  <LogOut className="h-3 w-3 inline mr-1" />Logout
+                  <LogOut className="h-3 w-3 inline mr-1" />{t('nav.signOut')}
                 </button>
               </div>
             </>
@@ -132,6 +129,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </button>
             <span className="text-body-sm text-ink-muted uppercase tracking-wider">{adminTitle}</span>
             <div className="flex-1" />
+            <LanguageSwitcher variant="icon" />
             <NotificationBell />
           </div>
 

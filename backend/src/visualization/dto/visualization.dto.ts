@@ -1,6 +1,8 @@
 import { Type } from 'class-transformer';
-import { IsString, IsOptional, IsIn, IsInt, Min } from 'class-validator';
+import { IsString, IsOptional, IsIn, IsInt, Min, IsArray } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+
+export const SUPPORTED_VIZ_LOCALES = ['zh-CN', 'zh-TW', 'en', 'ja'] as const;
 
 export class GenerateVisualizationDto {
   @ApiProperty({ description: 'Topic prompt for the AI' })
@@ -20,6 +22,11 @@ export class GenerateVisualizationDto {
   @IsOptional()
   @IsString()
   title?: string;
+
+  @ApiPropertyOptional({ description: 'Output language', enum: SUPPORTED_VIZ_LOCALES })
+  @IsOptional()
+  @IsIn(SUPPORTED_VIZ_LOCALES)
+  language?: string;
 }
 
 export class RefineVisualizationDto {
@@ -163,4 +170,57 @@ export class QueryVisualizationDto {
   @IsOptional()
   @IsIn(['draft', 'published'])
   status?: string;
+}
+
+// ─── Version Management ──────────────────────────────────────
+
+export class RestoreVersionDto {
+  @ApiPropertyOptional({ description: 'Change note for the restored version' })
+  @IsOptional()
+  @IsString()
+  changeNote?: string;
+}
+
+export class CompareVersionsDto {
+  @ApiProperty()
+  @IsInt()
+  fromVersionId: number;
+
+  @ApiProperty()
+  @IsInt()
+  toVersionId: number;
+}
+
+export class VersionListItem {
+  id: number;
+  version: number;
+  changeNote: string;
+  prompt: string;
+  createdAt: Date;
+  isCurrent: boolean;
+}
+
+// ─── Topic Suggestions ───────────────────────────────────────
+
+export class TopicSuggestion {
+  id: string;
+  title: string;
+  description: string;
+  subject: 'math' | 'physics';
+  difficulty: 'beginner' | 'intermediate' | 'advanced';
+  tags: string[];
+}
+
+export class SuggestTopicsDto {
+  @ApiPropertyOptional({ enum: ['math', 'physics'] })
+  @IsOptional()
+  @IsIn(['math', 'physics'])
+  subject?: string;
+
+  @ApiPropertyOptional({ description: 'Number of topics to suggest' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  count?: number;
 }

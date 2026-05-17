@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { banners as bannersApi, ai as aiApi, posts as postsApi } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,6 +15,7 @@ import { useConfirm } from '@/lib/confirm-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function AdminBannersPage() {
+  const { t } = useTranslation();
   const { confirm } = useConfirm();
   const [banners, setBanners] = useState<any[]>([]);
   const [posts, setPosts] = useState<any[]>([]);
@@ -49,7 +51,7 @@ export default function AdminBannersPage() {
   };
 
   const handleGenerateImage = async () => {
-    if (!form.title.trim()) { toast.error('Please enter a title first'); return; }
+    if (!form.title.trim()) { toast.error(t('admin.bannerEnterTitle')); return; }
     setGenerating(true);
     try {
       const { url } = await aiApi.generateBanner({
@@ -60,7 +62,7 @@ export default function AdminBannersPage() {
       });
       if (url) {
         handleChange('imageUrl', url);
-        toast.success(`Image generated via ${aiProvider === 'grok' ? 'Grok' : 'Cloudflare'}`);
+        toast.success(`Image generated via ${aiProvider === 'grok' ? t('admin.bannerProviderGrok') : t('admin.bannerProviderCloudflare')}`);
       } else {
         toast.error('Image generation returned no URL. Try the other provider.');
       }
@@ -125,9 +127,9 @@ export default function AdminBannersPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-8">
-        <h1 className="font-display text-display-md text-ink">Banners</h1>
+        <h1 className="font-display text-display-md text-ink">{t('admin.banners')}</h1>
         <Button onClick={() => { resetForm(); setShowForm(!showForm); }}>
-          <Plus className="h-4 w-4 mr-2" /> {showForm ? 'Cancel' : 'New Banner'}
+          <Plus className="h-4 w-4 mr-2" /> {showForm ? t('common.cancel') : t('admin.bannerNew')}
         </Button>
       </div>
 
@@ -137,17 +139,17 @@ export default function AdminBannersPage() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-body-sm text-ink-soft mb-1.5">Title *</label>
-                  <Input value={form.title} onChange={e => handleChange('title', e.target.value)} placeholder="Banner title" required />
+                  <label className="block text-body-sm text-ink-soft mb-1.5">{t('admin.bannerTitle')} *</label>
+                  <Input value={form.title} onChange={e => handleChange('title', e.target.value)} placeholder={t('admin.bannerTitle')} required />
                 </div>
                 <div>
-                  <label className="block text-body-sm text-ink-soft mb-1.5">Subtitle</label>
-                  <Input value={form.subtitle} onChange={e => handleChange('subtitle', e.target.value)} placeholder="Banner subtitle" />
+                  <label className="block text-body-sm text-ink-soft mb-1.5">{t('admin.bannerSubtitle')}</label>
+                  <Input value={form.subtitle} onChange={e => handleChange('subtitle', e.target.value)} placeholder={t('admin.bannerSubtitle')} />
                 </div>
               </div>
 
               <div>
-                <label className="block text-body-sm text-ink-soft mb-1.5">Image URL (1920x400 recommended)</label>
+                <label className="block text-body-sm text-ink-soft mb-1.5">{t('admin.bannerImageUrl')}</label>
                 <div className="flex gap-2">
                   <Input value={form.imageUrl} onChange={e => handleChange('imageUrl', e.target.value)} placeholder="https://..." className="flex-1" required />
                   <select
@@ -155,11 +157,11 @@ export default function AdminBannersPage() {
                     onChange={e => setAiProvider(e.target.value)}
                     className="h-9 rounded-editorial-sm border border-border bg-surface px-3 text-body-sm text-ink focus:outline-none focus:ring-2 focus:ring-clay"
                   >
-                    <option value="grok">Grok</option>
-                    <option value="cloudflare">Cloudflare</option>
+                    <option value="grok">{t('admin.bannerProviderGrok')}</option>
+                    <option value="cloudflare">{t('admin.bannerProviderCloudflare')}</option>
                   </select>
                   <Button type="button" variant="outline" onClick={handleGenerateImage} disabled={generating}>
-                    <Sparkles className="h-4 w-4 mr-2" />{generating ? 'Generating...' : 'AI Generate'}
+                    <Sparkles className="h-4 w-4 mr-2" />{generating ? t('admin.bannerGenerating') : t('admin.bannerAIGenerate')}
                   </Button>
                 </div>
                 {form.imageUrl && (
@@ -169,21 +171,21 @@ export default function AdminBannersPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-body-sm text-ink-soft mb-1.5">Link URL</label>
+                  <label className="block text-body-sm text-ink-soft mb-1.5">{t('admin.bannerLinkUrl')}</label>
                   <Input value={form.linkUrl} onChange={e => handleChange('linkUrl', e.target.value)} placeholder="https://..." />
                 </div>
                 <div>
-                  <label className="block text-body-sm text-ink-soft mb-1.5">Link to Post (optional)</label>
+                  <label className="block text-body-sm text-ink-soft mb-1.5">{t('admin.bannerLinkToPost')}</label>
                   <Select value={form.postId} onValueChange={val => handleChange('postId', val)}>
-                    <SelectTrigger><SelectValue placeholder="No link" /></SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder={t('admin.bannerNoLink')} /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="none">No link</SelectItem>
+                      <SelectItem value="none">{t('admin.bannerNoLink')}</SelectItem>
                       {posts.map(p => <SelectItem key={p.id} value={String(p.id)}>{p.title}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
                 <div>
-                  <label className="block text-body-sm text-ink-soft mb-1.5">Sort Order</label>
+                  <label className="block text-body-sm text-ink-soft mb-1.5">{t('admin.bannerSortOrder')}</label>
                   <Input type="number" value={form.sortOrder} onChange={e => handleChange('sortOrder', Number(e.target.value))} />
                 </div>
               </div>
@@ -198,12 +200,12 @@ export default function AdminBannersPage() {
                 >
                   <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform shadow-sm ${form.isActive ? 'translate-x-6' : 'translate-x-1'}`} />
                 </button>
-                <span className="text-body-sm text-ink-soft">Active</span>
+                <span className="text-body-sm text-ink-soft">{t('admin.bannerActive')}</span>
               </div>
 
               <div className="flex gap-2 pt-2">
-                <Button type="submit">{editingId ? 'Update' : 'Create'} Banner</Button>
-                <Button type="button" variant="outline" onClick={resetForm}>Cancel</Button>
+                <Button type="submit">{editingId ? t('admin.bannerUpdate') : t('admin.bannerCreate')}</Button>
+                <Button type="button" variant="outline" onClick={resetForm}>{t('common.cancel')}</Button>
               </div>
             </form>
           </CardContent>
@@ -216,7 +218,7 @@ export default function AdminBannersPage() {
         </div>
       ) : banners.length === 0 ? (
         <div className="text-center py-16 bg-surface rounded-editorial border border-border">
-          <p className="text-body text-ink-muted">No banners yet. Create your first banner!</p>
+          <p className="text-body text-ink-muted">{t('admin.bannerNoBanners')}</p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -234,14 +236,14 @@ export default function AdminBannersPage() {
                 <img src={banner.imageUrl} alt="" className="w-48 h-24 object-cover rounded-editorial-sm shrink-0" loading="lazy" />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <p className="text-body font-medium text-ink truncate">{banner.title || 'Untitled'}</p>
-                    {!banner.isActive && <Badge variant="outline">Inactive</Badge>}
+                    <p className="text-body font-medium text-ink truncate">{banner.title || t('admin.bannerUntitled')}</p>
+                    {!banner.isActive && <Badge variant="outline">{t('admin.bannerInactive')}</Badge>}
                   </div>
                   {banner.subtitle && <p className="text-body-sm text-ink-muted truncate">{banner.subtitle}</p>}
-                  <p className="text-caption text-ink-muted mt-1">Order: {banner.sortOrder}</p>
+                  <p className="text-caption text-ink-muted mt-1">{t('admin.bannerOrder', { order: banner.sortOrder })}</p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                  <Button variant="outline" size="sm" onClick={() => editBanner(banner)}>Edit</Button>
+                  <Button variant="outline" size="sm" onClick={() => editBanner(banner)}>{t('common.edit')}</Button>
                   <Button variant="ghost" size="sm" onClick={() => deleteBanner(banner.id)}>
                     <Trash2 className="h-4 w-4 text-destructive" />
                   </Button>

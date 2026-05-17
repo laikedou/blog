@@ -9,6 +9,7 @@ import { posts as postsApi } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { animate, stagger } from 'animejs';
+import { useTranslation } from 'react-i18next';
 
 export default function CategoryPageClient({ slug }: { slug: string }) {
   const [posts, setPosts] = useState<any[]>([]);
@@ -16,6 +17,7 @@ export default function CategoryPageClient({ slug }: { slug: string }) {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const postsRef = useRef<HTMLDivElement>(null);
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (!slug) return;
@@ -44,7 +46,7 @@ export default function CategoryPageClient({ slug }: { slug: string }) {
           <div className="grain-overlay absolute inset-0" aria-hidden="true" />
           <div className="content-container py-section-sm text-center relative z-10">
             <h1 id="category-heading" className="font-display text-display-xl text-white mb-3">{categoryName}</h1>
-            <p className="text-lead text-cream-400">Posts in this category</p>
+            <p className="text-lead text-cream-400">{t('category.postsIn')}</p>
           </div>
         </section>
 
@@ -61,8 +63,8 @@ export default function CategoryPageClient({ slug }: { slug: string }) {
               </div>
             ) : posts.length === 0 ? (
               <div className="text-center py-24">
-                <h2 className="font-display text-display-lg text-ink mb-3">No posts in this category</h2>
-                <Link href="/" className="text-clay hover:text-clay-dark text-body">Back to home</Link>
+                <h2 className="font-display text-display-lg text-ink mb-3">{t('category.noPosts')}</h2>
+                <Link href="/" className="text-clay hover:text-clay-dark text-body">{t('common.backToHome')}</Link>
               </div>
             ) : (
               <>
@@ -71,9 +73,9 @@ export default function CategoryPageClient({ slug }: { slug: string }) {
                 </div>
                 {totalPages > 1 && (
                   <nav className="flex justify-center gap-3 mt-16" aria-label="Pagination">
-                    <Button variant="outline" onClick={() => setPage(p => Math.max(1, p-1))} disabled={page === 1}>Previous</Button>
-                    <span className="text-body-sm text-ink-muted self-center">Page {page} of {totalPages}</span>
-                    <Button variant="outline" onClick={() => setPage(p => Math.min(totalPages, p+1))} disabled={page === totalPages}>Next</Button>
+                    <Button variant="outline" onClick={() => setPage(p => Math.max(1, p-1))} disabled={page === 1}>{t('common.previous')}</Button>
+                    <span className="text-body-sm text-ink-muted self-center">{t('common.pageOf', { page, total: totalPages })}</span>
+                    <Button variant="outline" onClick={() => setPage(p => Math.min(totalPages, p+1))} disabled={page === totalPages}>{t('common.next')}</Button>
                   </nav>
                 )}
               </>

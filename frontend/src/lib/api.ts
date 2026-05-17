@@ -10,6 +10,7 @@ const DEFAULT_TIMEOUT = 120_000; // 2 minutes — AI generation can be slow
 
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+  const locale = typeof window !== 'undefined' ? localStorage.getItem('i18nextLng') : null;
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -18,6 +19,10 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
 
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
+  }
+  if (locale) {
+    headers['Accept-Language'] = locale;
+    headers['X-Locale'] = locale;
   }
 
   // Remove Content-Type for FormData
@@ -251,9 +256,9 @@ export interface SSEStreamCallbacks {
 
 // Visualizations
 export const visualizations = {
-  generate: (data: { prompt: string; subject: string; provider?: string; title?: string }) =>
+  generate: (data: { prompt: string; subject: string; provider?: string; title?: string; language?: string }) =>
     request<any>('/visualizations/generate', { method: 'POST', body: JSON.stringify(data) }),
-  generateStream: (data: { prompt: string; subject: string; provider?: string; title?: string }, callbacks: SSEStreamCallbacks, signal?: AbortSignal) => {
+  generateStream: (data: { prompt: string; subject: string; provider?: string; title?: string; language?: string }, callbacks: SSEStreamCallbacks, signal?: AbortSignal) => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
     if (token) headers['Authorization'] = `Bearer ${token}`;
@@ -354,20 +359,45 @@ export const visualizations = {
   deleteComment: (commentId: number) =>
     request<any>(`/visualizations/comments/${commentId}`, { method: 'DELETE' }),
   getRelated: (id: number) => request<any[]>(`/visualizations/${id}/related`),
+
+  // ── Version Management ──
+  getVersions: (id: number) => request<any[]>(`/visualizations/${id}/versions`),
+  getVersionDetail: (id: number, versionId: number) => request<any>(`/visualizations/${id}/versions/${versionId}`),
+  restoreVersion: (id: number, versionId: number, changeNote?: string) =>
+    request<any>(`/visualizations/${id}/versions/${versionId}/restore`, { method: 'POST', body: JSON.stringify({ changeNote }) }),
+  compareVersions: (id: number, fromVersionId: number, toVersionId: number) =>
+    request<any>(`/visualizations/${id}/versions/compare`, { method: 'POST', body: JSON.stringify({ fromVersionId, toVersionId }) }),
+
+  // ── Topic Suggestions ──
+  suggestTopics: (params?: { subject?: string; count?: number }) => {
+    const sp = new URLSearchParams();
+    if (params?.subject) sp.set('subject', params.subject);
+    if (params?.count) sp.set('count', String(params.count));
+    const qs = sp.toString();
+    return request<any[]>(`/visualizations/topics/suggest${qs ? `?${qs}` : ''}`);
+  },
 };
 
 // AI
 export const ai = {
-  generatePost: (data: any) =>
-    request<any>('/ai/generate-post', { method: 'POST', body: JSON.stringify(data) }),
-  enhanceContent: (data: any) =>
-    request<any>('/ai/enhance-content', { method: 'POST', body: JSON.stringify(data) }),
-  generateSeo: (data: any) =>
-    request<any>('/ai/generate-seo', { method: 'POST', body: JSON.stringify(data) }),
+  generatePost: (data: any, language?: string) => {
+    const body = language ? { ...data, language } : data;
+    return request<any>('/ai/generate-post', { method: 'POST', body: JSON.stringify(body) });
+  },
+  enhanceContent: (data: any, language?: string) => {
+    const body = language ? { ...data, language } : data;
+    return request<any>('/ai/enhance-content', { method: 'POST', body: JSON.stringify(body) });
+  },
+  generateSeo: (data: any, language?: string) => {
+    const body = language ? { ...data, language } : data;
+    return request<any>('/ai/generate-seo', { method: 'POST', body: JSON.stringify(body) });
+  },
   suggestTags: (data: any) =>
     request<any>('/ai/suggest-tags', { method: 'POST', body: JSON.stringify(data) }),
-  imagePrompt: (data: any) =>
-    request<any>('/ai/image-prompt', { method: 'POST', body: JSON.stringify(data) }),
+  imagePrompt: (data: any, language?: string) => {
+    const body = language ? { ...data, language } : data;
+    return request<any>('/ai/image-prompt', { method: 'POST', body: JSON.stringify(body) });
+  },
   chat: (messages: { role: string; content: string }[]) =>
     request<any>('/ai/chat', { method: 'POST', body: JSON.stringify({ messages }) }),
   generateCover: (data: { title: string; excerpt?: string; provider?: string }) =>
@@ -413,4 +443,9 @@ export const aiUsage = {
     return request<any>(`/ai-usage?${sp}`);
   },
   stats: () => request<any>('/ai-usage/stats'),
+};
+
+// i18n
+export const i18nApi = {
+  detectLocale: () => request<{ locale: string; supportedLocales: string[] }>('/i18n/detect'),
 };

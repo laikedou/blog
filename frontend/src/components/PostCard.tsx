@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import Link from 'next/link';
 import { animate } from 'animejs';
 import { Badge } from '@/components/ui/badge';
@@ -22,6 +23,7 @@ interface PostCardProps {
 }
 
 export default function PostCard({ post }: PostCardProps) {
+  const { t } = useTranslation();
   const cardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -40,7 +42,7 @@ export default function PostCard({ post }: PostCardProps) {
     ? new Date(post.publishedAt).toLocaleDateString('en-US', {
         year: 'numeric', month: 'long', day: 'numeric',
       })
-    : 'Draft';
+    : t('common.draftStatus');
 
   return (
     <article ref={cardRef} className="opacity-0 group">
@@ -81,7 +83,7 @@ export default function PostCard({ post }: PostCardProps) {
         </Link>
 
         <p className="text-body text-ink-soft line-clamp-2">
-          {post.excerpt || 'No excerpt available.'}
+          {post.excerpt || t('common.noExcerpt')}
         </p>
 
         <div className="flex items-center justify-between pt-1">
@@ -94,8 +96,8 @@ export default function PostCard({ post }: PostCardProps) {
             <span className="text-body-sm text-ink-muted" itemProp="author">{post.author.displayName}</span>
           </div>
           <div className="flex items-center gap-3 text-body-sm text-ink-muted">
-            <span>{post.viewCount} views</span>
-            {post.commentCount !== undefined && <span>{post.commentCount} comments</span>}
+            <span>{t('common.viewCount', { count: post.viewCount })}</span>
+            {post.commentCount !== undefined && <span>{t('common.commentCount', { count: post.commentCount })}</span>}
           </div>
         </div>
       </div>

@@ -2,6 +2,13 @@
 
 ## 2026-05-17
 
+### i18n Internationalization
+- **Full i18n translation** — All frontend components migrated to use `react-i18next` with translation keys across 4 locales (en, zh-CN, zh-TW, ja)
+- **17 components translated**: AITools, BannerCarousel, ChatBot, DashboardCharts, FloatingAIMenu, SelectionAIToolbar, Header, Footer, NotificationBell, PostCard, ImageActionsDialog, MediaPickerDialog, LanguageSwitcher, and all Visualizations components (VisualizationRenderer, VisualizationLikeButton, RelatedVisualizations, VisualizationStats, VisualizationComments, VisualizationAICreator)
+- **New i18n keys** — Added ~100+ translation keys across `common`, `admin`, `viz`, `chat`, and `errors` namespaces
+- **Admin pages translated** — All 15+ admin pages including visualizations, logs, AI usage, settings, posts, categories, tags, comments, media, banners, SEO, crawl, and chat analytics
+- **Public pages translated** — Home, login, register, post detail, category, tag, visualization gallery, and privacy policy pages
+
 ### Features
 - **AI Usage Tracking** — New backend module (`ai-usage`) and admin page for monitoring API consumption across providers
 - **Data Visualizations** — Full visualization system with AI-powered chart generation (bar, line, pie, area, scatter, radar, treemap). Includes backend service with multiple AI provider support and SSE streaming, public gallery, admin management, and stats page

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/lib/auth';
 import { visualizations } from '@/lib/api';
 import { Heart } from 'lucide-react';
@@ -12,6 +13,7 @@ interface Props {
 }
 
 export default function VisualizationLikeButton({ visualizationId, initialLikes = 0 }: Props) {
+  const { t } = useTranslation();
   const { isAuthenticated } = useAuth();
   const [liked, setLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(initialLikes);
@@ -34,7 +36,7 @@ export default function VisualizationLikeButton({ visualizationId, initialLikes 
 
   const handleToggle = async () => {
     if (!isAuthenticated) {
-      toast.error('Please sign in to like');
+      toast.error(t('viz.signInToLike'));
       return;
     }
     setLoading(true);
@@ -43,7 +45,7 @@ export default function VisualizationLikeButton({ visualizationId, initialLikes 
       setLiked(result.liked);
       setLikesCount(result.likesCount);
     } catch {
-      toast.error('Failed to update like');
+      toast.error(t('viz.likeFailed'));
     }
     setLoading(false);
   };
@@ -57,7 +59,7 @@ export default function VisualizationLikeButton({ visualizationId, initialLikes 
           ? 'bg-red-50 border-red-200 text-red-600 hover:bg-red-100'
           : 'border-border text-ink-muted hover:text-red-500 hover:border-red-200 hover:bg-red-50'
       }`}
-      title={liked ? 'Unlike' : 'Like'}
+      title={liked ? t('viz.unlike') : t('viz.like')}
     >
       <Heart className={`h-4 w-4 ${liked ? 'fill-red-500 text-red-500' : ''} transition-all ${loading ? 'animate-pulse' : ''}`} />
       <span className="font-medium tabular-nums">{likesCount}</span>

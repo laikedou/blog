@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/lib/auth';
 import { visualizations } from '@/lib/api';
 import { Button } from '@/components/ui/button';
@@ -15,6 +16,7 @@ interface Props {
 }
 
 export default function VisualizationComments({ visualizationId }: Props) {
+  const { t } = useTranslation();
   const { user, isAuthenticated } = useAuth();
   const [comments, setComments] = useState<VisualizationComment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -41,9 +43,9 @@ export default function VisualizationComments({ visualizationId }: Props) {
       const comment = await visualizations.createComment(visualizationId, { content: newComment.trim() });
       setComments(prev => [comment, ...prev]);
       setNewComment('');
-      toast.success('Comment posted');
+      toast.success(t('viz.commentPosted'));
     } catch {
-      toast.error('Failed to post comment');
+      toast.error(t('viz.commentFailed'));
     }
     setSubmitting(false);
   };
@@ -58,9 +60,9 @@ export default function VisualizationComments({ visualizationId }: Props) {
       ));
       setReplyContent('');
       setReplyTo(null);
-      toast.success('Reply posted');
+      toast.success(t('viz.replyPosted'));
     } catch {
-      toast.error('Failed to post reply');
+      toast.error(t('viz.replyFailed'));
     }
     setSubmitting(false);
   };
@@ -70,9 +72,9 @@ export default function VisualizationComments({ visualizationId }: Props) {
     try {
       await visualizations.deleteComment(commentId);
       setComments(prev => prev.filter(c => c.id !== commentId));
-      toast.success('Comment deleted');
+      toast.success(t('viz.commentDeleted'));
     } catch {
-      toast.error('Failed to delete comment');
+      toast.error(t('viz.commentDeleteFailed'));
     }
     setDeleting(null);
   };
@@ -83,7 +85,7 @@ export default function VisualizationComments({ visualizationId }: Props) {
     <div>
       <div className="flex items-center gap-2 mb-6">
         <MessageSquare className="h-5 w-5 text-ink-muted" />
-        <h3 className="font-display text-display-sm text-ink">Comments ({comments.length})</h3>
+        <h3 className="font-display text-display-sm text-ink">{t('viz.commentsTitle', { count: comments.length })}</h3>
       </div>
 
       {isAuthenticated ? (
@@ -91,19 +93,19 @@ export default function VisualizationComments({ visualizationId }: Props) {
           <Textarea
             value={newComment}
             onChange={e => setNewComment(e.target.value)}
-            placeholder="Share your thoughts about this visualization..."
+            placeholder={t('viz.commentPlaceholder')}
             rows={3}
           />
           <div className="flex justify-end">
             <Button onClick={handleSubmit} disabled={submitting || !newComment.trim()} size="sm">
               {submitting && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
-              Post Comment
+              {t('viz.postComment')}
             </Button>
           </div>
         </div>
       ) : (
         <div className="mb-8 p-4 bg-cream-100 rounded-editorial-xs text-center text-body-sm text-ink-muted border border-border">
-          <a href="/login" className="text-clay hover:underline">Sign in</a> to leave a comment
+          <a href="/login" className="text-clay hover:underline">{t('viz.signInToComment')}</a>
         </div>
       )}
 
@@ -122,7 +124,7 @@ export default function VisualizationComments({ visualizationId }: Props) {
       ) : comments.length === 0 ? (
         <div className="text-center py-12 text-ink-muted">
           <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-40" />
-          <p className="text-body-sm">No comments yet. Be the first to share your thoughts!</p>
+          <p className="text-body-sm">{t('viz.noComments')}</p>
         </div>
       ) : (
         <div className="space-y-6">
@@ -148,7 +150,7 @@ export default function VisualizationComments({ visualizationId }: Props) {
                         onClick={() => setReplyTo(replyTo === comment.id ? null : comment.id)}
                         className="text-caption-sm text-ink-muted hover:text-clay transition-colors"
                       >
-                        Reply
+                        {t('viz.reply')}
                       </button>
                     )}
                     {canDelete(comment.authorId) && (
@@ -158,7 +160,7 @@ export default function VisualizationComments({ visualizationId }: Props) {
                         className="text-caption-sm text-ink-muted hover:text-red-500 transition-colors"
                       >
                         {deleting === comment.id ? <Loader2 className="h-3 w-3 inline animate-spin" /> : <Trash2 className="h-3 w-3 inline" />}
-                        Delete
+                        {t('viz.deleteComment')}
                       </button>
                     )}
                   </div>
@@ -168,14 +170,14 @@ export default function VisualizationComments({ visualizationId }: Props) {
                       <Textarea
                         value={replyContent}
                         onChange={e => setReplyContent(e.target.value)}
-                        placeholder="Write a reply..."
+                        placeholder={t('viz.replyPlaceholder')}
                         rows={2}
                       />
                       <div className="flex gap-2 justify-end">
-                        <Button variant="outline" size="sm" onClick={() => { setReplyTo(null); setReplyContent(''); }}>Cancel</Button>
+                        <Button variant="outline" size="sm" onClick={() => { setReplyTo(null); setReplyContent(''); }}>{t('common.cancel')}</Button>
                         <Button size="sm" onClick={() => handleReply(comment.id)} disabled={submitting || !replyContent.trim()}>
                           {submitting && <Loader2 className="h-3 w-3 mr-1 animate-spin" />}
-                          Reply
+                          {t('viz.reply')}
                         </Button>
                       </div>
                     </div>
@@ -204,7 +206,7 @@ export default function VisualizationComments({ visualizationId }: Props) {
                                 onClick={() => handleDelete(reply.id)}
                                 className="text-caption-sm text-ink-muted hover:text-red-500 transition-colors mt-1"
                               >
-                                Delete
+                                {t('viz.deleteComment')}
                               </button>
                             )}
                           </div>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { useTranslation, Trans } from 'react-i18next';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import PostCard from '@/components/PostCard';
@@ -9,7 +10,6 @@ import BannerCarousel from '@/components/BannerCarousel';
 import { posts as postsApi, categories as categoriesApi } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Badge } from '@/components/ui/badge';
 import { animate, stagger } from 'animejs';
 import { ArrowRight, Sparkles, Cpu, Globe, Database, ChevronRight } from 'lucide-react';
 
@@ -20,6 +20,7 @@ const TOPICS = [
 ];
 
 export default function HomePageClient() {
+  const { t } = useTranslation();
   const [posts, setPosts] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -78,19 +79,17 @@ export default function HomePageClient() {
           <div className="max-w-content mx-auto">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-clay/10 text-clay rounded-full text-body-sm mb-6">
               <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
-              <span>Frontend Developer &amp; AI Enthusiast</span>
+              <span>{t('home.role')}</span>
             </div>
             <h1 id="hero-heading" className="font-display text-hero text-ink mb-5 text-balance leading-[1.1]">
-              Exploring the<br />
-              <span className="text-clay">Future of Tech</span>
+              <Trans i18nKey="home.heroTitle" components={{ clay: <span className="text-clay" />, br: <br /> }} />
             </h1>
             <p className="text-lead text-ink-soft max-w-2xl mx-auto mb-10">
-              A personal blog about frontend engineering, artificial intelligence, Web3, and blockchain.
-              Writing about what I build, what I learn, and what excites me about the future of the web.
+              {t('home.heroDescription')}
             </p>
             <nav className="flex items-center justify-center gap-4" aria-label="Homepage actions">
-              <Link href="#posts"><Button size="lg">Browse Articles</Button></Link>
-              <Link href="/category/ai"><Button variant="outline" size="lg">Explore AI <ArrowRight className="h-4 w-4 ml-2" /></Button></Link>
+              <Link href="#posts"><Button size="lg">{t('home.browseArticles')}</Button></Link>
+              <Link href="/category/ai"><Button variant="outline" size="lg">{t('home.exploreAI')} <ArrowRight className="h-4 w-4 ml-2" /></Button></Link>
             </nav>
           </div>
         </div>
@@ -120,7 +119,7 @@ export default function HomePageClient() {
                 {cat && (
                   <Link href={`/category/${cat.slug}`}>
                     <Button variant="ghost" size="sm">
-                      View all <ChevronRight className="h-4 w-4 ml-1" />
+                      {t('common.viewAll')} <ChevronRight className="h-4 w-4 ml-1" />
                     </Button>
                   </Link>
                 )}
@@ -134,7 +133,7 @@ export default function HomePageClient() {
                 </div>
               ) : (
                 <div className="text-center py-12 bg-surface/50 rounded-editorial border border-border border-dashed">
-                  <p className="text-body text-ink-muted">No articles in this topic yet. Coming soon!</p>
+                  <p className="text-body text-ink-muted">{t('home.noArticlesTopic')}</p>
                 </div>
               )}
             </div>
@@ -147,8 +146,8 @@ export default function HomePageClient() {
         <div className="section-container py-section-sm">
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h2 id="latest-heading" className="font-display text-display-md text-ink">Latest Articles</h2>
-              <p className="text-body-sm text-ink-muted mt-1">Recent posts from the blog</p>
+              <h2 id="latest-heading" className="font-display text-display-md text-ink">{t('home.latestPosts')}</h2>
+              <p className="text-body-sm text-ink-muted mt-1">{t('home.recentPostsDesc')}</p>
             </div>
           </div>
 
@@ -165,8 +164,8 @@ export default function HomePageClient() {
             </div>
           ) : posts.length === 0 ? (
             <div className="text-center py-24">
-              <h2 className="font-display text-display-lg text-ink mb-3">No posts yet</h2>
-              <p className="text-body text-ink-muted">Check back later for new content.</p>
+              <h2 className="font-display text-display-lg text-ink mb-3">{t('home.noPosts')}</h2>
+              <p className="text-body text-ink-muted">{t('home.checkBackLater')}</p>
             </div>
           ) : (
             <>
@@ -176,11 +175,11 @@ export default function HomePageClient() {
 
               {totalPages > 1 && (
                 <nav className="flex justify-center items-center gap-3 mt-16" aria-label="Pagination">
-                  <Button variant="outline" onClick={() => setPage(p => Math.max(1, p-1))} disabled={page === 1}>Previous</Button>
+                  <Button variant="outline" onClick={() => setPage(p => Math.max(1, p-1))} disabled={page === 1}>{t('common.previous')}</Button>
                   {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
                     <Button key={p} variant={p === page ? 'default' : 'outline'} onClick={() => setPage(p)} className="min-w-[40px]" aria-current={p === page ? 'page' : undefined}>{p}</Button>
                   ))}
-                  <Button variant="outline" onClick={() => setPage(p => Math.min(totalPages, p+1))} disabled={page === totalPages}>Next</Button>
+                  <Button variant="outline" onClick={() => setPage(p => Math.min(totalPages, p+1))} disabled={page === totalPages}>{t('common.next')}</Button>
                 </nav>
               )}
             </>
@@ -195,17 +194,15 @@ export default function HomePageClient() {
             <div className="w-20 h-20 rounded-full bg-gradient-to-br from-clay to-teal flex items-center justify-center mx-auto mb-6" aria-hidden="true">
               <span className="font-display text-display-md text-white">F</span>
             </div>
-            <h2 id="about-heading" className="font-display text-display-md text-ink mb-3">About the Author</h2>
+            <h2 id="about-heading" className="font-display text-display-md text-ink mb-3">{t('home.aboutAuthor')}</h2>
             <p className="text-body text-ink-soft max-w-2xl mx-auto leading-relaxed">
-              A frontend engineer passionate about building beautiful, performant web experiences.
-              Deeply curious about AI, its intersection with web development, and the decentralized
-              future of the internet.
+              {t('home.aboutDesc')}
             </p>
             <div className="flex items-center justify-center gap-6 mt-8 text-body-sm text-ink-muted">
-              <span className="flex items-center gap-1.5"><Cpu className="h-4 w-4" aria-hidden="true" /> Frontend</span>
-              <span className="flex items-center gap-1.5"><Sparkles className="h-4 w-4" aria-hidden="true" /> AI</span>
-              <span className="flex items-center gap-1.5"><Globe className="h-4 w-4" aria-hidden="true" /> Web3</span>
-              <span className="flex items-center gap-1.5"><Database className="h-4 w-4" aria-hidden="true" /> Blockchain</span>
+              <span className="flex items-center gap-1.5"><Cpu className="h-4 w-4" aria-hidden="true" /> {t('home.topicFrontend')}</span>
+              <span className="flex items-center gap-1.5"><Sparkles className="h-4 w-4" aria-hidden="true" /> {t('home.topicAI')}</span>
+              <span className="flex items-center gap-1.5"><Globe className="h-4 w-4" aria-hidden="true" /> {t('home.topicWeb3')}</span>
+              <span className="flex items-center gap-1.5"><Database className="h-4 w-4" aria-hidden="true" /> {t('home.topicBlockchain')}</span>
             </div>
           </div>
         </div>

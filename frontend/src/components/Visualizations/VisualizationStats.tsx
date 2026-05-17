@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { visualizations } from '@/lib/api';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -13,6 +14,7 @@ import {
 const COLORS = ['#c84b31', '#2d5a5a', '#8a8478', '#e8c4b5', '#3d7a7a'];
 
 export function VisualizationStatsOverview() {
+  const { t } = useTranslation();
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -49,10 +51,10 @@ export function VisualizationStatsOverview() {
       {/* Summary cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'Total Visualizations', value: stats.totalVisualizations, icon: BarChart3, color: 'text-clay' },
-          { label: 'Total Views', value: stats.totalViews, icon: Eye, color: 'text-teal' },
-          { label: 'Total Interactions', value: stats.totalInteracts, icon: MousePointerClick, color: 'text-ink-soft' },
-          { label: 'By Subject', value: `${subjectData.find((s: any) => s.name.includes('Math'))?.value || 0} Math / ${subjectData.find((s: any) => s.name.includes('Physics'))?.value || 0} Physics`, icon: BookOpen, color: 'text-ink-muted' },
+          { label: t('viz.totalVisualizations'), value: stats.totalVisualizations, icon: BarChart3, color: 'text-clay' },
+          { label: t('viz.totalViewsCard'), value: stats.totalViews, icon: Eye, color: 'text-teal' },
+          { label: t('viz.totalInteractions'), value: stats.totalInteracts, icon: MousePointerClick, color: 'text-ink-soft' },
+          { label: t('viz.bySubject'), value: (subjectData.find((s: any) => s.name.includes('Math'))?.value || 0) + ' / ' + (subjectData.find((s: any) => s.name.includes('Physics'))?.value || 0), icon: BookOpen, color: 'text-ink-muted' },
         ].map(item => {
           const Icon = item.icon;
           return (
@@ -74,7 +76,7 @@ export function VisualizationStatsOverview() {
         {/* Subject distribution */}
         <Card className="border-border">
           <CardHeader className="border-b border-border pb-4">
-            <CardTitle className="text-body-sm font-medium">By Subject</CardTitle>
+            <CardTitle className="text-body-sm font-medium">{t('viz.bySubject')}</CardTitle>
           </CardHeader>
           <CardContent className="p-6">
             {subjectData.length > 0 ? (
@@ -98,7 +100,7 @@ export function VisualizationStatsOverview() {
                 </PieChart>
               </ResponsiveContainer>
             ) : (
-              <p className="text-body-sm text-ink-muted text-center py-8">No data yet</p>
+              <p className="text-body-sm text-ink-muted text-center py-8">{t('viz.noDataYet')}</p>
             )}
           </CardContent>
         </Card>
@@ -106,7 +108,7 @@ export function VisualizationStatsOverview() {
         {/* 30-day timeline */}
         <Card className="border-border">
           <CardHeader className="border-b border-border pb-4">
-            <CardTitle className="text-body-sm font-medium">Last 30 Days Activity</CardTitle>
+            <CardTitle className="text-body-sm font-medium">{t('viz.last30DaysActivity')}</CardTitle>
           </CardHeader>
           <CardContent className="p-6">
             {timelineData.length > 0 ? (
@@ -120,7 +122,7 @@ export function VisualizationStatsOverview() {
                 </LineChart>
               </ResponsiveContainer>
             ) : (
-              <p className="text-body-sm text-ink-muted text-center py-8">No activity in last 30 days</p>
+              <p className="text-body-sm text-ink-muted text-center py-8">{t('viz.noActivity')}</p>
             )}
           </CardContent>
         </Card>

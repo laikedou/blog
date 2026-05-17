@@ -2,6 +2,7 @@
 
 import ReactMarkdown from 'react-markdown';
 import type { Components } from 'react-markdown';
+import { useTranslation } from 'react-i18next';
 
 const markdownComponents: Components = {
   h1: ({ children, ...props }) => (
@@ -69,11 +70,12 @@ interface PolicyContentProps {
 }
 
 export default function PolicyContent({ title, content, siteTitle }: PolicyContentProps) {
+  const { t } = useTranslation();
   if (!content) {
     return (
       <div className="text-center py-16">
         <h1 className="font-display text-display-lg text-ink mb-4">{title}</h1>
-        <p className="text-body text-ink-muted">This page has not been configured yet. Please check back later.</p>
+        <p className="text-body text-ink-muted">{t('common.noData')}</p>
       </div>
     );
   }

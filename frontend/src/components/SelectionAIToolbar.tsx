@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ai } from '@/lib/api';
 import { Languages, RefreshCw, Loader2, Sparkles, ImageIcon } from 'lucide-react';
 
@@ -11,6 +12,7 @@ interface SelectionAIToolbarProps {
 }
 
 export default function SelectionAIToolbar({ editor, editorContainer, onImageAction }: SelectionAIToolbarProps) {
+  const { t } = useTranslation();
   const [visible, setVisible] = useState(false);
   const [position, setPosition] = useState({ top: 0, left: 0 });
   const [loading, setLoading] = useState<string | null>(null);
@@ -117,7 +119,7 @@ export default function SelectionAIToolbar({ editor, editorContainer, onImageAct
       editor.dangerouslyInsertHtml(r.enhancedContent);
       setVisible(false);
     } catch (err: any) {
-      setError(err.message || 'Enhance failed');
+      setError(err.message || t('common.enhanceFailed'));
     }
     setLoading(null);
   };
@@ -133,7 +135,7 @@ export default function SelectionAIToolbar({ editor, editorContainer, onImageAct
       <div className="pointer-events-auto flex items-center gap-1 bg-white/95 backdrop-blur-xl rounded-editorial-sm border border-border shadow-elevated px-2 py-1.5 animate-fade-in">
         <div className="flex items-center gap-1.5 px-1.5 text-caption-sm text-ink-muted">
           <Sparkles className="h-3 w-3 text-clay" />
-          <span>AI</span>
+          <span>{t('common.aiLabel')}</span>
         </div>
         <div className="w-px h-4 bg-border" />
 
@@ -146,7 +148,7 @@ export default function SelectionAIToolbar({ editor, editorContainer, onImageAct
               className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-editorial-xs text-body-sm text-ink-soft hover:bg-cream-200 hover:text-clay transition-colors disabled:opacity-40"
             >
               {loading === 'polish' ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Languages className="h-3.5 w-3.5" />}
-              润色
+              {t('common.polish')}
             </button>
 
             <button
@@ -156,7 +158,7 @@ export default function SelectionAIToolbar({ editor, editorContainer, onImageAct
               className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-editorial-xs text-body-sm text-ink-soft hover:bg-cream-200 hover:text-clay transition-colors disabled:opacity-40"
             >
               {loading === 'rewrite' ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
-              重写
+              {t('common.rewrite')}
             </button>
           </>
         )}
@@ -168,7 +170,7 @@ export default function SelectionAIToolbar({ editor, editorContainer, onImageAct
             className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-editorial-xs text-body-sm text-ink-soft hover:bg-cream-200 hover:text-clay transition-colors"
           >
             <ImageIcon className="h-3.5 w-3.5" />
-            AI Image
+            {t('common.aiImage')}
           </button>
         )}
 

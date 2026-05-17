@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import Link from 'next/link';
 import { visualizations } from '@/lib/api';
 import { Layers, Eye, Heart, Loader2 } from 'lucide-react';
@@ -24,6 +25,7 @@ interface Props {
 }
 
 export default function RelatedVisualizations({ visualizationId, currentSubject }: Props) {
+  const { t } = useTranslation();
   const [items, setItems] = useState<RelatedViz[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -48,7 +50,7 @@ export default function RelatedVisualizations({ visualizationId, currentSubject 
     <div>
       <div className="flex items-center gap-2 mb-4">
         <Layers className="h-5 w-5 text-ink-muted" />
-        <h3 className="font-display text-display-sm text-ink">Related Visualizations</h3>
+        <h3 className="font-display text-display-sm text-ink">{t('viz.relatedVisualizations')}</h3>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {items.map(item => (

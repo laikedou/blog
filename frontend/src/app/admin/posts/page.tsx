@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useTranslation } from 'react-i18next';
 import { posts as postsApi } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -11,6 +12,7 @@ import { useConfirm } from '@/lib/confirm-dialog';
 import { toast } from 'sonner';
 
 export default function AdminPostsPage() {
+  const { t } = useTranslation();
   const { confirm } = useConfirm();
   const [posts, setPosts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -28,19 +30,19 @@ export default function AdminPostsPage() {
   useEffect(() => { fetchPosts(); }, [page, statusFilter]);
 
   const deletePost = async (id: number) => {
-    const ok = await confirm({ title: 'Delete Post', message: 'Are you sure you want to delete this post? This action cannot be undone.', confirmLabel: 'Delete', variant: 'destructive' });
+    const ok = await confirm({ title: t('admin.deletePost'), message: t('admin.confirmDeletePost'), confirmLabel: t('common.delete'), variant: 'destructive' });
     if (!ok) return;
     await postsApi.delete(id);
-    toast.success('Post deleted');
+    toast.success(t('admin.postDeleted'));
     fetchPosts();
   };
 
   return (
     <div>
       <div className="flex items-center justify-between mb-8">
-        <h1 className="font-display text-display-md text-ink">Posts</h1>
+        <h1 className="font-display text-display-md text-ink">{t('admin.posts')}</h1>
         <Link href="/admin/posts/new">
-          <Button><Plus className="h-4 w-4 mr-2" /> New Post</Button>
+          <Button><Plus className="h-4 w-4 mr-2" /> {t('admin.newPost')}</Button>
         </Link>
       </div>
 
@@ -53,7 +55,7 @@ export default function AdminPostsPage() {
               className="cursor-pointer"
               onClick={() => { setStatusFilter(s); setPage(1); }}
             >
-              {s || 'All'}
+              {s ? t(`admin.${s}`) : t('admin.all')}
             </Badge>
           ))}
         </div>
@@ -66,7 +68,7 @@ export default function AdminPostsPage() {
           <div>
             {posts.length === 0 ? (
               <div className="p-10 text-center">
-                <p className="text-body text-ink-muted">No posts found</p>
+                <p className="text-body text-ink-muted">{t('admin.noPostsFound')}</p>
               </div>
             ) : (
               posts.map((post: any, i: number) => (
@@ -77,7 +79,7 @@ export default function AdminPostsPage() {
                     </Link>
                     <p className="text-body-sm text-ink-muted mt-0.5">
                       {post.author?.displayName} &middot; {new Date(post.createdAt).toLocaleDateString()}
-                      {post.viewCount > 0 && ` · ${post.viewCount} views`}
+                      {post.viewCount > 0 && ` · ${t('admin.views', { count: post.viewCount })}`}
                     </p>
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
@@ -98,11 +100,11 @@ export default function AdminPostsPage() {
         {totalPages > 1 && (
           <div className="px-6 py-4 border-t border-border flex justify-center items-center gap-3">
             <Button variant="outline" size="sm" onClick={() => setPage(p => Math.max(1, p-1))} disabled={page === 1}>
-              Prev
+              {t('common.previous')}
             </Button>
             <span className="text-body-sm text-ink-muted">{page} / {totalPages}</span>
             <Button variant="outline" size="sm" onClick={() => setPage(p => Math.min(totalPages, p+1))} disabled={page === totalPages}>
-              Next
+              {t('common.next')}
             </Button>
           </div>
         )}

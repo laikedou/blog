@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { posts as postsApi, categories as categoriesApi, tags as tagsApi, ai as aiApi } from '@/lib/api';
@@ -16,6 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 const RichEditor = dynamic(() => import('@/components/RichEditor'), { ssr: false });
 
 export default function NewPostPage() {
+  const { t } = useTranslation();
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [generatingCover, setGeneratingCover] = useState(false);
@@ -93,7 +95,7 @@ export default function NewPostPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-8">
-        <h1 className="font-display text-display-md text-ink">New Post</h1>
+        <h1 className="font-display text-display-md text-ink">{t('admin.newPost')}</h1>
         <AITools onGenerate={handleAIGenerate} currentContent={form.content} currentTitle={form.title} />
       </div>
 
@@ -101,7 +103,7 @@ export default function NewPostPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
             <Card className="p-6">
-              <Input value={form.title} onChange={e => handleChange('title', e.target.value)} placeholder="Post title" className="font-display text-display-md border-0 border-b-2 border-border rounded-none px-0 pb-3 mb-6 shadow-none focus-visible:ring-0" required />
+              <Input value={form.title} onChange={e => handleChange('title', e.target.value)} placeholder={t('admin.postTitle')} className="font-display text-display-md border-0 border-b-2 border-border rounded-none px-0 pb-3 mb-6 shadow-none focus-visible:ring-0" required />
               <RichEditor value={form.content} onChange={val => handleChange('content', val)} placeholder="Write your post content here..." />
             </Card>
           </div>
@@ -128,7 +130,7 @@ export default function NewPostPage() {
               </Select>
             </CardContent></Card>
 
-            <Card><CardHeader><CardTitle>Tags</CardTitle></CardHeader><CardContent>
+            <Card><CardHeader><CardTitle>{t('admin.tags')}</CardTitle></CardHeader><CardContent>
               <div className="flex flex-wrap gap-1.5">
                 {allTags.map(tag => (
                   <Badge key={tag.id} variant={form.tagIds.includes(tag.id) ? 'default' : 'outline'} className="cursor-pointer" onClick={() => toggleTag(tag.id)}>{tag.name}</Badge>
@@ -136,10 +138,10 @@ export default function NewPostPage() {
               </div>
             </CardContent></Card>
 
-            <Card><CardHeader><CardTitle>SEO</CardTitle></CardHeader><CardContent className="space-y-3">
+            <Card><CardHeader><CardTitle>{t('admin.seo')}</CardTitle></CardHeader><CardContent className="space-y-3">
               <Input value={form.seoTitle} onChange={e => handleChange('seoTitle', e.target.value)} placeholder="SEO Title" />
               <Textarea value={form.seoDescription} onChange={e => handleChange('seoDescription', e.target.value)} placeholder="SEO Description" rows={2} />
-              <Input value={form.slug} onChange={e => handleChange('slug', e.target.value)} placeholder="Custom slug" />
+              <Input value={form.slug} onChange={e => handleChange('slug', e.target.value)} placeholder={t('admin.slug')} />
             </CardContent></Card>
 
             <Card><CardHeader><CardTitle>Featured Image</CardTitle></CardHeader><CardContent className="space-y-3">

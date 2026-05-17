@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ai } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { Button } from '@/components/ui/button';
@@ -20,6 +21,7 @@ interface AIToolsProps {
 }
 
 export default function AITools({ onGenerate, currentContent, currentTitle, isOpen: controlledOpen, onClose }: AIToolsProps) {
+  const { t } = useTranslation();
   const { isAuthenticated } = useAuth();
   const [internalOpen, setInternalOpen] = useState(false);
   const isOpen = controlledOpen !== undefined ? controlledOpen : internalOpen;
@@ -83,7 +85,7 @@ export default function AITools({ onGenerate, currentContent, currentTitle, isOp
     <>
       {controlledOpen === undefined && (
         <Button type="button" onClick={() => setInternalOpen(true)}>
-          <Sparkles className="h-4 w-4 mr-2" /> AI Tools
+          <Sparkles className="h-4 w-4 mr-2" /> {t('common.aiTools')}
         </Button>
       )}
 
@@ -92,7 +94,7 @@ export default function AITools({ onGenerate, currentContent, currentTitle, isOp
           <DialogHeader className="sticky top-0 bg-surface border-b border-border">
             <div className="flex items-center justify-between">
               <DialogTitle className="font-display text-display-sm text-ink flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-clay" /> AI Assistant
+                <Sparkles className="h-5 w-5 text-clay" /> {t('common.aiAssistant')}
               </DialogTitle>
             </div>
           </DialogHeader>
@@ -101,56 +103,56 @@ export default function AITools({ onGenerate, currentContent, currentTitle, isOp
             {error && <div className="bg-clay-subtle text-clay text-body-sm rounded-editorial-sm p-3 border border-clay/20">{error}</div>}
 
             <div className="space-y-3">
-              <h3 className="text-body-sm font-medium text-ink flex items-center gap-2"><Wand2 className="h-4 w-4 text-clay" /> Generate Post</h3>
-              <Input value={topic} onChange={e => setTopic(e.target.value)} placeholder="Enter a topic..." />
+              <h3 className="text-body-sm font-medium text-ink flex items-center gap-2"><Wand2 className="h-4 w-4 text-clay" /> {t('common.generatePost')}</h3>
+              <Input value={topic} onChange={e => setTopic(e.target.value)} placeholder={t('common.topicPlaceholder')} />
               <div className="flex gap-2">
                 <select value={style} onChange={e => setStyle(e.target.value)} className="flex h-11 flex-1 rounded-editorial-sm border border-border bg-surface px-4 py-2.5 text-body">
-                  <option value="professional">Professional</option>
-                  <option value="casual">Casual</option>
-                  <option value="technical">Technical</option>
-                  <option value="storytelling">Storytelling</option>
+                  <option value="professional">{t('common.professional')}</option>
+                  <option value="casual">{t('common.casual')}</option>
+                  <option value="technical">{t('common.technical')}</option>
+                  <option value="storytelling">{t('common.storytelling')}</option>
                 </select>
-                <Input type="number" value={wordCount} onChange={e => setWordCount(Number(e.target.value))} className="w-24" placeholder="Words" />
+                <Input type="number" value={wordCount} onChange={e => setWordCount(Number(e.target.value))} className="w-24" placeholder={t('common.words')} />
               </div>
               <Button onClick={handleGeneratePost} disabled={loading === 'generate' || !topic.trim()} className="w-full">
-                {loading === 'generate' ? 'Generating...' : 'Generate Post'}
+                {loading === 'generate' ? t('common.generating') : t('common.generatePost')}
               </Button>
             </div>
 
             <div className="border-t border-border pt-5">
-              <h3 className="text-body-sm font-medium text-ink mb-3 flex items-center gap-2"><Wand2 className="h-4 w-4 text-clay" /> Enhance</h3>
+              <h3 className="text-body-sm font-medium text-ink mb-3 flex items-center gap-2"><Wand2 className="h-4 w-4 text-clay" /> {t('common.enhance')}</h3>
               <div className="flex flex-wrap gap-2">
                 <Button variant="outline" size="sm" onClick={() => handleEnhance('improve-grammar')} disabled={!!loading}>
-                  {loading === 'improve-grammar' ? '...' : 'Grammar'}
+                  {loading === 'improve-grammar' ? '...' : t('common.grammar')}
                 </Button>
                 <Button variant="outline" size="sm" onClick={() => handleEnhance('polish')} disabled={!!loading}>
-                  {loading === 'polish' ? '...' : 'Polish 润色'}
+                  {loading === 'polish' ? '...' : t('common.polish')}
                 </Button>
                 <Button variant="outline" size="sm" onClick={() => handleEnhance('rewrite')} disabled={!!loading}>
-                  {loading === 'rewrite' ? '...' : 'Rewrite 重写'}
+                  {loading === 'rewrite' ? '...' : t('common.rewrite')}
                 </Button>
                 <Button variant="outline" size="sm" onClick={() => handleEnhance('summarize')} disabled={!!loading}>
-                  {loading === 'summarize' ? '...' : 'Summarize'}
+                  {loading === 'summarize' ? '...' : t('common.summarize')}
                 </Button>
                 <Button variant="outline" size="sm" onClick={() => handleEnhance('expand')} disabled={!!loading}>
-                  {loading === 'expand' ? '...' : 'Expand'}
+                  {loading === 'expand' ? '...' : t('common.expand')}
                 </Button>
               </div>
             </div>
 
             <div className="flex gap-2">
               <Button variant="outline" onClick={handleGenerateSeo} disabled={!!loading} className="flex-1">
-                <Search className="h-4 w-4 mr-2" />{loading === 'seo' ? '...' : 'SEO'}
+                <Search className="h-4 w-4 mr-2" />{loading === 'seo' ? '...' : t('common.seo')}
               </Button>
               <Button variant="outline" onClick={handleSuggestTags} disabled={!!loading} className="flex-1">
-                <Tags className="h-4 w-4 mr-2" />{loading === 'tags' ? '...' : 'Tags'}
+                <Tags className="h-4 w-4 mr-2" />{loading === 'tags' ? '...' : t('common.tags')}
               </Button>
             </div>
 
             <div className="border-t border-border pt-5">
-              <h3 className="text-body-sm font-medium text-ink mb-3 flex items-center gap-2"><MessageSquare className="h-4 w-4 text-clay" /> Chat</h3>
+              <h3 className="text-body-sm font-medium text-ink mb-3 flex items-center gap-2"><MessageSquare className="h-4 w-4 text-clay" /> {t('common.chat')}</h3>
               <div className="h-48 overflow-y-auto mb-3 space-y-2.5 bg-cream-200 rounded-editorial-sm p-4">
-                {chatHistory.length === 0 && <p className="text-body-sm text-ink-muted text-center pt-8">Ask for writing advice, ideas, or feedback</p>}
+                {chatHistory.length === 0 && <p className="text-body-sm text-ink-muted text-center pt-8">{t('common.writeAdvice')}</p>}
                 {chatHistory.map((msg, i) => (
                   <div key={i} className={`text-body-sm ${msg.role === 'user' ? 'text-right' : ''}`}>
                     <span className={`inline-block rounded-pill px-4 py-2 max-w-[80%] ${
@@ -160,7 +162,7 @@ export default function AITools({ onGenerate, currentContent, currentTitle, isOp
                 ))}
               </div>
               <div className="flex gap-2">
-                <Input value={chatMessage} onChange={e => setChatMessage(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleChat()} placeholder="Ask the AI..." />
+                <Input value={chatMessage} onChange={e => setChatMessage(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleChat()} placeholder={t('common.askAiPrompt')} />
                 <Button onClick={handleChat} disabled={loading === 'chat' || !chatMessage.trim()}><Send className="h-4 w-4" /></Button>
               </div>
             </div>

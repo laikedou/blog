@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, LineChart, Line, Legend,
@@ -33,10 +34,11 @@ interface DashboardChartsProps {
 }
 
 export function PostsTimelineChart({ data }: { data: TimelineItem[] }) {
+  const { t } = useTranslation();
   if (!data || data.length === 0) return null;
   return (
     <div className="bg-surface rounded-editorial border border-border shadow-card p-6">
-      <h3 className="text-body-sm font-medium text-ink mb-4">Posts (Last 30 Days)</h3>
+      <h3 className="text-body-sm font-medium text-ink mb-4">{t('common.postsTimeline')}</h3>
       <ResponsiveContainer width="100%" height={250}>
         <LineChart data={data}>
           <CartesianGrid strokeDasharray="3 3" stroke="#e8e2d8" />
@@ -44,8 +46,8 @@ export function PostsTimelineChart({ data }: { data: TimelineItem[] }) {
           <YAxis tick={{ fontSize: 11 }} stroke="#8a8478" allowDecimals={false} />
           <Tooltip />
           <Legend />
-          <Line type="monotone" dataKey="published" stroke="#c84b31" strokeWidth={2} name="Published" dot={false} />
-          <Line type="monotone" dataKey="draft" stroke="#8a8478" strokeWidth={2} name="Draft" dot={false} />
+          <Line type="monotone" dataKey="published" stroke="#c84b31" strokeWidth={2} name={t('common.published')} dot={false} />
+          <Line type="monotone" dataKey="draft" stroke="#8a8478" strokeWidth={2} name={t('common.draftStatus')} dot={false} />
         </LineChart>
       </ResponsiveContainer>
     </div>
@@ -53,10 +55,11 @@ export function PostsTimelineChart({ data }: { data: TimelineItem[] }) {
 }
 
 export function CategoryPieChart({ data }: { data: CategoryItem[] }) {
+  const { t } = useTranslation();
   if (!data || data.length === 0) return null;
   return (
     <div className="bg-surface rounded-editorial border border-border shadow-card p-6">
-      <h3 className="text-body-sm font-medium text-ink mb-4">Posts by Category</h3>
+      <h3 className="text-body-sm font-medium text-ink mb-4">{t('common.postsByCategory')}</h3>
       <ResponsiveContainer width="100%" height={250}>
         <PieChart>
           <Pie
@@ -81,10 +84,11 @@ export function CategoryPieChart({ data }: { data: CategoryItem[] }) {
 }
 
 export function TopPostsChart({ data }: { data: TopPost[] }) {
+  const { t } = useTranslation();
   if (!data || data.length === 0) return null;
   return (
     <div className="bg-surface rounded-editorial border border-border shadow-card p-6">
-      <h3 className="text-body-sm font-medium text-ink mb-4">Top Posts by Views</h3>
+      <h3 className="text-body-sm font-medium text-ink mb-4">{t('common.topPostsByViews')}</h3>
       <ResponsiveContainer width="100%" height={250}>
         <BarChart data={data} layout="vertical">
           <CartesianGrid strokeDasharray="3 3" stroke="#e8e2d8" />

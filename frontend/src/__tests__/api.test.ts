@@ -480,5 +480,125 @@ describe('API Client', () => {
       expect(mockFetch).toHaveBeenCalledWith('/api/visualizations/stats/aggregated', expect.any(Object));
       expect(result.totalVisualizations).toBe(10);
     });
+
+    // ── Version Management ──
+
+    it('visualizations.getVersions fetches version list', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => [
+          { id: 3, version: 3, changeNote: 'Refined', isCurrent: true },
+          { id: 2, version: 2, changeNote: 'Initial', isCurrent: false },
+        ],
+      });
+
+      const { visualizations } = require('../lib/api');
+      const result = await visualizations.getVersions(1);
+
+      expect(mockFetch).toHaveBeenCalledWith('/api/visualizations/1/versions', expect.any(Object));
+      expect(result).toHaveLength(2);
+      expect(result[0].isCurrent).toBe(true);
+    });
+
+    it('visualizations.getVersionDetail fetches a specific version', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ id: 2, version: 2, htmlContent: '<div>v2</div>', isCurrent: false }),
+      });
+
+      const { visualizations } = require('../lib/api');
+      const result = await visualizations.getVersionDetail(1, 2);
+
+      expect(mockFetch).toHaveBeenCalledWith('/api/visualizations/1/versions/2', expect.any(Object));
+      expect(result.htmlContent).toBe('<div>v2</div>');
+    });
+
+    it('visualizations.restoreVersion sends POST with changeNote', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ version: 4, htmlContent: '<div>restored</div>' }),
+      });
+
+      const { visualizations } = require('../lib/api');
+      const result = await visualizations.restoreVersion(1, 2, 'Going back');
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        '/api/visualizations/1/versions/2/restore',
+        expect.objectContaining({ method: 'POST' }),
+      );
+      expect(JSON.parse(mockFetch.mock.calls[0][1].body).changeNote).toBe('Going back');
+      expect(result.version).toBe(4);
+    });
+
+    it('visualizations.restoreVersion works without changeNote', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ version: 4, htmlContent: '<div>restored</div>' }),
+      });
+
+      const { visualizations } = require('../lib/api');
+      await visualizations.restoreVersion(1, 2);
+
+      const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+      expect(body.changeNote).toBeUndefined();
+    });
+
+    it('visualizations.compareVersions sends POST with from/to', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          from: { version: 1 },
+          to: { version: 2 },
+          htmlContentFrom: '<div>v1</div>',
+          htmlContentTo: '<div>v2</div>',
+        }),
+      });
+
+      const { visualizations } = require('../lib/api');
+      const result = await visualizations.compareVersions(1, 1, 2);
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        '/api/visualizations/1/versions/compare',
+        expect.objectContaining({ method: 'POST' }),
+      );
+      const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+      expect(body.fromVersionId).toBe(1);
+      expect(body.toVersionId).toBe(2);
+      expect(result.from.version).toBe(1);
+      expect(result.to.version).toBe(2);
+    });
+
+    // ── Topic Suggestions ──
+
+    it('visualizations.suggestTopics fetches topic suggestions', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => [
+          { id: 'pythagorean', title: 'Pythagorean Theorem', subject: 'math' },
+          { id: 'pendulum', title: 'Pendulum', subject: 'physics' },
+        ],
+      });
+
+      const { visualizations } = require('../lib/api');
+      const result = await visualizations.suggestTopics({ subject: 'math', count: 5 });
+
+      expect(mockFetch.mock.calls[0][0]).toContain('/visualizations/topics/suggest');
+      expect(mockFetch.mock.calls[0][0]).toContain('subject=math');
+      expect(mockFetch.mock.calls[0][0]).toContain('count=5');
+      expect(result).toHaveLength(2);
+    });
+
+    it('visualizations.suggestTopics works without params', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => [{ id: 'pythagorean', title: 'Pythagorean Theorem', subject: 'math' }],
+      });
+
+      const { visualizations } = require('../lib/api');
+      const result = await visualizations.suggestTopics();
+
+      expect(mockFetch.mock.calls[0][0]).toBe('/api/visualizations/topics/suggest');
+      expect(result).toHaveLength(1);
+    });
   });
 });

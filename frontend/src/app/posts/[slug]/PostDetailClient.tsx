@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import Footer from '@/components/Footer';
 import { posts as postsApi, comments as commentsApi } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -29,6 +30,7 @@ export default function PostDetailClient({ post: initialPost, notFound: initialN
   const [commentText, setCommentText] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
+  const { t } = useTranslation();
 
   // If initial post was provided from server, skip client fetch
   // If not (e.g. client navigation), fetch from client
@@ -72,7 +74,7 @@ export default function PostDetailClient({ post: initialPost, notFound: initialN
   );
 
   if (notFound || !post) return (
-    <><Header /><main className="flex-1"><div className="content-container mx-auto px-6 py-24 text-center"><h1 className="font-display text-display-xl text-ink mb-4">Post Not Found</h1><p className="text-body text-ink-muted mb-8">The post you&apos;re looking for doesn&apos;t exist.</p><Link href="/"><Button>Back to Home</Button></Link></div></main><Footer /></>
+    <><Header /><main className="flex-1"><div className="content-container mx-auto px-6 py-24 text-center"><h1 className="font-display text-display-xl text-ink mb-4">{t('posts.notFound')}</h1><p className="text-body text-ink-muted mb-8">{t('posts.notFoundDesc')}</p><Link href="/"><Button>{t('common.backToHome')}</Button></Link></div></main><Footer /></>
   );
 
   const date = post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : '';
@@ -86,7 +88,7 @@ export default function PostDetailClient({ post: initialPost, notFound: initialN
           <nav aria-label="Breadcrumb" className="mb-8">
             <ol className="flex items-center gap-2 text-body-sm text-ink-muted" itemScope itemType="https://schema.org/BreadcrumbList">
               <li itemProp="itemListElement" itemScope itemType="https://schema.org/ListItem">
-                <Link href="/" itemProp="item" className="hover:text-clay transition-colors"><span itemProp="name">Home</span></Link>
+                <Link href="/" itemProp="item" className="hover:text-clay transition-colors"><span itemProp="name">{t('posts.breadcrumbHome')}</span></Link>
                 <meta itemProp="position" content="1" />
                 <span className="mx-2">/</span>
               </li>
@@ -129,12 +131,12 @@ export default function PostDetailClient({ post: initialPost, notFound: initialN
               </span>
               <span className="flex items-center gap-1.5">
                 <Eye className="h-3.5 w-3.5" aria-hidden="true" />
-                <span>{post.viewCount} views</span>
+                <span>{t('posts.views', { count: post.viewCount })}</span>
               </span>
               {post.comments && (
                 <span className="flex items-center gap-1.5">
                   <MessageSquare className="h-3.5 w-3.5" aria-hidden="true" />
-                  <span>{post.comments.length} comments</span>
+                  <span>{t('posts.comments', { count: post.comments.length })}</span>
                 </span>
               )}
               {post.aiGenerated && <Badge variant="default" className="text-caption-sm">AI</Badge>}
@@ -172,18 +174,18 @@ export default function PostDetailClient({ post: initialPost, notFound: initialN
 
           {/* Comments section */}
           <section className="mt-20 pt-12 border-t border-border" aria-labelledby="comments-heading">
-            <h2 id="comments-heading" className="font-display text-display-md text-ink mb-8">Comments ({post.comments?.length || 0})</h2>
+            <h2 id="comments-heading" className="font-display text-display-md text-ink mb-8">{t('posts.comments', { count: post.comments?.length || 0 })}</h2>
 
             {isAuthenticated ? (
               <form onSubmit={handleComment} className="mb-12">
-                <Textarea value={commentText} onChange={e => setCommentText(e.target.value)} placeholder="Share your thoughts..." rows={3} className="mb-3" required />
-                <Button type="submit" disabled={submitting}>{submitting ? 'Posting...' : 'Post Comment'}</Button>
+                <Textarea value={commentText} onChange={e => setCommentText(e.target.value)} placeholder={t('posts.commentPlaceholder')} rows={3} className="mb-3" required />
+                <Button type="submit" disabled={submitting}>{submitting ? t('posts.posting') : t('posts.submitComment')}</Button>
               </form>
             ) : (
               <Card className="mb-12 bg-cream-200 border-0 shadow-none">
                 <CardContent className="p-6 text-center">
                   <p className="text-body text-ink-muted">
-                    <Link href="/login" className="text-clay hover:underline font-medium">Sign in</Link> to leave a comment
+                    <Link href="/login" className="text-clay hover:underline font-medium">{t('nav.signIn')}</Link> {t('posts.loginToComment')}
                   </p>
                 </CardContent>
               </Card>
@@ -221,7 +223,7 @@ export default function PostDetailClient({ post: initialPost, notFound: initialN
                 </Card>
               ))}
               {(!post.comments || post.comments.length === 0) && (
-                <p className="text-body text-ink-muted text-center py-12">No comments yet. Be the first to share your thoughts!</p>
+                <p className="text-body text-ink-muted text-center py-12">{t('posts.noCommentsDetailed')}</p>
               )}
             </div>
           </section>

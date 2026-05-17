@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { tags as tagsApi } from '@/lib/api';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -11,6 +12,7 @@ import { toast } from 'sonner';
 import { useConfirm } from '@/lib/confirm-dialog';
 
 export default function AdminTagsPage() {
+  const { t } = useTranslation();
   const { confirm } = useConfirm();
   const [tags, setTags] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -31,7 +33,7 @@ export default function AdminTagsPage() {
     try {
       if (editing) await tagsApi.update(editing.id, { name });
       else await tagsApi.create({ name });
-      toast.success(editing ? 'Tag updated' : 'Tag created');
+      toast.success(editing ? t('admin.tagUpdated') : t('admin.tagCreated'));
       setName(''); setEditing(null);
       fetchTags();
     } catch (err: any) { toast.error(err.message); }
@@ -40,32 +42,32 @@ export default function AdminTagsPage() {
 
   const handleEdit = (tag: any) => { setEditing(tag); setName(tag.name); };
   const handleDelete = async (id: number) => {
-    const ok = await confirm({ title: 'Delete Tag', message: 'Are you sure you want to delete this tag? Posts tagged with it will no longer have this tag.', confirmLabel: 'Delete', variant: 'destructive' });
+    const ok = await confirm({ title: t('admin.deleteTag'), message: t('admin.confirmDeleteTag'), confirmLabel: t('common.delete'), variant: 'destructive' });
     if (!ok) return;
     await tagsApi.delete(id);
-    toast.success('Tag deleted');
+    toast.success(t('admin.tagDeleted'));
     fetchTags();
   };
 
   return (
     <div>
-      <h1 className="font-display text-display-md text-ink mb-8">Tags</h1>
+      <h1 className="font-display text-display-md text-ink mb-8">{t('admin.tags')}</h1>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
-          <CardHeader><CardTitle>{editing ? 'Edit Tag' : 'New Tag'}</CardTitle></CardHeader>
+          <CardHeader><CardTitle>{editing ? t('admin.editTag') : t('admin.newTag')}</CardTitle></CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="flex gap-2">
-              <Input value={name} onChange={e => setName(e.target.value)} placeholder="Tag name" required />
+              <Input value={name} onChange={e => setName(e.target.value)} placeholder={t('admin.tagNamePlaceholder')} required />
               <Button type="submit" disabled={saving}>
-                {saving ? '...' : editing ? 'Update' : <><Plus className="h-4 w-4 mr-1" /> Add</>}
+                {saving ? '...' : editing ? t('admin.update') : <><Plus className="h-4 w-4 mr-1" /> {t('admin.add')}</>}
               </Button>
-              {editing && <Button variant="outline" onClick={() => { setEditing(null); setName(''); }}>Cancel</Button>}
+              {editing && <Button variant="outline" onClick={() => { setEditing(null); setName(''); }}>{t('common.cancel')}</Button>}
             </form>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader><CardTitle>All Tags</CardTitle></CardHeader>
+          <CardHeader><CardTitle>{t('admin.allTags')}</CardTitle></CardHeader>
           <CardContent className="p-0">
             {loading ? (
               <div className="p-6 space-y-3">{[1,2,3].map(i => <Skeleton key={i} className="h-12 w-full" />)}</div>
@@ -76,7 +78,7 @@ export default function AdminTagsPage() {
                     <Input
                       value={searchQuery}
                       onChange={e => setSearchQuery(e.target.value)}
-                      placeholder="Search tags..."
+                      placeholder={t('admin.searchTagsPlaceholder')}
                       className="h-9"
                     />
                   </div>
@@ -84,7 +86,7 @@ export default function AdminTagsPage() {
                 {tags.filter(t => t.name.toLowerCase().includes(searchQuery.toLowerCase())).length === 0 ? (
                   <div className="p-8 text-center">
                     <p className="text-body-sm text-ink-muted">
-                      {searchQuery ? `No tags matching "${searchQuery}"` : 'No tags yet'}
+                      {searchQuery ? t('admin.noTagsMatch', { query: searchQuery }) : t('admin.noTagsYet')}
                     </p>
                   </div>
                 ) : (

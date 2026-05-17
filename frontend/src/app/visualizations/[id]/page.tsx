@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { visualizations } from '@/lib/api';
 import { HtmlVisualizationRenderer } from '@/components/Visualizations/VisualizationRenderer';
+import CodePreview from '@/components/Visualizations/CodePreview';
 import VisualizationLikeButton from '@/components/Visualizations/VisualizationLikeButton';
 import VisualizationComments from '@/components/Visualizations/VisualizationComments';
 import RelatedVisualizations from '@/components/Visualizations/RelatedVisualizations';
@@ -15,6 +16,7 @@ import {
   ChevronLeft, BookOpen, Atom, Clock, User, Eye, Share2, BarChart3,
   Maximize2, Minimize2, Download, MessageSquare, Layers, Code, Sparkles,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 
 export default function VisualizationDetailPage() {
@@ -25,6 +27,7 @@ export default function VisualizationDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [fullscreen, setFullscreen] = useState(false);
   const [showCode, setShowCode] = useState(false);
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<'comments' | 'related'>('comments');
   const rendererRef = useRef<HTMLDivElement>(null);
 
@@ -48,7 +51,7 @@ export default function VisualizationDetailPage() {
       await navigator.share({ title: viz?.title, url });
     } catch {
       await navigator.clipboard.writeText(url);
-      toast.success('Link copied to clipboard');
+      toast.success(t('viz.linkCopied'));
     }
     visualizations.recordStat(id, 'share').catch(() => {});
   };
@@ -70,7 +73,7 @@ export default function VisualizationDetailPage() {
     a.download = `${viz.title.replace(/[^a-z0-9]/gi, '_')}.html`;
     a.click();
     URL.revokeObjectURL(url);
-    toast.success('Downloaded as HTML');
+    toast.success(t('viz.downloaded'));
   };
 
   if (loading) {
@@ -89,10 +92,10 @@ export default function VisualizationDetailPage() {
       <div className="min-h-screen bg-cream-200 flex items-center justify-center">
         <Card className="p-12 text-center max-w-md">
           <BarChart3 className="h-16 w-16 mx-auto mb-4 text-ink-faint" />
-          <h2 className="font-display text-display-md text-ink mb-2">Not Found</h2>
-          <p className="text-body-sm text-ink-muted mb-6">{error || 'This visualization does not exist.'}</p>
+          <h2 className="font-display text-display-md text-ink mb-2">{t('common.pageNotFound')}</h2>
+          <p className="text-body-sm text-ink-muted mb-6">{error || t('viz.notFound')}</p>
           <Link href="/visualizations">
-            <Button variant="outline"><ChevronLeft className="h-4 w-4 mr-1" /> Browse Visualizations</Button>
+            <Button variant="outline"><ChevronLeft className="h-4 w-4 mr-1" /> {t('viz.browse')}</Button>
           </Link>
         </Card>
       </div>
@@ -118,12 +121,12 @@ export default function VisualizationDetailPage() {
             className="inline-flex items-center gap-1.5 text-body-sm text-ink-muted hover:text-ink transition-colors"
           >
             <ChevronLeft className="h-4 w-4" />
-            Browse All
+            {t('viz.browseAll')}
           </Link>
 
           <div className="flex items-center gap-2">
             <span className="text-caption-sm text-ink-muted mr-2 hidden sm:inline">
-              v{viz.version}
+              {t('viz.versionLabel', { version: viz.version })}
               {viz.aiGenerated && <span className="ml-1.5 inline-flex items-center gap-0.5"><Sparkles className="h-3 w-3 text-clay" />AI</span>}
             </span>
 
@@ -140,7 +143,7 @@ export default function VisualizationDetailPage() {
             </Button>
 
             <Button variant="ghost" size="sm" onClick={handleShare}>
-              <Share2 className="h-4 w-4 mr-1" /> Share
+              <Share2 className="h-4 w-4 mr-1" /> {t('viz.share')}
             </Button>
           </div>
         </div>
@@ -154,9 +157,9 @@ export default function VisualizationDetailPage() {
               viz.subject === 'math' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'
             }`}>
               {viz.subject === 'math' ? <BookOpen className="h-3 w-3" /> : <Atom className="h-3 w-3" />}
-              {viz.subject === 'math' ? 'Mathematics' : 'Physics'}
+              {viz.subject === 'math' ? t('viz.mathematics') : t('viz.physicsLabel')}
             </span>
-            <span className="text-caption-sm text-ink-muted">Version {viz.version}</span>
+            <span className="text-caption-sm text-ink-muted">{t('viz.versionLabel', { version: viz.version })}</span>
           </div>
 
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
@@ -169,7 +172,7 @@ export default function VisualizationDetailPage() {
             <div className="flex items-center gap-2 shrink-0">
               <VisualizationLikeButton visualizationId={id} initialLikes={viz.likesCount || 0} />
               <Button variant="outline" size="sm" onClick={handleShare}>
-                <Share2 className="h-4 w-4 mr-1" /> Share
+                <Share2 className="h-4 w-4 mr-1" /> {t('viz.share')}
               </Button>
             </div>
           </div>
@@ -177,8 +180,8 @@ export default function VisualizationDetailPage() {
           <div className="flex flex-wrap items-center gap-4 mt-3 text-caption-sm text-ink-muted">
             <span className="flex items-center gap-1"><User className="h-3 w-3" /> {viz.author?.displayName || viz.author?.username}</span>
             <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {new Date(viz.createdAt).toLocaleDateString()}</span>
-            <span className="flex items-center gap-1"><Eye className="h-3 w-3" /> {viz.viewCount || 0} views</span>
-            <span className="flex items-center gap-1"><BarChart3 className="h-3 w-3" /> Updated {new Date(viz.updatedAt).toLocaleDateString()}</span>
+            <span className="flex items-center gap-1"><Eye className="h-3 w-3" /> {t('viz.views', { count: viz.viewCount || 0 })}</span>
+            <span className="flex items-center gap-1"><BarChart3 className="h-3 w-3" /> {t('viz.updated')} {new Date(viz.updatedAt).toLocaleDateString()}</span>
           </div>
         </div>
 
@@ -186,7 +189,7 @@ export default function VisualizationDetailPage() {
         {viz.introduction && (
           <Card className="border-border bg-surface-warm mb-6">
             <CardContent className="p-6">
-              <h2 className="font-display text-display-xs text-ink mb-2">About This Visualization</h2>
+              <h2 className="font-display text-display-xs text-ink mb-2">{t('viz.aboutThis')}</h2>
               <p className="text-body text-ink-muted leading-relaxed">{viz.introduction}</p>
             </CardContent>
           </Card>
@@ -203,7 +206,7 @@ export default function VisualizationDetailPage() {
         {viz.detailedExplanation && (
           <Card className="border-border shadow-card mb-6">
             <CardContent className="p-6">
-              <h2 className="font-display text-display-xs text-ink mb-3">Detailed Explanation</h2>
+              <h2 className="font-display text-display-xs text-ink mb-3">{t('viz.detailedExplanation')}</h2>
               <div className="text-body text-ink-muted leading-relaxed space-y-3">
                 {viz.detailedExplanation.split('\n\n').filter(Boolean).map((para: string, i: number) => (
                   <p key={i}>{para}</p>
@@ -217,7 +220,7 @@ export default function VisualizationDetailPage() {
         {viz.knowledgeSummary && (
           <Card className="border-border shadow-card mb-6">
             <CardContent className="p-6">
-              <h2 className="font-display text-display-xs text-ink mb-3">Key Knowledge Points</h2>
+              <h2 className="font-display text-display-xs text-ink mb-3">{t('viz.keyKnowledge')}</h2>
               <ul className="space-y-2">
                 {viz.knowledgeSummary.split('\n').filter(Boolean).map((point: string, i: number) => (
                   <li key={i} className="flex items-start gap-3 text-body text-ink-muted">
@@ -235,14 +238,12 @@ export default function VisualizationDetailPage() {
           <Card className="border-border mb-6">
             <CardContent className="p-0">
               <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-cream-100">
-                <span className="text-caption-sm font-medium text-ink-muted uppercase tracking-wider">HTML Source Code</span>
-                <Button variant="ghost" size="sm" onClick={() => { navigator.clipboard.writeText(viz.htmlContent); toast.success('Code copied'); }}>
-                  Copy
+                <span className="text-caption-sm font-medium text-ink-muted uppercase tracking-wider">{t('viz.htmlSourceCode')}</span>
+                <Button variant="ghost" size="sm" onClick={() => { navigator.clipboard.writeText(viz.htmlContent); toast.success(t('common.copied')); }}>
+                  {t('common.copy')}
                 </Button>
               </div>
-              <pre className="p-5 overflow-x-auto text-body-sm font-mono text-ink-soft max-h-[400px] overflow-y-auto">
-                {viz.htmlContent}
-              </pre>
+              <CodePreview code={viz.htmlContent} maxHeight="400px" />
             </CardContent>
           </Card>
         )}
@@ -251,7 +252,7 @@ export default function VisualizationDetailPage() {
         {viz.prompt && (
           <Card className="border-border bg-surface-warm mb-6">
             <CardContent className="p-5">
-              <p className="text-caption-sm text-ink-muted uppercase tracking-wider mb-1">Generation Prompt</p>
+              <p className="text-caption-sm text-ink-muted uppercase tracking-wider mb-1">{t('viz.generationPrompt')}</p>
               <p className="text-body-sm text-ink-muted">{viz.prompt}</p>
             </CardContent>
           </Card>
@@ -268,7 +269,7 @@ export default function VisualizationDetailPage() {
                 }`}
               >
                 <MessageSquare className="h-4 w-4 inline mr-1.5" />
-                Comments
+                {t('viz.comments_tab')}
               </button>
               <button
                 onClick={() => setActiveTab('related')}
@@ -277,7 +278,7 @@ export default function VisualizationDetailPage() {
                 }`}
               >
                 <Layers className="h-4 w-4 inline mr-1.5" />
-                Related
+                {t('viz.related_tab')}
               </button>
             </div>
 

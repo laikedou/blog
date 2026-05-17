@@ -1,20 +1,21 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/navigation';
 import { Bell, CheckCheck, Trash2, ExternalLink, Loader2, Globe, Volume2, VolumeX } from 'lucide-react';
 import { useNotifications, CrawlNotification } from '@/lib/notification-context';
 
-function formatRelativeTime(iso: string): string {
+function formatRelativeTime(t: (key: string, opts?: any) => string, iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
   const sec = Math.floor(diff / 1000);
-  if (sec < 60) return 'just now';
+  if (sec < 60) return t('common.justNow');
   const min = Math.floor(sec / 60);
-  if (min < 60) return `${min}m ago`;
+  if (min < 60) return t('common.minutesAgo', { count: min });
   const hr = Math.floor(min / 60);
-  if (hr < 24) return `${hr}h ago`;
+  if (hr < 24) return t('common.hoursAgo', { count: hr });
   const day = Math.floor(hr / 24);
-  return `${day}d ago`;
+  return t('common.daysAgo', { count: day });
 }
 
 function NotificationIcon({ type }: { type: CrawlNotification['type'] }) {
@@ -38,6 +39,7 @@ function getBg(type: CrawlNotification['type'], read: boolean) {
 }
 
 export default function NotificationBell() {
+  const { t } = useTranslation();
   const { notifications, unreadCount, soundEnabled, toggleSound, markAllRead, clearAll } = useNotifications();
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -77,7 +79,7 @@ export default function NotificationBell() {
       <button
         onClick={() => setOpen(!open)}
         className="relative p-2 rounded-editorial-xs text-ink-soft hover:text-ink hover:bg-cream-300 transition-colors"
-        title="Notifications"
+        title={t('admin.notifications')}
       >
         <Bell className="h-5 w-5" />
         {unreadCount > 0 && (
@@ -92,16 +94,16 @@ export default function NotificationBell() {
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-cream-100">
             <h3 className="text-body-sm font-semibold text-ink">
-              Notifications
+              {t('admin.notifications')}
               {unreadCount > 0 && (
-                <span className="ml-2 text-caption-sm text-ink-muted font-normal">({unreadCount} unread)</span>
+                <span className="ml-2 text-caption-sm text-ink-muted font-normal">{t('admin.notificationsUnread', { count: unreadCount })}</span>
               )}
             </h3>
             <div className="flex items-center gap-1">
               <button
                 onClick={toggleSound}
                 className={`p-1.5 rounded-editorial-xs transition-colors ${soundEnabled ? 'text-ink-muted hover:text-ink hover:bg-cream-300' : 'text-ink-faint hover:text-ink-muted'}`}
-                title={soundEnabled ? 'Mute sound' : 'Enable sound'}
+                title={soundEnabled ? t('admin.muteSound') : t('admin.enableSound')}
               >
                 {soundEnabled ? <Volume2 className="h-3.5 w-3.5" /> : <VolumeX className="h-3.5 w-3.5" />}
               </button>
@@ -109,7 +111,7 @@ export default function NotificationBell() {
                 <button
                   onClick={markAllRead}
                   className="p-1.5 rounded-editorial-xs text-ink-muted hover:text-ink hover:bg-cream-300 transition-colors"
-                  title="Mark all as read"
+                  title={t('admin.markAllRead')}
                 >
                   <CheckCheck className="h-3.5 w-3.5" />
                 </button>
@@ -118,7 +120,7 @@ export default function NotificationBell() {
                 <button
                   onClick={clearAll}
                   className="p-1.5 rounded-editorial-xs text-ink-muted hover:text-clay hover:bg-clay-subtle/20 transition-colors"
-                  title="Clear all"
+                  title={t('admin.clearAll')}
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>
@@ -130,8 +132,8 @@ export default function NotificationBell() {
           {notifications.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-ink-muted">
               <Bell className="h-8 w-8 mb-2 opacity-30" />
-              <p className="text-body-sm">No notifications yet</p>
-              <p className="text-caption-sm">Crawl events will appear here</p>
+              <p className="text-body-sm">{t('admin.noNotifications')}</p>
+              <p className="text-caption-sm">{t('admin.notificationsDesc')}</p>
             </div>
           ) : (
             <div className="overflow-y-auto max-h-[440px]">
@@ -148,7 +150,7 @@ export default function NotificationBell() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-2">
                         <span className="text-body-sm font-medium text-ink truncate">{note.title}</span>
-                        <span className="text-micro text-ink-muted shrink-0">{formatRelativeTime(note.timestamp)}</span>
+                        <span className="text-micro text-ink-muted shrink-0">{formatRelativeTime(t, note.timestamp)}</span>
                       </div>
                       <p className="text-caption-sm text-ink-muted mt-0.5 line-clamp-2">{note.message}</p>
                     </div>
@@ -159,7 +161,7 @@ export default function NotificationBell() {
                 onClick={() => { setOpen(false); router.push('/admin/crawl'); }}
                 className="w-full text-center py-2.5 text-caption-sm text-teal hover:text-teal-light bg-cream-100 hover:bg-cream-300 transition-colors border-t border-border"
               >
-                <ExternalLink className="h-3 w-3 inline mr-1" />View Crawl Page
+                <ExternalLink className="h-3 w-3 inline mr-1" />{t('admin.viewCrawlPage')}
               </button>
             </div>
           )}

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { DM_Serif_Display, Sora } from 'next/font/google';
 import { AuthProvider } from '@/lib/auth';
+import { LanguageProvider } from '@/lib/i18n/LanguageProvider';
 import ChatBot from '@/components/ChatBot';
 import { CustomHeadInjector } from '@/components/CustomHeadInjector';
 import { SITE_CONFIG, websiteJsonLd, organizationJsonLd } from '@/lib/seo';
@@ -129,11 +130,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className="font-body">
         <AuthProvider>
-          <div className="min-h-screen flex flex-col">
-            {children}
-          </div>
-          <ChatBot />
-          <CustomHeadInjector />
+          <LanguageProvider>
+            <div className="min-h-screen flex flex-col">
+              {children}
+            </div>
+            <ChatBot />
+            <CustomHeadInjector />
+          </LanguageProvider>
         </AuthProvider>
       </body>
     </html>

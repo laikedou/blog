@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { seo as seoApi, posts as postsApi } from '@/lib/api';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,6 +15,7 @@ import { toast } from 'sonner';
 import { useConfirm } from '@/lib/confirm-dialog';
 
 export default function AdminSeoPage() {
+  const { t } = useTranslation();
   const { confirm } = useConfirm();
   const [dashboard, setDashboard] = useState<any>(null);
   const [keywords, setKeywords] = useState<any[]>([]);
@@ -98,15 +100,15 @@ export default function AdminSeoPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-8">
-        <h1 className="font-display text-display-md text-ink">SEO Dashboard</h1>
-        <Button variant="outline" onClick={fetchData}><RefreshCw className="h-4 w-4 mr-2" /> Refresh</Button>
+        <h1 className="font-display text-display-md text-ink">{t('admin.seoDashboard')}</h1>
+        <Button variant="outline" onClick={fetchData}><RefreshCw className="h-4 w-4 mr-2" /> {t('common.refresh')}</Button>
       </div>
 
       {/* Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <Card className="border-border">
           <CardHeader className="pb-2 flex flex-row items-center justify-between">
-            <CardTitle className="text-body-sm text-ink-muted font-normal">Avg SEO Score</CardTitle>
+            <CardTitle className="text-body-sm text-ink-muted font-normal">{t('admin.seoAvgScore')}</CardTitle>
             <BarChart3 className="h-5 w-5 text-clay opacity-60" />
           </CardHeader>
           <CardContent>
@@ -117,7 +119,7 @@ export default function AdminSeoPage() {
         </Card>
         <Card className="border-border">
           <CardHeader className="pb-2 flex flex-row items-center justify-between">
-            <CardTitle className="text-body-sm text-ink-muted font-normal">Tracked Keywords</CardTitle>
+            <CardTitle className="text-body-sm text-ink-muted font-normal">{t('admin.seoTrackedKeywords')}</CardTitle>
             <TrendingUp className="h-5 w-5 text-teal opacity-60" />
           </CardHeader>
           <CardContent>
@@ -126,7 +128,7 @@ export default function AdminSeoPage() {
         </Card>
         <Card className="border-border">
           <CardHeader className="pb-2 flex flex-row items-center justify-between">
-            <CardTitle className="text-body-sm text-ink-muted font-normal">Google Indexed</CardTitle>
+            <CardTitle className="text-body-sm text-ink-muted font-normal">{t('admin.seoGoogleIndexed')}</CardTitle>
             <Globe className="h-5 w-5 text-blue-500 opacity-60" />
           </CardHeader>
           <CardContent>
@@ -138,7 +140,7 @@ export default function AdminSeoPage() {
         </Card>
         <Card className="border-border">
           <CardHeader className="pb-2 flex flex-row items-center justify-between">
-            <CardTitle className="text-body-sm text-ink-muted font-normal">Baidu Indexed</CardTitle>
+            <CardTitle className="text-body-sm text-ink-muted font-normal">{t('admin.seoBaiduIndexed')}</CardTitle>
             <Search className="h-5 w-5 text-amber-500 opacity-60" />
           </CardHeader>
           <CardContent>
@@ -152,10 +154,10 @@ export default function AdminSeoPage() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList>
-          <TabsTrigger value="dashboard"><BarChart3 className="h-4 w-4 mr-2" />Dashboard</TabsTrigger>
-          <TabsTrigger value="keywords"><TrendingUp className="h-4 w-4 mr-2" />Keywords</TabsTrigger>
-          <TabsTrigger value="audit"><CheckCircle className="h-4 w-4 mr-2" />Audit</TabsTrigger>
-          <TabsTrigger value="index"><Globe className="h-4 w-4 mr-2" />Index Status</TabsTrigger>
+          <TabsTrigger value="dashboard"><BarChart3 className="h-4 w-4 mr-2" />{t('admin.seoTabDashboard')}</TabsTrigger>
+          <TabsTrigger value="keywords"><TrendingUp className="h-4 w-4 mr-2" />{t('admin.seoTabKeywords')}</TabsTrigger>
+          <TabsTrigger value="audit"><CheckCircle className="h-4 w-4 mr-2" />{t('admin.seoTabAudit')}</TabsTrigger>
+          <TabsTrigger value="index"><Globe className="h-4 w-4 mr-2" />{t('admin.seoTabIndex')}</TabsTrigger>
         </TabsList>
 
         {/* Dashboard Tab */}
@@ -164,7 +166,7 @@ export default function AdminSeoPage() {
             {/* Recent Audits */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-body-sm font-medium">Recent SEO Audits</CardTitle>
+                <CardTitle className="text-body-sm font-medium">{t('admin.seoRecentAudits')}</CardTitle>
               </CardHeader>
               <CardContent>
                 {dashboard?.recentAudits?.length > 0 ? (
@@ -182,7 +184,7 @@ export default function AdminSeoPage() {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-body-sm text-ink-muted text-center py-6">No audits yet. Run an audit from the Audit tab.</p>
+                  <p className="text-body-sm text-ink-muted text-center py-6">{t('admin.seoNoAudits')}</p>
                 )}
               </CardContent>
             </Card>
@@ -190,7 +192,7 @@ export default function AdminSeoPage() {
             {/* Click Stats */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-body-sm font-medium">Traffic Sources (30 days)</CardTitle>
+                <CardTitle className="text-body-sm font-medium">{t('admin.seoTrafficSources')}</CardTitle>
               </CardHeader>
               <CardContent>
                 {dashboard?.clickSources && Object.keys(dashboard.clickSources).length > 0 ? (
@@ -199,14 +201,14 @@ export default function AdminSeoPage() {
                       <div key={source} className="flex items-center justify-between p-3 bg-cream-200 rounded-editorial-sm">
                         <span className="text-body-sm text-ink font-medium capitalize">{source}</span>
                         <div className="text-right">
-                          <span className="text-body-sm text-ink">{data.clicks} clicks</span>
-                          <span className="text-caption-sm text-ink-muted ml-2">({data.impressions} impressions)</span>
+                          <span className="text-body-sm text-ink">{t('admin.seoClicks', { count: data.clicks })}</span>
+                          <span className="text-caption-sm text-ink-muted ml-2">({t('admin.seoImpressions', { count: data.impressions })})</span>
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-body-sm text-ink-muted text-center py-6">No click data yet.</p>
+                  <p className="text-body-sm text-ink-muted text-center py-6">{t('admin.seoNoClickData')}</p>
                 )}
               </CardContent>
             </Card>
@@ -217,19 +219,19 @@ export default function AdminSeoPage() {
         <TabsContent value="keywords">
           <Card className="mb-6">
             <CardHeader>
-              <CardTitle className="text-body-sm font-medium">Add Keyword</CardTitle>
+              <CardTitle className="text-body-sm font-medium">{t('admin.seoAddKeyword')}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex gap-2">
                 <Input
                   value={newKeyword}
                   onChange={e => setNewKeyword(e.target.value)}
-                  placeholder="Enter a keyword to track..."
+                  placeholder={t('admin.seoKeywordPlaceholder')}
                   onKeyDown={e => e.key === 'Enter' && handleAddKeyword()}
                   className="flex-1"
                 />
                 <Button onClick={handleAddKeyword} disabled={!newKeyword.trim()}>
-                  <Plus className="h-4 w-4 mr-2" /> Add
+                  <Plus className="h-4 w-4 mr-2" /> {t('admin.seoAdd')}
                 </Button>
               </div>
             </CardContent>
@@ -237,19 +239,19 @@ export default function AdminSeoPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-body-sm font-medium">Tracked Keywords</CardTitle>
+              <CardTitle className="text-body-sm font-medium">{t('admin.seoTrackedKeywordsTitle')}</CardTitle>
             </CardHeader>
             <CardContent>
               {keywords.length > 0 ? (
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Keyword</TableHead>
-                      <TableHead>Source</TableHead>
-                      <TableHead>Volume</TableHead>
-                      <TableHead>Difficulty</TableHead>
-                      <TableHead>Latest Ranking</TableHead>
-                      <TableHead>Actions</TableHead>
+                      <TableHead>{t('admin.seoKeyword')}</TableHead>
+                      <TableHead>{t('admin.seoSource')}</TableHead>
+                      <TableHead>{t('admin.seoVolume')}</TableHead>
+                      <TableHead>{t('admin.seoDifficulty')}</TableHead>
+                      <TableHead>{t('admin.seoLatestRanking')}</TableHead>
+                      <TableHead>{t('admin.seoActions')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -276,7 +278,7 @@ export default function AdminSeoPage() {
                                 #{latestRanking.position} ({latestRanking.source})
                               </Badge>
                             ) : (
-                              <span className="text-ink-muted text-body-sm">Not ranked</span>
+                              <span className="text-ink-muted text-body-sm">{t('admin.seoNotRanked')}</span>
                             )}
                           </TableCell>
                           <TableCell>
@@ -290,7 +292,7 @@ export default function AdminSeoPage() {
                   </TableBody>
                 </Table>
               ) : (
-                <p className="text-body-sm text-ink-muted text-center py-6">No keywords tracked yet. Add your first keyword above.</p>
+                <p className="text-body-sm text-ink-muted text-center py-6">{t('admin.seoNoKeywords')}</p>
               )}
             </CardContent>
           </Card>
@@ -300,25 +302,25 @@ export default function AdminSeoPage() {
         <TabsContent value="audit">
           <Card className="mb-6">
             <CardHeader>
-              <CardTitle className="text-body-sm font-medium">Run Post Audit</CardTitle>
+              <CardTitle className="text-body-sm font-medium">{t('admin.seoRunAudit')}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex gap-2 mb-4">
                 <Input
                   value={auditPostId}
                   onChange={e => setAuditPostId(e.target.value)}
-                  placeholder="Enter Post ID to audit..."
+                  placeholder={t('admin.seoAuditPlaceholder')}
                   className="flex-1"
                 />
                 <Button onClick={handleAuditPost} disabled={auditLoading}>
-                  {auditLoading ? 'Auditing...' : <><Search className="h-4 w-4 mr-2" /> Audit</>}
+                  {auditLoading ? t('admin.seoAuditing') : <><Search className="h-4 w-4 mr-2" /> {t('admin.seoAuditBtn')}</>}
                 </Button>
               </div>
 
               {auditResult && (
                 <div className="space-y-4 mt-6 p-4 bg-cream-200 rounded-editorial">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-body font-medium text-ink">Audit Results</h3>
+                    <h3 className="text-body font-medium text-ink">{t('admin.seoAuditResults')}</h3>
                     <span className={`font-display text-display-sm ${scoreColor(auditResult.score)}`}>
                       {auditResult.score}/100
                     </span>
@@ -327,23 +329,23 @@ export default function AdminSeoPage() {
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     <div className="bg-surface p-3 rounded-editorial-sm text-center">
                       <p className="text-display-sm text-ink">{auditResult.wordCount}</p>
-                      <p className="text-caption-sm text-ink-muted">Words</p>
+                      <p className="text-caption-sm text-ink-muted">{t('admin.seoWords')}</p>
                     </div>
                     <div className="bg-surface p-3 rounded-editorial-sm text-center">
                       <p className="text-display-sm text-ink">{Object.keys(auditResult.checks).length}</p>
-                      <p className="text-caption-sm text-ink-muted">Checks</p>
+                      <p className="text-caption-sm text-ink-muted">{t('admin.seoChecks')}</p>
                     </div>
                     <div className="bg-surface p-3 rounded-editorial-sm text-center">
                       <p className="text-display-sm text-green-600">
                         {Object.values(auditResult.checks).filter((c: any) => c.pass).length}
                       </p>
-                      <p className="text-caption-sm text-ink-muted">Passed</p>
+                      <p className="text-caption-sm text-ink-muted">{t('admin.seoPassed')}</p>
                     </div>
                     <div className="bg-surface p-3 rounded-editorial-sm text-center">
                       <p className="text-display-sm text-red-600">
                         {Object.values(auditResult.checks).filter((c: any) => !c.pass).length}
                       </p>
-                      <p className="text-caption-sm text-ink-muted">Failed</p>
+                      <p className="text-caption-sm text-ink-muted">{t('admin.seoFailed')}</p>
                     </div>
                   </div>
 
@@ -366,7 +368,7 @@ export default function AdminSeoPage() {
                   {auditResult.suggestions?.length > 0 && (
                     <div className="mt-4">
                       <h4 className="text-body-sm font-medium text-ink mb-2 flex items-center gap-1">
-                        <Lightbulb className="h-4 w-4 text-clay" /> Suggestions
+                        <Lightbulb className="h-4 w-4 text-clay" /> {t('admin.seoSuggestions')}
                       </h4>
                       <ul className="space-y-1">
                         {auditResult.suggestions.map((s: string, i: number) => (
@@ -387,18 +389,18 @@ export default function AdminSeoPage() {
         <TabsContent value="index">
           <Card>
             <CardHeader>
-              <CardTitle className="text-body-sm font-medium">Search Engine Index Status</CardTitle>
+              <CardTitle className="text-body-sm font-medium">{t('admin.seoIndexStatus')}</CardTitle>
             </CardHeader>
             <CardContent>
               {indexStatus.length > 0 ? (
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Page URL</TableHead>
-                      <TableHead>Google</TableHead>
-                      <TableHead>Baidu</TableHead>
-                      <TableHead>Last Checked</TableHead>
-                      <TableHead>Errors</TableHead>
+                      <TableHead>{t('admin.seoPageUrl')}</TableHead>
+                      <TableHead>{t('admin.seoGoogle')}</TableHead>
+                      <TableHead>{t('admin.seoBaidu')}</TableHead>
+                      <TableHead>{t('admin.seoLastChecked')}</TableHead>
+                      <TableHead>{t('admin.seoErrors')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -407,14 +409,14 @@ export default function AdminSeoPage() {
                         <TableCell className="font-mono text-body-sm">{item.pageUrl}</TableCell>
                         <TableCell>
                           {item.googleIndexed
-                            ? <Badge className="bg-green-100 text-green-700 border-green-300"><CheckCircle className="h-3 w-3 mr-1" /> Indexed</Badge>
-                            : <Badge variant="outline"><XCircle className="h-3 w-3 mr-1" /> Not Found</Badge>
+                            ? <Badge className="bg-green-100 text-green-700 border-green-300"><CheckCircle className="h-3 w-3 mr-1" /> {t('admin.seoIndexed')}</Badge>
+                            : <Badge variant="outline"><XCircle className="h-3 w-3 mr-1" /> {t('admin.seoNotFound')}</Badge>
                           }
                         </TableCell>
                         <TableCell>
                           {item.baiduIndexed
-                            ? <Badge className="bg-green-100 text-green-700 border-green-300"><CheckCircle className="h-3 w-3 mr-1" /> Indexed</Badge>
-                            : <Badge variant="outline"><AlertTriangle className="h-3 w-3 mr-1" /> Not Found</Badge>
+                            ? <Badge className="bg-green-100 text-green-700 border-green-300"><CheckCircle className="h-3 w-3 mr-1" /> {t('admin.seoIndexed')}</Badge>
+                            : <Badge variant="outline"><AlertTriangle className="h-3 w-3 mr-1" /> {t('admin.seoNotFound')}</Badge>
                           }
                         </TableCell>
                         <TableCell className="text-body-sm text-ink-muted">
@@ -427,7 +429,7 @@ export default function AdminSeoPage() {
                 </Table>
               ) : (
                 <p className="text-body-sm text-ink-muted text-center py-6">
-                  No index data yet. Submit your sitemap to Google Search Console and Baidu Webmaster Tools.
+                  {t('admin.seoNoIndexData')}
                 </p>
               )}
             </CardContent>

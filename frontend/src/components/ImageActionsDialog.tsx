@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ai as aiApi } from '@/lib/api';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -17,6 +18,7 @@ interface ImageActionsDialogProps {
 }
 
 export default function ImageActionsDialog({ open, onOpenChange, imageUrl, onReplace }: ImageActionsDialogProps) {
+  const { t } = useTranslation();
   const [showMediaPicker, setShowMediaPicker] = useState(false);
   const [aiPrompt, setAiPrompt] = useState('');
   const [generating, setGenerating] = useState(false);
@@ -29,7 +31,7 @@ export default function ImageActionsDialog({ open, onOpenChange, imageUrl, onRep
       onReplace(r.url);
       onOpenChange(false);
     } catch (err: any) {
-      toast.error(err.message || 'Failed to generate image');
+      toast.error(err.message || t('common.failedGenerateImage'));
     }
     setGenerating(false);
   };
@@ -40,7 +42,7 @@ export default function ImageActionsDialog({ open, onOpenChange, imageUrl, onRep
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Image className="h-5 w-5 text-clay" /> Image Actions
+              <Image className="h-5 w-5 text-clay" /> {t('common.imageActions')}
             </DialogTitle>
           </DialogHeader>
 
@@ -53,12 +55,12 @@ export default function ImageActionsDialog({ open, onOpenChange, imageUrl, onRep
             {/* Replace with AI */}
             <div className="space-y-2.5">
               <h4 className="text-body-sm font-medium text-ink flex items-center gap-2">
-                <Wand2 className="h-4 w-4 text-clay" /> Replace with AI
+                <Wand2 className="h-4 w-4 text-clay" /> {t('common.replaceWithAI')}
               </h4>
               <Input
                 value={aiPrompt}
                 onChange={e => setAiPrompt(e.target.value)}
-                placeholder="Describe the new image style..."
+                placeholder={t('common.describeNewImage')}
               />
               <Button
                 type="button"
@@ -67,9 +69,9 @@ export default function ImageActionsDialog({ open, onOpenChange, imageUrl, onRep
                 className="w-full"
               >
                 {generating ? (
-                  <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Generating...</>
+                  <><Loader2 className="h-4 w-4 animate-spin mr-2" /> {t('common.generating')}</>
                 ) : (
-                  <><Sparkles className="h-4 w-4 mr-2" /> Generate & Replace</>
+                  <><Sparkles className="h-4 w-4 mr-2" /> {t('common.generateAndReplace')}</>
                 )}
               </Button>
             </div>
@@ -77,7 +79,7 @@ export default function ImageActionsDialog({ open, onOpenChange, imageUrl, onRep
             {/* Divider */}
             <div className="flex items-center gap-3">
               <div className="flex-1 h-px bg-border" />
-              <span className="text-caption-sm text-ink-muted">OR</span>
+              <span className="text-caption-sm text-ink-muted">{t('common.or')}</span>
               <div className="flex-1 h-px bg-border" />
             </div>
 
@@ -88,7 +90,7 @@ export default function ImageActionsDialog({ open, onOpenChange, imageUrl, onRep
               onClick={() => setShowMediaPicker(true)}
               className="w-full"
             >
-              <Image className="h-4 w-4 mr-2" /> Choose from Media Library
+              <Image className="h-4 w-4 mr-2" /> {t('common.chooseFromLibrary')}
             </Button>
           </div>
         </DialogContent>

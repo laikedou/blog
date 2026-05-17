@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ai } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { Sparkles, Languages, RefreshCw, SpellCheck, Minimize2, Maximize2, Search, Tags, MessageSquare, ChevronRight, Loader2 } from 'lucide-react';
@@ -14,14 +15,15 @@ interface FloatingAIMenuProps {
 }
 
 const quickActions = [
-  { mode: 'polish', label: '润色', icon: Languages },
-  { mode: 'rewrite', label: '重写', icon: RefreshCw },
-  { mode: 'improve-grammar', label: '语法', icon: SpellCheck },
-  { mode: 'summarize', label: '摘要', icon: Minimize2 },
-  { mode: 'expand', label: '扩写', icon: Maximize2 },
+  { mode: 'polish', labelKey: 'common.polish', icon: Languages },
+  { mode: 'rewrite', labelKey: 'common.rewrite', icon: RefreshCw },
+  { mode: 'improve-grammar', labelKey: 'common.grammar', icon: SpellCheck },
+  { mode: 'summarize', labelKey: 'common.summarize', icon: Minimize2 },
+  { mode: 'expand', labelKey: 'common.expand', icon: Maximize2 },
 ] as const;
 
 export default function FloatingAIMenu({ onGenerate, currentContent, currentTitle, onOpenFullTools, style }: FloatingAIMenuProps) {
+  const { t } = useTranslation();
   const { isAuthenticated } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState<string | null>(null);
@@ -98,7 +100,7 @@ export default function FloatingAIMenu({ onGenerate, currentContent, currentTitl
           <div className="px-3.5 py-2.5 border-b border-border/60">
             <div className="flex items-center gap-2">
               <Sparkles className="h-3.5 w-3.5 text-clay" />
-              <span className="text-caption uppercase tracking-wider text-ink-muted">AI 快速操作</span>
+              <span className="text-caption uppercase tracking-wider text-ink-muted">{t('common.quickActions')}</span>
             </div>
           </div>
 
@@ -112,7 +114,7 @@ export default function FloatingAIMenu({ onGenerate, currentContent, currentTitl
           {/* Quick actions grid */}
           <div className="p-2.5">
             <div className="grid grid-cols-5 gap-1">
-              {quickActions.map(({ mode, label, icon: Icon }) => (
+              {quickActions.map(({ mode, labelKey, icon: Icon }) => (
                 <button
                   key={mode}
                   type="button"
@@ -129,7 +131,7 @@ export default function FloatingAIMenu({ onGenerate, currentContent, currentTitl
                     <Icon className="h-4 w-4 text-ink-soft group-hover/action:text-clay transition-colors" />
                   )}
                   <span className="text-[10px] font-medium text-ink-muted group-hover/action:text-ink-soft transition-colors whitespace-nowrap">
-                    {label}
+                    {t(labelKey)}
                   </span>
                 </button>
               ))}
@@ -150,7 +152,7 @@ export default function FloatingAIMenu({ onGenerate, currentContent, currentTitl
                 disabled:opacity-40 disabled:cursor-not-allowed text-body-sm text-ink-soft"
             >
               {loading === 'seo' ? <Loader2 className="h-4 w-4 text-clay animate-spin" /> : <Search className="h-4 w-4" />}
-              <span>SEO 优化</span>
+              <span>{t('common.seo')}</span>
             </button>
             <button
               type="button"
@@ -161,7 +163,7 @@ export default function FloatingAIMenu({ onGenerate, currentContent, currentTitl
                 disabled:opacity-40 disabled:cursor-not-allowed text-body-sm text-ink-soft"
             >
               {loading === 'tags' ? <Loader2 className="h-4 w-4 text-clay animate-spin" /> : <Tags className="h-4 w-4" />}
-              <span>智能标签</span>
+              <span>{t('common.tags')}</span>
             </button>
           </div>
 
@@ -179,7 +181,7 @@ export default function FloatingAIMenu({ onGenerate, currentContent, currentTitl
               >
                 <span className="flex items-center gap-2.5">
                   <MessageSquare className="h-4 w-4" />
-                  <span>打开完整 AI 工具</span>
+                  <span>{t('common.openFullTools')}</span>
                 </span>
                 <ChevronRight className="h-3.5 w-3.5 text-ink-muted" />
               </button>
@@ -198,7 +200,7 @@ export default function FloatingAIMenu({ onGenerate, currentContent, currentTitl
           hover:shadow-card-hover hover:bg-white
           transition-all duration-300 ease-out
           active:scale-95"
-        title="AI Tools"
+        title={t('common.aiTools')}
       >
         <Sparkles className="h-5 w-5 text-clay" />
         <span className="absolute inset-0 rounded-full ring-1 ring-clay/20 group-hover:ring-clay/40 transition-all duration-300" />

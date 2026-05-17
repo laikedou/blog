@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { logs as logsApi } from '@/lib/api';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -50,6 +51,7 @@ interface LogDetail {
 }
 
 export default function AdminLogsPage() {
+  const { t } = useTranslation();
   const { confirm } = useConfirm();
   const [logs, setLogs] = useState<LogDetail[]>([]);
   const [stats, setStats] = useState<any>(null);
@@ -116,15 +118,15 @@ export default function AdminLogsPage() {
 
   const handleClearLogs = async () => {
     const ok = await confirm({
-      title: 'Clear All Logs',
-      message: `Are you sure you want to delete all ${total} error logs? This action cannot be undone.`,
-      confirmLabel: 'Clear All',
+      title: t('admin.logsClearConfirmTitle'),
+      message: t('admin.logsClearConfirmMessage', { count: total }),
+      confirmLabel: t('admin.logsClearAll'),
       variant: 'destructive',
     });
     if (!ok) return;
     try {
       await logsApi.clear();
-      toast.success('All logs cleared');
+      toast.success(t('admin.logsCleared'));
       fetchData(1);
     } catch (err: any) { toast.error(err.message); }
   };
@@ -159,15 +161,15 @@ export default function AdminLogsPage() {
     <div>
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="font-display text-display-md text-ink">Error Logs</h1>
-          <p className="text-body-sm text-ink-muted mt-1">Monitor and debug API errors</p>
+          <h1 className="font-display text-display-md text-ink">{t('admin.logsTitle')}</h1>
+          <p className="text-body-sm text-ink-muted mt-1">{t('admin.logsDesc')}</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" onClick={() => fetchData(page)}>
-            <RefreshCw className="h-4 w-4 mr-2" /> Refresh
+            <RefreshCw className="h-4 w-4 mr-2" /> {t('common.refresh')}
           </Button>
           <Button variant="destructive" onClick={handleClearLogs} disabled={total === 0}>
-            <Trash2 className="h-4 w-4 mr-2" /> Clear All
+            <Trash2 className="h-4 w-4 mr-2" /> {t('admin.logsClearAll')}
           </Button>
         </div>
       </div>
@@ -176,7 +178,7 @@ export default function AdminLogsPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <Card className="border-border">
           <CardHeader className="pb-2 flex flex-row items-center justify-between">
-            <CardTitle className="text-body-sm text-ink-muted font-normal">Total Errors</CardTitle>
+            <CardTitle className="text-body-sm text-ink-muted font-normal">{t('admin.logsTotalErrors')}</CardTitle>
             <Bug className="h-5 w-5 text-red-500 opacity-60" />
           </CardHeader>
           <CardContent>
@@ -185,7 +187,7 @@ export default function AdminLogsPage() {
         </Card>
         <Card className="border-border">
           <CardHeader className="pb-2 flex flex-row items-center justify-between">
-            <CardTitle className="text-body-sm text-ink-muted font-normal">Today</CardTitle>
+            <CardTitle className="text-body-sm text-ink-muted font-normal">{t('admin.logsToday')}</CardTitle>
             <AlertTriangle className="h-5 w-5 text-orange-500 opacity-60" />
           </CardHeader>
           <CardContent>
@@ -194,7 +196,7 @@ export default function AdminLogsPage() {
         </Card>
         <Card className="border-border">
           <CardHeader className="pb-2 flex flex-row items-center justify-between">
-            <CardTitle className="text-body-sm text-ink-muted font-normal">Last 7 Days</CardTitle>
+            <CardTitle className="text-body-sm text-ink-muted font-normal">{t('admin.logsLast7Days')}</CardTitle>
             <TrendingUp className="h-5 w-5 text-clay opacity-60" />
           </CardHeader>
           <CardContent>
@@ -203,13 +205,13 @@ export default function AdminLogsPage() {
         </Card>
         <Card className="border-border">
           <CardHeader className="pb-2 flex flex-row items-center justify-between">
-            <CardTitle className="text-body-sm text-ink-muted font-normal">5xx Errors</CardTitle>
+            <CardTitle className="text-body-sm text-ink-muted font-normal">{t('admin.logsServerErrors')}</CardTitle>
             <BarChart3 className="h-5 w-5 text-red-600 opacity-60" />
           </CardHeader>
           <CardContent>
             <p className="font-display text-display-lg text-red-600">{overview.serverErrors ?? 0}</p>
             <p className="text-caption-sm text-ink-muted">
-              {overview.clientErrors ?? 0} client (4xx) errors
+              {t('admin.logsClientErrors', { count: overview.clientErrors ?? 0 })}
             </p>
           </CardContent>
         </Card>
@@ -217,8 +219,8 @@ export default function AdminLogsPage() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList>
-          <TabsTrigger value="logs"><Bug className="h-4 w-4 mr-2" />Logs</TabsTrigger>
-          <TabsTrigger value="charts"><BarChart3 className="h-4 w-4 mr-2" />Charts</TabsTrigger>
+          <TabsTrigger value="logs"><Bug className="h-4 w-4 mr-2" />{t('admin.logsTabLogs')}</TabsTrigger>
+          <TabsTrigger value="charts"><BarChart3 className="h-4 w-4 mr-2" />{t('admin.logsTabCharts')}</TabsTrigger>
         </TabsList>
 
         {/* Logs Tab */}
@@ -235,7 +237,7 @@ export default function AdminLogsPage() {
                         value={searchInput}
                         onChange={e => setSearchInput(e.target.value)}
                         onKeyDown={e => e.key === 'Enter' && handleSearch()}
-                        placeholder="Search error messages..."
+                        placeholder={t('admin.logsSearchPlaceholder')}
                         className="pl-9"
                       />
                     </div>
@@ -246,7 +248,7 @@ export default function AdminLogsPage() {
                     onChange={e => { setMethodFilter(e.target.value); handleFilterChange(); }}
                     className="h-9 rounded-editorial-sm border border-border bg-surface px-3 text-body-sm text-ink focus:outline-none focus:ring-2 focus:ring-clay"
                   >
-                    <option value="">All Methods</option>
+                    <option value="">{t('admin.logsAllMethods')}</option>
                     <option value="GET">GET</option>
                     <option value="POST">POST</option>
                     <option value="PUT">PUT</option>
@@ -259,7 +261,7 @@ export default function AdminLogsPage() {
                     onChange={e => { setStatusFilter(e.target.value); handleFilterChange(); }}
                     className="h-9 rounded-editorial-sm border border-border bg-surface px-3 text-body-sm text-ink focus:outline-none focus:ring-2 focus:ring-clay"
                   >
-                    <option value="">All Status</option>
+                    <option value="">{t('admin.logsAllStatus')}</option>
                     <option value="400">400 Bad Request</option>
                     <option value="401">401 Unauthorized</option>
                     <option value="403">403 Forbidden</option>
@@ -270,11 +272,11 @@ export default function AdminLogsPage() {
                     <option value="500">500 Server Error</option>
                   </select>
                   <Button variant="outline" size="sm" onClick={() => { setSearchInput(''); setSearchQuery(''); setMethodFilter(''); setStatusFilter(''); setPage(1); fetchData(1); }}>
-                    <X className="h-3 w-3 mr-1" /> Clear
+                    <X className="h-3 w-3 mr-1" /> {t('common.clear')}
                   </Button>
                 </div>
                 <div className="text-body-sm text-ink-muted">
-                  {total} error{total !== 1 ? 's' : ''} found
+                  {t('admin.logsErrorsFound', { count: total })}
                 </div>
               </div>
             </CardHeader>
@@ -282,15 +284,15 @@ export default function AdminLogsPage() {
               {error ? (
                 <div className="text-center py-12">
                   <AlertTriangle className="h-8 w-8 text-red-400 mx-auto mb-3" />
-                  <p className="text-body-sm text-ink-muted">Failed to load logs: {error}</p>
+                  <p className="text-body-sm text-ink-muted">{t('admin.logsFailedLoad', { error })}</p>
                   <Button variant="outline" onClick={() => fetchData(page)} className="mt-4">
-                    <RefreshCw className="h-4 w-4 mr-2" /> Retry
+                    <RefreshCw className="h-4 w-4 mr-2" /> {t('common.retry')}
                   </Button>
                 </div>
               ) : logs.length === 0 ? (
                 <div className="text-center py-12">
                   <Bug className="h-8 w-8 text-ink-muted mx-auto mb-3" />
-                  <p className="text-body-sm text-ink-muted">No errors found{searchQuery || methodFilter || statusFilter ? ' matching your filters' : ' — everything looks good!'}</p>
+                  <p className="text-body-sm text-ink-muted">{t('admin.logsNoErrors', { hasFilters: searchQuery || methodFilter || statusFilter ? 1 : 0 })}</p>
                 </div>
               ) : (
                 <>
@@ -298,13 +300,13 @@ export default function AdminLogsPage() {
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead className="w-16">ID</TableHead>
-                          <TableHead className="w-20">Method</TableHead>
-                          <TableHead className="w-20">Status</TableHead>
-                          <TableHead>URL</TableHead>
-                          <TableHead>Message</TableHead>
-                          <TableHead className="w-40">Time</TableHead>
-                          <TableHead className="w-16">Actions</TableHead>
+                          <TableHead className="w-16">{t('admin.logsId')}</TableHead>
+                          <TableHead className="w-20">{t('admin.logsMethod')}</TableHead>
+                          <TableHead className="w-20">{t('admin.logsStatus')}</TableHead>
+                          <TableHead>{t('admin.logsUrl')}</TableHead>
+                          <TableHead>{t('admin.logsMessage')}</TableHead>
+                          <TableHead className="w-40">{t('admin.logsTime')}</TableHead>
+                          <TableHead className="w-16">{t('admin.logsActions')}</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -337,7 +339,7 @@ export default function AdminLogsPage() {
                   {totalPages > 1 && (
                     <div className="flex items-center justify-between pt-4 border-t border-border mt-4">
                       <p className="text-caption-sm text-ink-muted">
-                        Page {page} of {totalPages} ({total} total)
+                        {t('admin.logsPageOfTotal', { page, totalPages, total })}
                       </p>
                       <div className="flex gap-1">
                         <Button
@@ -346,7 +348,7 @@ export default function AdminLogsPage() {
                           disabled={page <= 1}
                           onClick={() => fetchData(page - 1)}
                         >
-                          <ChevronLeft className="h-4 w-4 mr-1" /> Prev
+                          <ChevronLeft className="h-4 w-4 mr-1" /> {t('common.prev')}
                         </Button>
                         <Button
                           variant="outline"
@@ -354,7 +356,7 @@ export default function AdminLogsPage() {
                           disabled={page >= totalPages}
                           onClick={() => fetchData(page + 1)}
                         >
-                          Next <ChevronRight className="h-4 w-4 ml-1" />
+                          {t('common.next')} <ChevronRight className="h-4 w-4 ml-1" />
                         </Button>
                       </div>
                     </div>
@@ -463,7 +465,7 @@ export default function AdminLogsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setSelectedLog(null)}>
           <div className="bg-surface rounded-editorial border border-border shadow-card-lg w-full max-w-2xl max-h-[80vh] overflow-y-auto mx-4" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between p-5 border-b border-border">
-              <h2 className="font-display text-display-sm text-ink">Error Detail #{selectedLog.id}</h2>
+              <h2 className="font-display text-display-sm text-ink">{t('admin.logsErrorDetail', { id: selectedLog.id })}</h2>
               <Button variant="ghost" size="sm" onClick={() => setSelectedLog(null)}>
                 <X className="h-4 w-4" />
               </Button>
@@ -471,35 +473,35 @@ export default function AdminLogsPage() {
             <div className="p-5 space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <span className="text-caption-sm text-ink-muted block">Method</span>
+                  <span className="text-caption-sm text-ink-muted block">{t('admin.logsMethod')}</span>
                   <MethodBadge method={selectedLog.method} />
                 </div>
                 <div>
-                  <span className="text-caption-sm text-ink-muted block">Status</span>
+                  <span className="text-caption-sm text-ink-muted block">{t('admin.logsStatus')}</span>
                   <StatusBadge code={selectedLog.statusCode} />
                 </div>
                 <div className="col-span-2">
-                  <span className="text-caption-sm text-ink-muted block">URL</span>
+                  <span className="text-caption-sm text-ink-muted block">{t('admin.logsUrl')}</span>
                   <p className="text-body-sm font-mono text-ink break-all">{selectedLog.url}</p>
                 </div>
                 <div className="col-span-2">
-                  <span className="text-caption-sm text-ink-muted block">Message</span>
+                  <span className="text-caption-sm text-ink-muted block">{t('admin.logsMessage')}</span>
                   <p className="text-body-sm text-ink break-all">{selectedLog.message}</p>
                 </div>
                 <div className="col-span-2">
-                  <span className="text-caption-sm text-ink-muted block">Time</span>
+                  <span className="text-caption-sm text-ink-muted block">{t('admin.logsTime')}</span>
                   <p className="text-body-sm text-ink">{formatDate(selectedLog.createdAt)}</p>
                 </div>
                 {selectedLog.userId && (
                   <div className="col-span-2">
-                    <span className="text-caption-sm text-ink-muted block">User ID</span>
+                    <span className="text-caption-sm text-ink-muted block">{t('admin.logsUserId')}</span>
                     <p className="text-body-sm text-ink">{selectedLog.userId}</p>
                   </div>
                 )}
               </div>
               {selectedLog.body && selectedLog.body !== '{}' && (
                 <div>
-                  <span className="text-caption-sm text-ink-muted block mb-1">Request Body</span>
+                  <span className="text-caption-sm text-ink-muted block mb-1">{t('admin.logsRequestBody')}</span>
                   <pre className="bg-cream-200 rounded-editorial-sm p-3 text-caption-sm font-mono text-ink overflow-x-auto max-h-40">
                     {(() => {
                       try { return JSON.stringify(JSON.parse(selectedLog.body), null, 2); }
@@ -510,7 +512,7 @@ export default function AdminLogsPage() {
               )}
               {selectedLog.stack && (
                 <div>
-                  <span className="text-caption-sm text-ink-muted block mb-1">Stack Trace</span>
+                  <span className="text-caption-sm text-ink-muted block mb-1">{t('admin.logsStackTrace')}</span>
                   <pre className="bg-cream-200 rounded-editorial-sm p-3 text-caption-sm font-mono text-ink overflow-x-auto max-h-60 whitespace-pre-wrap">
                     {selectedLog.stack}
                   </pre>

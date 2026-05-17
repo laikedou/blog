@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useTranslation } from 'react-i18next';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useAuth } from '@/lib/auth';
@@ -16,6 +17,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const { t } = useTranslation();
   const { login } = useAuth();
   const router = useRouter();
 
@@ -23,7 +25,7 @@ export default function LoginPage() {
     e.preventDefault();
     setError(''); setLoading(true);
     try { await login(username, password); router.push('/admin'); }
-    catch (err: any) { setError(err.message || 'Login failed'); }
+    catch (err: any) { setError(err.message || t('errors.generic')); }
     setLoading(false);
   };
 
@@ -34,30 +36,30 @@ export default function LoginPage() {
         <div className="w-full max-w-md">
           <Card className="shadow-elevated">
             <CardHeader className="text-center">
-              <CardTitle className="font-display text-display-md">Welcome back</CardTitle>
-              <CardDescription>Sign in to your account</CardDescription>
+              <CardTitle className="font-display text-display-md">{t('auth.login')}</CardTitle>
+              <CardDescription>{t('auth.login')}</CardDescription>
             </CardHeader>
             <CardContent>
               {error && <div className="bg-clay-subtle text-clay text-body-sm rounded-editorial-sm p-3 mb-4 border border-clay/20">{error}</div>}
               <form onSubmit={handleSubmit} className="space-y-5">
                 <div className="space-y-2">
-                  <Label htmlFor="username" className="text-body-sm text-ink-soft">Username</Label>
-                  <Input id="username" value={username} onChange={e => setUsername(e.target.value)} placeholder="Enter your username" required />
+                  <Label htmlFor="username" className="text-body-sm text-ink-soft">{t('auth.username')}</Label>
+                  <Input id="username" value={username} onChange={e => setUsername(e.target.value)} placeholder={t('auth.username')} required />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="password" className="text-body-sm text-ink-soft">Password</Label>
-                  <Input id="password" type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Enter your password" required />
+                  <Label htmlFor="password" className="text-body-sm text-ink-soft">{t('auth.password')}</Label>
+                  <Input id="password" type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder={t('auth.password')} required />
                 </div>
                 <Button type="submit" disabled={loading} className="w-full">
-                  {loading ? 'Signing in...' : 'Sign in'}
+                  {loading ? t('auth.loggingIn') : t('auth.login')}
                 </Button>
               </form>
             </CardContent>
             <CardFooter className="flex-col gap-5">
               <div className="divider-wave" />
               <p className="text-body-sm text-ink-muted">
-                Don&apos;t have an account?{' '}
-                <Link href="/register" className="text-clay hover:text-clay-dark font-medium">Register</Link>
+                {t('auth.noAccount')}{' '}
+                <Link href="/register" className="text-clay hover:text-clay-dark font-medium">{t('auth.register')}</Link>
               </p>
               <div className="w-full p-4 bg-cream-200 rounded-editorial-sm text-body-sm text-ink-muted space-y-1">
                 <p className="font-medium text-ink-soft">Demo accounts:</p>

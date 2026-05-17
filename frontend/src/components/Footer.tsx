@@ -2,22 +2,24 @@
 
 import Link from 'next/link';
 import { useSiteConfig } from '@/lib/use-site-config';
-
-const CATEGORIES = [
-  { href: '/category/technology', label: 'Technology' },
-  { href: '/category/programming', label: 'Programming' },
-  { href: '/category/design', label: 'Design' },
-  { href: '/category/ai', label: 'AI &amp; ML' },
-];
+import { useTranslation } from 'react-i18next';
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
   const { config } = useSiteConfig();
+  const { t } = useTranslation();
 
   const siteTitle = config.siteTitle || 'AI Blog';
-  const description = config.siteDescription || 'A modern personal blog platform powered by AI. Write smarter, publish faster.';
-  const footerText = config.footerText || 'Built with Next.js &amp; NestJS.';
-  const copyrightText = config.copyrightText || `&copy; ${currentYear} ${siteTitle}. All rights reserved.`;
+  const description = config.siteDescription || t('footer.description');
+  const footerText = config.footerText || t('common.poweredBy');
+  const copyrightText = config.copyrightText || `&copy; ${currentYear} ${siteTitle}. ${t('common.allRightsReserved')}.`;
+
+  const CATEGORIES = [
+    { href: '/category/technology', label: t('footer.technology') },
+    { href: '/category/programming', label: t('footer.programming') },
+    { href: '/category/design', label: t('footer.design') },
+    { href: '/category/ai', label: t('footer.aiMl') },
+  ];
 
   let socialLinks: Record<string, string> = {};
   try {
@@ -50,16 +52,16 @@ export default function Footer() {
               </div>
             )}
           </div>
-          <nav aria-label="Quick links">
-            <h3 className="text-caption text-ink tracking-wider uppercase mb-4">Quick Links</h3>
+          <nav aria-label={t('footer.quickLinks')}>
+            <h3 className="text-caption text-ink tracking-wider uppercase mb-4">{t('footer.quickLinks')}</h3>
             <ul className="space-y-2.5">
-              <li><Link href="/" className="text-body text-ink-soft hover:text-clay transition-colors">Home</Link></li>
-              <li><Link href="/login" className="text-body text-ink-soft hover:text-clay transition-colors">Sign In</Link></li>
-              <li><Link href="/register" className="text-body text-ink-soft hover:text-clay transition-colors">Register</Link></li>
+              <li><Link href="/" className="text-body text-ink-soft hover:text-clay transition-colors">{t('footer.home')}</Link></li>
+              <li><Link href="/login" className="text-body text-ink-soft hover:text-clay transition-colors">{t('footer.signIn')}</Link></li>
+              <li><Link href="/register" className="text-body text-ink-soft hover:text-clay transition-colors">{t('footer.register')}</Link></li>
             </ul>
           </nav>
-          <nav aria-label="Categories">
-            <h3 className="text-caption text-ink tracking-wider uppercase mb-4">Categories</h3>
+          <nav aria-label={t('footer.categories')}>
+            <h3 className="text-caption text-ink tracking-wider uppercase mb-4">{t('footer.categories')}</h3>
             <ul className="space-y-2.5">
               {CATEGORIES.map(cat => (
                 <li key={cat.href}>
@@ -70,11 +72,11 @@ export default function Footer() {
               ))}
             </ul>
           </nav>
-          <nav aria-label="Support">
-            <h3 className="text-caption text-ink tracking-wider uppercase mb-4">Support</h3>
+          <nav aria-label={t('footer.support')}>
+            <h3 className="text-caption text-ink tracking-wider uppercase mb-4">{t('footer.support')}</h3>
             <ul className="space-y-2.5">
-              <li><Link href="/privacy-policy" className="text-body text-ink-soft hover:text-clay transition-colors">Privacy Policy</Link></li>
-              <li><Link href="/terms-of-use" className="text-body text-ink-soft hover:text-clay transition-colors">Terms of Use</Link></li>
+              <li><Link href="/privacy-policy" className="text-body text-ink-soft hover:text-clay transition-colors">{t('footer.privacyPolicy')}</Link></li>
+              <li><Link href="/terms-of-use" className="text-body text-ink-soft hover:text-clay transition-colors">{t('footer.termsOfUse')}</Link></li>
             </ul>
           </nav>
         </div>

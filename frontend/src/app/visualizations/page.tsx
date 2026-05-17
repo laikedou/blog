@@ -7,11 +7,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
+import { useTranslation } from 'react-i18next';
 import { Search, BarChart3, BookOpen, Atom, Play, Clock, User, Eye } from 'lucide-react';
 
 export default function PublicVisualizationsPage() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [subject, setSubject] = useState<string>('');
 
@@ -34,11 +36,8 @@ export default function PublicVisualizationsPage() {
       {/* Hero */}
       <div className="bg-surface-tile text-white py-section">
         <div className="max-w-grid mx-auto px-6">
-          <h1 className="font-display text-display-xl mb-4">Interactive Learning</h1>
-          <p className="text-lead text-white/60 max-w-reading">
-            Explore math and physics concepts through AI-generated interactive visualizations.
-            Learn by seeing, touching, and experimenting.
-          </p>
+          <h1 className="font-display text-display-xl mb-4">{t('viz.interactiveLearning')}</h1>
+          <p className="text-lead text-white/60 max-w-reading">{t('viz.subtitle')}</p>
 
           {/* Search & filter */}
           <div className="flex flex-wrap items-center gap-3 mt-8">
@@ -47,15 +46,15 @@ export default function PublicVisualizationsPage() {
               <Input
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                placeholder="Search visualizations..."
+                placeholder={t('viz.searchPlaceholder')}
                 className="pl-9 bg-white/10 border-white/20 text-white placeholder:text-white/40"
               />
             </div>
             <div className="flex gap-2">
               {[
-                { value: '', label: 'All' },
-                { value: 'math', label: '📐 Math' },
-                { value: 'physics', label: '⚛️ Physics' },
+                { value: '', label: t('viz.allSubjects') },
+                { value: 'math', label: `📐 ${t('viz.mathematics')}` },
+                { value: 'physics', label: `⚛️ ${t('viz.physicsLabel')}` },
               ].map(s => (
                 <button
                   key={s.value}
@@ -85,8 +84,8 @@ export default function PublicVisualizationsPage() {
         ) : data?.data?.length === 0 ? (
           <div className="text-center py-20">
             <BarChart3 className="h-16 w-16 mx-auto mb-4 text-ink-faint" />
-            <h2 className="font-display text-display-md text-ink mb-2">No visualizations yet</h2>
-            <p className="text-body text-ink-muted">Check back soon for interactive learning content.</p>
+            <h2 className="font-display text-display-md text-ink mb-2">{t('viz.noViz')}</h2>
+            <p className="text-body text-ink-muted">{t('viz.noVizDesc')}</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -112,14 +111,14 @@ export default function PublicVisualizationsPage() {
                     )}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
                       <span className="text-white text-body-sm font-medium flex items-center gap-1">
-                        <Play className="h-4 w-4" /> View & Interact
+                        <Play className="h-4 w-4" /> {t('viz.viewInteract')}
                       </span>
                     </div>
                   </div>
                   <CardContent className="p-5">
                     <div className="flex items-center gap-2 mb-2">
                       <span className="text-caption-sm font-medium px-2 py-0.5 rounded-pill bg-cream-300 text-ink-muted">
-                        {viz.subject === 'math' ? '📐 Math' : '⚛️ Physics'}
+                        {viz.subject === 'math' ? `📐 ${t('viz.mathematics')}` : `⚛️ ${t('viz.physicsLabel')}`}
                       </span>
                     </div>
                     <h3 className="font-display text-display-sm text-ink group-hover:text-clay transition-colors line-clamp-2">

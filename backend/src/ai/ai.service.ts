@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { GeneratePostDto, EnhanceContentDto, GenerateSeoDto, SuggestTagsDto, AiImagePromptDto } from './dto/ai.dto';
 import { AiUsageService } from '../ai-usage/ai-usage.service';
+import { getLanguageInstruction, SupportedLocale } from '../common/language.helper';
 
 @Injectable()
 export class AiService {
@@ -152,11 +153,11 @@ export class AiService {
   }
 
   async generatePost(dto: GeneratePostDto, userId?: number): Promise<any> {
+    const langInstruction = getLanguageInstruction(dto.language as SupportedLocale);
     const systemPrompt = `You are a professional blog writer. Generate a complete blog post in HTML format.
 Return ONLY a JSON object with these exact fields: title, slug, content (full HTML), excerpt (1-2 sentences).
 Content must be well-structured with h2, h3, p, ul/li tags.
-Style: ${dto.style || 'professional'}. Target: ~${dto.wordCount || 800} words. No markdown, only JSON.
-CRITICAL: Generate the post in the SAME language as the topic. If the topic is Chinese, write in Chinese. Never translate.`;
+Style: ${dto.style || 'professional'}. Target: ~${dto.wordCount || 800} words. No markdown, only JSON.${langInstruction}`;
 
     const userMessage = `Topic: ${dto.topic}${dto.keywords ? '\nKeywords: ' + dto.keywords.join(', ') : ''}`;
 
@@ -175,25 +176,30 @@ CRITICAL: Generate the post in the SAME language as the topic. If the topic is C
   }
 
   async enhanceContent(dto: EnhanceContentDto, userId?: number): Promise<any> {
+    const langClause = dto.language
+      ? 'CRITICAL: Output all content in the specified language.'
+      : 'CRITICAL: Preserve the original language — do not translate.';
+    const langInstruction = getLanguageInstruction(dto.language as SupportedLocale);
     const instructions: Record<string, string> = {
-      'improve-grammar': 'Fix grammar, spelling, and improve readability. Preserve original meaning and HTML structure. CRITICAL: Preserve the original language — do not translate.',
-      'summarize': 'Summarize to ~1/3 length while keeping key points. Preserve HTML structure. CRITICAL: Preserve the original language — do not translate.',
-      'expand': 'Expand with more details, examples, and explanations. Preserve HTML structure. CRITICAL: Preserve the original language — do not translate.',
-      'polish': 'Polish the writing style: improve sentence flow, word choice, and readability while preserving the original meaning and HTML structure. Make the language more natural and engaging. Maintain the original length. CRITICAL: Preserve the original language — if the text is Chinese, keep it Chinese; if English, keep it English. Never translate.',
-      'rewrite': 'Rewrite the entire article to significantly improve quality, clarity, and engagement. Maintain the original meaning and factual accuracy. Improve sentence flow, readability, and word choice. Adapt the tone to be professional yet approachable. Preserve ALL HTML tags exactly. Keep the same approximate length. CRITICAL: Preserve the original language — if the text is Chinese, keep it Chinese; if English, keep it English. Never translate.',
+      'improve-grammar': `Fix grammar, spelling, and improve readability. Preserve original meaning and HTML structure. ${langClause}`,
+      'summarize': `Summarize to ~1/3 length while keeping key points. Preserve HTML structure. ${langClause}`,
+      'expand': `Expand with more details, examples, and explanations. Preserve HTML structure. ${langClause}`,
+      'polish': `Polish the writing style: improve sentence flow, word choice, and readability while preserving the original meaning and HTML structure. Make the language more natural and engaging. Maintain the original length. ${langClause}`,
+      'rewrite': `Rewrite the entire article to significantly improve quality, clarity, and engagement. Maintain the original meaning and factual accuracy. Improve sentence flow, readability, and word choice. Adapt the tone to be professional yet approachable. Preserve ALL HTML tags exactly. Keep the same approximate length. ${langClause}`,
     };
     const mode = dto.mode || 'improve-grammar';
     const systemPrompt = `You are a professional blog editor and writing assistant. ${instructions[mode] || instructions['improve-grammar']}
-Return only the processed HTML content, no markdown, no code fences.`;
+Return only the processed HTML content, no markdown, no code fences.${langInstruction}`;
 
     const result = await this.callDeepSeek(systemPrompt, `Content to ${mode}:\n\n${dto.content}`, mode === 'rewrite' || mode === 'polish' ? 6000 : 4000, 'enhanceContent', userId);
     return { enhancedContent: result };
   }
 
   async generateSeo(dto: GenerateSeoDto, userId?: number): Promise<any> {
+    const langInstruction = getLanguageInstruction(dto.language as SupportedLocale);
     const systemPrompt = `You are an SEO expert. Generate SEO metadata for a blog post.
 Return ONLY valid JSON: { "seoTitle": "under 60 chars", "seoDescription": "under 160 chars", "slug": "url-friendly-string" }
-CRITICAL: Match the language of the content. If the content is in Chinese, generate Chinese SEO metadata. Never translate.`;
+CRITICAL: Match the language of the content.${langInstruction}`;
 
     const content = (dto.content || '').replace(/<[^>]*>/g, '').substring(0, 1000);
     const result = await this.callDeepSeek(systemPrompt, `Title: ${dto.title}\n\nContent: ${content}`, 2000, 'generateSeo', userId);
@@ -223,9 +229,10 @@ Return ONLY valid JSON: { "tags": ["tag1","tag2",...] (${max} tags), "category":
   }
 
   async generateImagePrompt(dto: AiImagePromptDto, userId?: number): Promise<any> {
+    const langInstruction = getLanguageInstruction(dto.language as SupportedLocale);
     const systemPrompt = `You generate image search queries for blog post featured images.
 Return ONLY valid JSON: { "imagePrompt": "search query", "keywords": ["keyword1","keyword2"] }
-CRITICAL: Match the language of the content. If the content is in Chinese, generate Chinese image prompts. Never translate.`;
+CRITICAL: Match the language of the content.${langInstruction}`;
 
     const result = await this.callDeepSeek(systemPrompt, dto.postContent.replace(/<[^>]*>/g, '').substring(0, 800), 2000, 'generateImagePrompt', userId);
     try {
