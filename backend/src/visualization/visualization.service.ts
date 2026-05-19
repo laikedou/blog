@@ -1,7 +1,13 @@
 import { Injectable, InternalServerErrorException, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
+import * as fs from 'fs';
+import * as path from 'path';
 import { PrismaService } from '../common/prisma.service';
 import { CloudflareAiService } from '../common/cloudflare-ai.service';
+import { NotificationsGateway } from '../common/notifications.gateway';
+import { heuristicSpamCheck, aiSpamCheck } from '../common/spam-checker';
 import { VisualizationAiService } from './visualization-ai.service';
+import { AzureTtsService } from './azure-tts.service';
+import { EdgeTtsService } from './edge-tts.service';
 import {
   CreateVisualizationDto,
   UpdateVisualizationDto,
@@ -20,6 +26,9 @@ export class VisualizationService {
     private prisma: PrismaService,
     private ai: VisualizationAiService,
     private cloudflareAi: CloudflareAiService,
+    private notifications: NotificationsGateway,
+    private azureTts: AzureTtsService,
+    private edgeTts: EdgeTtsService,
   ) {}
 
   async generate(dto: GenerateVisualizationDto, authorId: number) {
@@ -82,13 +91,13 @@ export class VisualizationService {
     return this.prisma.visualization.findUniqueOrThrow({ where: { id } });
   }
 
-  async generateMetadata(id: number, authorId: number) {
+  async generateMetadata(id: number, authorId: number, language?: string) {
     const viz = await this.prisma.visualization.findFirst({
       where: { id, authorId },
     });
     if (!viz) throw new NotFoundException('Visualization not found');
 
-    const metadata = await this.ai.generateMetadata(viz.prompt, viz.subject);
+    const metadata = await this.ai.generateMetadata(viz.title, viz.subject, undefined, undefined, language);
     const updated = await this.prisma.visualization.update({
       where: { id },
       data: {
@@ -104,13 +113,60 @@ export class VisualizationService {
     };
   }
 
+  async getVizForMetadataStream(id: number, authorId: number) {
+    const viz = await this.prisma.visualization.findFirst({
+      where: { id, authorId },
+    });
+    if (!viz) throw new NotFoundException('Visualization not found');
+    return { title: viz.title, subject: viz.subject };
+  }
+
+  async getVizForRefineStream(id: number, authorId: number) {
+    const viz = await this.prisma.visualization.findFirst({
+      where: { id, authorId },
+    });
+    if (!viz) throw new NotFoundException('Visualization not found');
+    return { htmlContent: viz.htmlContent };
+  }
+
+  async saveMetadata(id: number, data: { introduction: string; detailedExplanation: string; knowledgeSummary: string }) {
+    await this.prisma.visualization.update({
+      where: { id },
+      data,
+    });
+  }
+
+  async updateAfterRefineStream(id: number, code: string, feedback: string) {
+    const viz = await this.prisma.visualization.findUnique({ where: { id } });
+    if (!viz) throw new NotFoundException('Visualization not found');
+
+    const newVersion = viz.version + 1;
+
+    await this.prisma.visualization.update({
+      where: { id },
+      data: { htmlContent: code, version: newVersion },
+    });
+
+    await this.prisma.visualizationVersion.create({
+      data: {
+        visualizationId: id,
+        htmlContent: code,
+        prompt: feedback,
+        version: newVersion,
+        changeNote: feedback.slice(0, 200),
+      },
+    });
+
+    return { id, version: newVersion, htmlContent: code };
+  }
+
   async refine(dto: RefineVisualizationDto, authorId: number) {
     const viz = await this.prisma.visualization.findFirst({
       where: { id: dto.visualizationId, authorId },
     });
     if (!viz) throw new NotFoundException('Visualization not found');
 
-    const result = await this.ai.refine(viz.htmlContent, dto.feedback);
+    const result = await this.ai.refine(viz.htmlContent, dto.feedback, undefined, undefined, dto.language);
 
     const newVersion = viz.version + 1;
 
@@ -143,7 +199,7 @@ export class VisualizationService {
 
     // Use the dedicated fixError path — minimal prompt, no style/quality guidelines,
     // so the AI only touches what's broken and leaves everything else intact.
-    const result = await this.ai.fixError(viz.htmlContent, dto.error);
+    const result = await this.ai.fixError(viz.htmlContent, dto.error, undefined, undefined, dto.language);
 
     const newVersion = viz.version + 1;
 
@@ -212,12 +268,15 @@ export class VisualizationService {
       ];
     }
 
+    const sortBy = query.sortBy || 'createdAt';
+    const sortOrder = query.sortOrder || 'desc';
+
     const [data, total] = await Promise.all([
       this.prisma.visualization.findMany({
         where,
         skip,
         take: limit,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { [sortBy]: sortOrder },
         include: { author: { select: { id: true, username: true, displayName: true } } },
       }),
       this.prisma.visualization.count({ where }),
@@ -240,6 +299,35 @@ export class VisualizationService {
     });
     if (!viz) throw new NotFoundException('Visualization not found');
     return viz;
+  }
+
+  async forkVisualization(id: number, authorId: number) {
+    const source = await this.findOne(id);
+
+    const forked = await this.prisma.visualization.create({
+      data: {
+        title: `${source.title} (fork)`,
+        subject: source.subject,
+        description: source.description,
+        htmlContent: source.htmlContent,
+        introduction: source.introduction,
+        detailedExplanation: source.detailedExplanation,
+        knowledgeSummary: source.knowledgeSummary,
+        authorId,
+        status: 'draft',
+      },
+    });
+
+    await this.prisma.visualizationVersion.create({
+      data: {
+        visualizationId: forked.id,
+        version: 1,
+        htmlContent: source.htmlContent,
+        changeNote: `Forked from "${source.title}" by ${source.author.displayName}`,
+      },
+    });
+
+    return forked;
   }
 
   async update(id: number, dto: UpdateVisualizationDto, authorId: number) {
@@ -431,10 +519,10 @@ export class VisualizationService {
     const comments = await this.prisma.visualizationComment.findMany({
       where: { visualizationId, parentId: null },
       include: {
-        author: { select: { id: true, username: true, displayName: true, avatar: true } },
+        author: { select: { id: true, username: true, displayName: true, avatar: true, role: true } },
         replies: {
           include: {
-            author: { select: { id: true, username: true, displayName: true, avatar: true } },
+            author: { select: { id: true, username: true, displayName: true, avatar: true, role: true } },
           },
           orderBy: { createdAt: 'asc' },
         },
@@ -456,14 +544,50 @@ export class VisualizationService {
       }
     }
 
+    const author = await this.prisma.user.findUnique({ where: { id: userId }, select: { displayName: true } });
+
     const comment = await this.prisma.visualizationComment.create({
       data: { content, visualizationId, authorId: userId, parentId },
       include: {
-        author: { select: { id: true, username: true, displayName: true, avatar: true } },
+        author: { select: { id: true, username: true, displayName: true, avatar: true, role: true } },
       },
     });
 
+    // Notify parent comment author on reply
+    if (parentId) {
+      const parent = await this.prisma.visualizationComment.findUnique({
+        where: { id: parentId },
+        select: { authorId: true },
+      });
+      if (parent && parent.authorId !== userId) {
+        this.notifications.notifyCommentReply({
+          commentId: comment.id,
+          visualizationId,
+          replyAuthor: author?.displayName || 'Someone',
+          parentAuthorId: parent.authorId,
+          snippet: content.substring(0, 100),
+        });
+      }
+    }
+
+    // Async spam check
+    this.runVizCommentSpamCheck(comment.id, content);
+
     return comment;
+  }
+
+  private async runVizCommentSpamCheck(commentId: number, content: string) {
+    try {
+      const heuristic = heuristicSpamCheck(content);
+      if (heuristic.isSpam) {
+        await this.prisma.visualizationComment.update({ where: { id: commentId }, data: { status: 'spam' } });
+        return;
+      }
+      const ai = await aiSpamCheck(content);
+      if (ai.isSpam) {
+        await this.prisma.visualizationComment.update({ where: { id: commentId }, data: { status: 'pending' } });
+      }
+    } catch { /* ignore */ }
   }
 
   async deleteComment(commentId: number, userId: number) {
@@ -680,5 +804,319 @@ export class VisualizationService {
     }
 
     return related;
+  }
+
+  // ─── Difficulty (Feature 4) ────────────────────────────────────
+
+  async generateDifficulty(id: number, levels: string[], authorId: number, language?: string) {
+    const viz = await this.findOne(id);
+    if (viz.authorId !== authorId) throw new BadRequestException('Only the author can generate difficulty variants');
+
+    const results: Record<string, number> = {};
+    const levelDescriptions: Record<string, string> = {
+      beginner: 'Create a beginner-friendly version with simplified explanations, basic terminology, and gentle pacing. Focus on intuition and everyday analogies.',
+      intermediate: 'Create an intermediate version with standard terminology, balanced depth, and interactive exploration.',
+      advanced: 'Create an advanced version with rigorous mathematical notation, deeper theoretical connections, and challenging interactive elements.',
+    };
+
+    for (const level of levels) {
+      const levelPrompt = `${levelDescriptions[level] || ''}\n\nOriginal topic: ${viz.prompt || viz.title}\nSubject: ${viz.subject}`;
+      const result = await this.ai.generate(levelPrompt, viz.subject, undefined, authorId, language);
+      const variant = await this.prisma.visualization.create({
+        data: {
+          title: `${viz.title} (${level.charAt(0).toUpperCase() + level.slice(1)})`,
+          subject: viz.subject,
+          description: viz.description,
+          htmlContent: result.code,
+          prompt: levelPrompt,
+          status: 'draft',
+          authorId,
+        },
+      });
+      await this.prisma.visualizationVersion.create({
+        data: { visualizationId: variant.id, htmlContent: result.code, prompt: levelPrompt, version: 1, changeNote: `Difficulty variant: ${level}` },
+      });
+      results[level] = variant.id;
+    }
+
+    await this.prisma.visualization.update({
+      where: { id },
+      data: { difficultyLevels: JSON.stringify(results), isDifficultyRoot: true },
+    });
+
+    return results;
+  }
+
+  async getDifficulty(id: number) {
+    const viz = await this.findOne(id);
+    let levels: Record<string, number> = {};
+    try { levels = JSON.parse(viz.difficultyLevels || '{}'); } catch {}
+
+    if (Object.keys(levels).length === 0) return null;
+
+    const ids = Object.values(levels);
+    const variants = await this.prisma.visualization.findMany({
+      where: { id: { in: ids } },
+      select: { id: true, title: true, htmlContent: true, description: true, introduction: true, detailedExplanation: true, knowledgeSummary: true },
+    });
+
+    const result: Record<string, any> = {};
+    for (const [level, variantId] of Object.entries(levels)) {
+      const v = variants.find((x) => x.id === variantId);
+      if (v) result[level] = v;
+    }
+    return result;
+  }
+
+  // ─── Narration (Feature 3) ─────────────────────────────────────
+
+  async generateNarration(id: number, authorId: number, locale?: string) {
+    const viz = await this.findOne(id);
+    if (viz.authorId !== authorId) throw new BadRequestException('Only the author can generate narration');
+
+    const targetLocale = locale || 'en';
+    const { segments, fullText } = await this.ai.generateNarrationScript(
+      {
+        title: viz.title,
+        subject: viz.subject,
+        description: viz.description,
+        introduction: viz.introduction,
+        detailedExplanation: viz.detailedExplanation,
+        knowledgeSummary: viz.knowledgeSummary,
+      },
+      targetLocale,
+      undefined,
+      authorId,
+    );
+
+    // Generate audio via TTS:
+    // Priority: 1) Edge TTS (free, always available) 2) Azure TTS (if configured) 3) Browser fallback
+    let audioUrl = '';
+    const ttsSources: { name: string; fn: () => Promise<Buffer> }[] = [
+      {
+        name: 'Edge TTS',
+        fn: () => this.edgeTts.synthesize(fullText, targetLocale),
+      },
+    ];
+    if (this.azureTts.isConfigured()) {
+      // If Azure is configured, try it first (higher reliability/throughput)
+      ttsSources.unshift({
+        name: 'Azure TTS',
+        fn: () => this.azureTts.synthesize(fullText, targetLocale),
+      });
+    }
+
+    for (const source of ttsSources) {
+      try {
+        const audioBuffer = await source.fn();
+        const narrationsDir = path.join(process.cwd(), 'uploads', 'narrations');
+        if (!fs.existsSync(narrationsDir)) {
+          fs.mkdirSync(narrationsDir, { recursive: true });
+        }
+        const fileName = `${id}_${targetLocale}.mp3`;
+        fs.writeFileSync(path.join(narrationsDir, fileName), audioBuffer);
+        audioUrl = `/uploads/narrations/${fileName}`;
+        this.logger.log(`Narration audio generated via ${source.name}: ${audioUrl}`);
+        break;
+      } catch (err: any) {
+        this.logger.warn(
+          `${source.name} failed for narration ${id}/${targetLocale}: ${err.message}`,
+        );
+      }
+    }
+
+    if (!audioUrl) {
+      this.logger.warn(
+        `No TTS provider available for narration ${id}/${targetLocale} — browser Web Speech API will be used as fallback`,
+      );
+    }
+
+    const existing = await this.prisma.narrationScript.findUnique({
+      where: { visualizationId_locale: { visualizationId: id, locale: targetLocale } },
+    });
+
+    const data = {
+      segments: JSON.stringify(segments),
+      fullText,
+      audioUrl,
+      ...(existing ? { version: existing.version + 1, generatedAt: new Date() } : {}),
+    };
+
+    if (existing) {
+      return this.prisma.narrationScript.update({
+        where: { id: existing.id },
+        data,
+      });
+    }
+
+    return this.prisma.narrationScript.create({
+      data: {
+        visualizationId: id,
+        locale: targetLocale,
+        title: viz.title,
+        ...data,
+      },
+    });
+  }
+
+  async getNarration(id: number, locale?: string) {
+    const targetLocale = locale || 'en';
+    const script = await this.prisma.narrationScript.findUnique({
+      where: { visualizationId_locale: { visualizationId: id, locale: targetLocale } },
+    });
+    if (!script) return null;
+    return {
+      ...script,
+      segments: JSON.parse(script.segments || '[]'),
+    };
+  }
+
+  // ─── AI Tutor (Feature 1) ──────────────────────────────────────
+
+  async askTutor(id: number, body: { sessionId: string; interactionType: string; parameterName?: string; parameterValue?: string; question?: string; language?: string }) {
+    const viz = await this.findOne(id);
+
+    // Get recent history for context (last 5 interactions in this session)
+    const history = await this.prisma.tutorInteraction.findMany({
+      where: { visualizationId: id, sessionId: body.sessionId },
+      orderBy: { createdAt: 'desc' },
+      take: 5,
+      select: { parameterName: true, interactionType: true, aiResponse: true },
+    });
+
+    const parameterName = body.parameterName || '';
+    const parameterValue = body.parameterValue || '';
+
+    const aiResponse = await this.ai.generateTutorResponse(
+      {
+        title: viz.title,
+        subject: viz.subject,
+        description: viz.description,
+        knowledgeSummary: viz.knowledgeSummary,
+      },
+      {
+        interactionType: body.interactionType,
+        parameterName,
+        parameterValue,
+      },
+      history.reverse().map(h => ({
+        parameterName: h.parameterName,
+        interactionType: h.interactionType,
+        aiResponse: h.aiResponse,
+      })),
+      undefined,
+      undefined,
+      body.language,
+    );
+
+    // Store the interaction
+    const interaction = await this.prisma.tutorInteraction.create({
+      data: {
+        visualizationId: id,
+        sessionId: body.sessionId,
+        interactionType: body.interactionType,
+        parameterName,
+        parameterValue,
+        aiResponse,
+      },
+    });
+
+    return { aiResponse, interactionId: interaction.id };
+  }
+
+  async getTutorHistory(id: number, sessionId: string) {
+    return this.prisma.tutorInteraction.findMany({
+      where: { visualizationId: id, sessionId },
+      orderBy: { createdAt: 'asc' },
+    });
+  }
+
+  // ─── Article Mode (Feature 5) ─────────────────────────────────
+
+  async generateArticleQuiz(id: number, authorId: number, language?: string) {
+    const viz = await this.findOne(id);
+    const quiz = await this.ai.generateQuiz(
+      viz.prompt || viz.title,
+      viz.subject,
+      undefined,
+      authorId,
+      language,
+    );
+    await this.prisma.visualization.update({
+      where: { id },
+      data: { quiz: JSON.stringify(quiz), articleMode: true },
+    });
+    return { quiz };
+  }
+
+  async updateArticleConfig(id: number, body: { articleMode?: boolean; quiz?: string }, authorId: number) {
+    const viz = await this.findOne(id);
+    if (viz.authorId !== authorId) throw new BadRequestException('Only the author can update article config');
+    const data: any = {};
+    if (body.articleMode !== undefined) data.articleMode = body.articleMode;
+    if (body.quiz !== undefined) data.quiz = body.quiz;
+    return this.prisma.visualization.update({ where: { id }, data });
+  }
+
+  // ─── Batch Operations ────────────────────────────────────────
+
+  async batchUpdateStatus(ids: number[], status: string, authorId: number) {
+    await this.prisma.visualization.updateMany({
+      where: { id: { in: ids }, authorId },
+      data: { status },
+    });
+    return { updated: ids.length };
+  }
+
+  async batchDelete(ids: number[], authorId: number) {
+    await this.prisma.visualization.deleteMany({
+      where: { id: { in: ids }, authorId },
+    });
+    return { deleted: ids.length };
+  }
+
+  // ─── Visualization Comment Admin ─────────────────────────────
+
+  async listVizComments(page = 1, limit = 20, status?: string) {
+    const skip = (page - 1) * limit;
+    const where: any = {};
+    if (status) where.status = status;
+
+    const [data, total] = await Promise.all([
+      this.prisma.visualizationComment.findMany({
+        where,
+        skip,
+        take: limit,
+        include: {
+          author: { select: { id: true, username: true, displayName: true, role: true } },
+          visualization: { select: { id: true, title: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.visualizationComment.count({ where }),
+    ]);
+
+    return { data, total, page, limit, totalPages: Math.ceil(total / limit) };
+  }
+
+  async updateVizComment(id: number, body: { content?: string; status?: string }) {
+    const comment = await this.prisma.visualizationComment.findUnique({ where: { id } });
+    if (!comment) throw new NotFoundException('Comment not found');
+    return this.prisma.visualizationComment.update({ where: { id }, data: body });
+  }
+
+  async deleteVizComment(id: number) {
+    const comment = await this.prisma.visualizationComment.findUnique({ where: { id } });
+    if (!comment) throw new NotFoundException('Comment not found');
+    await this.prisma.visualizationComment.delete({ where: { id } });
+    return { deleted: true };
+  }
+
+  async batchUpdateVizCommentStatus(ids: number[], status: string) {
+    await this.prisma.visualizationComment.updateMany({
+      where: { id: { in: ids } },
+      data: { status },
+    });
+    return { updated: ids.length };
   }
 }

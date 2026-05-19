@@ -1,30 +1,17 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { visualizations } from '@/lib/api';
 import { HtmlVisualizationRenderer } from '@/components/Visualizations/VisualizationRenderer';
 import CodePreview from '@/components/Visualizations/CodePreview';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Separator } from '@/components/ui/separator';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import {
-  ChevronLeft, Save, Wand2, Loader2, AlertCircle, Check, Eye, EyeOff, History, ImagePlus,
-  Sparkles, Code2, Copy, RotateCcw, RefreshCw, ArrowLeftRight,
-} from 'lucide-react';
 import { toast } from 'sonner';
 import { VersionPanel, VersionPanelCompact } from './VersionPanel';
 
 export default function EditVisualizationPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const params = useParams();
   const router = useRouter();
   const id = Number(params.id);
@@ -45,6 +32,7 @@ export default function EditVisualizationPage() {
   const [detailedExplanation, setDetailedExplanation] = useState('');
   const [knowledgeSummary, setKnowledgeSummary] = useState('');
   const [activePreviewTab, setActivePreviewTab] = useState<'preview' | 'code'>('preview');
+  const [versionsOpen, setVersionsOpen] = useState(false);
 
   useEffect(() => {
     visualizations.get(id)
@@ -64,13 +52,35 @@ export default function EditVisualizationPage() {
   const handleRefine = async () => {
     if (!feedback.trim()) return;
     setRefining(true);
+    setCode('');
+    setRenderError(null);
+    setActivePreviewTab('code');
+
+    const abortController = new AbortController();
+
     try {
-      const result = await visualizations.refine({ visualizationId: id, feedback: feedback.trim() });
-      setCode(result.htmlContent);
-      setFeedback('');
-      toast.success(t('admin.vizRefined'));
+      await visualizations.refineStream(
+        { visualizationId: id, feedback: feedback.trim(), language: i18n.language },
+        {
+          onChunk: (text) => {
+            setCode(prev => prev + text);
+          },
+          onDone: (data) => {
+            setCode(data.htmlContent);
+            setFeedback('');
+            setActivePreviewTab('preview');
+            toast.success(t('admin.vizRefined'));
+          },
+          onError: (message) => {
+            toast.error(message);
+          },
+        },
+        abortController.signal,
+      );
     } catch (e: any) {
-      toast.error(e.message);
+      if (e.name !== 'AbortError') {
+        toast.error(e.message);
+      }
     } finally {
       setRefining(false);
     }
@@ -94,7 +104,7 @@ export default function EditVisualizationPage() {
     try {
       await visualizations.publish(id, newStatus);
       setViz((prev: any) => ({ ...prev, status: newStatus }));
-      toast.success(newStatus === 'published' ? 'Published!' : 'Unpublished');
+      toast.success(newStatus === 'published' ? t('admin.vizToastPublished') : t('admin.vizToastUnpublished'));
     } catch (e: any) {
       toast.error(e.message);
     } finally {
@@ -117,14 +127,41 @@ export default function EditVisualizationPage() {
 
   const handleGenerateMetadata = async () => {
     setGeneratingMetadata(true);
+    setIntroduction('');
+    setDetailedExplanation('');
+    setKnowledgeSummary('');
+
+    const abortController = new AbortController();
+
     try {
-      const result = await visualizations.generateMetadata(id);
-      setIntroduction(result.introduction);
-      setDetailedExplanation(result.detailedExplanation);
-      setKnowledgeSummary(result.knowledgeSummary);
-      toast.success(t('admin.vizMetadataGenerated'));
+      await visualizations.generateMetadataStream(id, i18n.language, {
+        onFieldChunk: (field, text) => {
+          switch (field) {
+            case 'introduction':
+              setIntroduction(prev => prev + text);
+              break;
+            case 'detailedExplanation':
+              setDetailedExplanation(prev => prev + text);
+              break;
+            case 'knowledgeSummary':
+              setKnowledgeSummary(prev => prev + text);
+              break;
+          }
+        },
+        onDone: (data) => {
+          setIntroduction(data.introduction);
+          setDetailedExplanation(data.detailedExplanation);
+          setKnowledgeSummary(data.knowledgeSummary);
+          toast.success(t('admin.vizMetadataGenerated'));
+        },
+        onError: (message) => {
+          toast.error(message);
+        },
+      }, abortController.signal);
     } catch (e: any) {
-      toast.error(e.message);
+      if (e.name !== 'AbortError') {
+        toast.error(e.message);
+      }
     } finally {
       setGeneratingMetadata(false);
     }
@@ -136,142 +173,196 @@ export default function EditVisualizationPage() {
     toast.success(t('admin.vizVersionRestored'));
   };
 
+  const Spinner = () => (
+    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+    </svg>
+  );
+
   if (loading) {
     return (
       <div className="space-y-6">
-        <Skeleton className="h-6 w-32" />
-        <Skeleton className="h-96 rounded-editorial" />
+        <div className="h-6 w-32 bg-surface-container-highest/30 animate-pulse rounded" />
+        <div className="h-96 bg-surface-container-highest/30 animate-pulse rounded-xl" />
       </div>
     );
   }
 
   if (!viz) {
     return (
-      <Card className="p-12 text-center">
-        <p className="text-ink-muted">{t('admin.vizNotFound')}</p>
-        <Link href="/admin/visualizations"><Button variant="outline" className="mt-4">{t('common.back')}</Button></Link>
-      </Card>
+      <div
+        className="rounded-xl py-12 text-center"
+        style={{
+          background: 'rgba(34, 42, 61, 0.6)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+          border: '1px solid rgba(255, 255, 255, 0.08)',
+        }}
+      >
+        <p className="font-body-sm text-body-sm text-on-surface-variant">{t('admin.vizNotFound')}</p>
+        <Link
+          href="/admin/visualizations"
+          className="inline-block mt-4 bg-transparent border border-white/20 text-on-surface hover:bg-white/5 rounded-lg px-4 py-2 text-label-sm font-label-sm transition-all"
+        >
+          {t('common.back')}
+        </Link>
+      </div>
     );
   }
+
+  const isPublished = viz.status === 'published';
 
   return (
     <div className="min-h-screen bg-background">
       {/* Sticky header */}
-      <div className="sticky top-0 z-30 bg-surface border-b border-border">
-        <div className="max-w-grid mx-auto px-6 py-3 flex items-center justify-between">
+      <div
+        className="sticky top-0 z-30 border-b border-white/5"
+        style={{
+          background: 'rgba(11, 19, 38, 0.8)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+        }}
+      >
+        <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link
               href="/admin/visualizations"
-              className="inline-flex items-center justify-center w-8 h-8 rounded-editorial-xs text-ink-muted hover:text-ink hover:bg-surface-hover transition-colors"
+              className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-white/5 transition-colors"
             >
-              <ChevronLeft className="h-4 w-4" />
+              <span className="material-symbols-outlined text-[18px]">chevron_left</span>
             </Link>
             <div>
-              <h1 className="font-display text-display-sm text-ink leading-none">{viz.title}</h1>
-              <p className="text-caption-sm text-ink-muted mt-0.5 flex items-center gap-2">
-                <Badge variant={viz.status === 'published' ? 'default' : 'outline'} className="text-caption-xs">
-                  {viz.status === 'published' ? t('admin.published') : t('admin.draft')}
-                </Badge>
+              <h1 className="font-headline-md text-headline-md text-on-surface leading-none">{viz.title}</h1>
+              <p className="font-label-sm text-label-sm text-on-surface-variant mt-0.5 flex items-center gap-2">
+                <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-label-sm ${
+                  isPublished
+                    ? 'bg-tertiary/10 text-tertiary border border-tertiary/20'
+                    : 'bg-surface-variant/50 text-on-surface-variant border border-white/10'
+                }`}>
+                  {isPublished ? t('admin.published') : t('admin.draft')}
+                </span>
                 <span>v{viz.version}</span>
               </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Sheet>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <SheetTrigger asChild>
-                      <Button variant="outline" size="sm">
-                        <History className="h-4 w-4 mr-1" /> {t('admin.vizVersions')}
-                      </Button>
-                    </SheetTrigger>
-                  </TooltipTrigger>
-                  <TooltipContent>{t('admin.vizVersionDesc')}</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <SheetContent className="w-[400px] sm:max-w-[400px]">
-                <SheetHeader className="mb-6">
-                  <SheetTitle>{t('admin.vizVersions')}</SheetTitle>
-                </SheetHeader>
-                <VersionPanel visualizationId={id} currentCode={code} onRestore={handleRestore} />
-              </SheetContent>
-            </Sheet>
-            <Button
+            <button
+              onClick={() => setVersionsOpen(!versionsOpen)}
+              className="bg-transparent border border-white/20 text-on-surface-variant hover:text-on-surface hover:bg-white/5 rounded-lg px-3 py-1.5 text-label-sm font-label-sm transition-all flex items-center gap-1"
+              title={t('admin.vizVersionDesc')}
+            >
+              <span className="material-symbols-outlined text-[16px]">history</span>
+              {t('admin.vizVersions')}
+            </button>
+            <button
               onClick={handleSave}
               disabled={saving || publishing}
-              variant="outline"
-              size="sm"
+              className="bg-transparent border border-white/20 text-on-surface-variant hover:text-on-surface hover:bg-white/5 rounded-lg px-3 py-1.5 text-label-sm font-label-sm transition-all disabled:opacity-50 flex items-center gap-1"
             >
-              {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+              {saving ? <Spinner /> : <span className="material-symbols-outlined text-[16px]">save</span>}
               {saving ? t('common.saving') : t('common.save')}
-            </Button>
-            <Button
+            </button>
+            <button
               onClick={handlePublish}
               disabled={publishing || saving}
-              size="sm"
-              className={viz.status === 'published'
-                ? 'bg-ink text-white hover:bg-ink/90 shadow-sm'
-                : 'bg-clay text-white hover:bg-clay-dark shadow-sm'
-              }
+              className="py-1.5 px-3 rounded-lg text-label-sm font-label-sm font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+              style={{
+                background: isPublished
+                  ? 'rgba(255, 255, 255, 0.1)'
+                  : 'linear-gradient(180deg, #548dff 0%, #0058c9 100%)',
+                color: isPublished ? '#dae2fd' : '#ffffff',
+                border: isPublished ? '1px solid rgba(255,255,255,0.2)' : '1px solid rgba(255,255,255,0.1)',
+                boxShadow: isPublished ? 'none' : 'inset 0 1px 0 rgba(255,255,255,0.2)',
+              }}
             >
-              {publishing ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              ) : viz.status === 'published' ? (
-                <EyeOff className="h-4 w-4 mr-2" />
-              ) : (
-                <Check className="h-4 w-4 mr-2" />
+              {publishing ? <Spinner /> : (
+                <span className="material-symbols-outlined text-[16px]">
+                  {isPublished ? 'visibility_off' : 'check'}
+                </span>
               )}
               {publishing
-                ? (viz.status === 'published' ? t('admin.vizUnpublishing') : t('admin.vizPublishing'))
-                : (viz.status === 'published' ? t('admin.vizUnpublish') : t('admin.vizPublish'))
+                ? (isPublished ? t('admin.vizUnpublishing') : t('admin.vizPublishing'))
+                : (isPublished ? t('admin.vizUnpublish') : t('admin.vizPublish'))
               }
-            </Button>
+            </button>
           </div>
         </div>
       </div>
 
-      <div className="max-w-grid mx-auto px-6 py-6">
+      <div className="max-w-7xl mx-auto px-6 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main: Preview + AI Refine */}
           <div className="lg:col-span-2 space-y-6">
             {/* Preview / Code tabs */}
-            <Card className="border-border overflow-hidden">
-              <div className="flex items-center justify-between px-5 py-2.5 border-b border-border bg-surface-warm">
+            <div
+              className="overflow-hidden rounded-xl"
+              style={{
+                background: 'rgba(34, 42, 61, 0.6)',
+                backdropFilter: 'blur(12px)',
+                WebkitBackdropFilter: 'blur(12px)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+              }}
+            >
+              <div className="flex items-center justify-between px-5 py-2.5 border-b border-white/5 bg-surface-container-low/50">
                 <div className="flex items-center gap-1">
                   <button
                     onClick={() => setActivePreviewTab('preview')}
-                    className={`px-3 py-1.5 rounded-editorial-xs text-caption-sm font-medium transition-colors ${
-                      activePreviewTab === 'preview' ? 'bg-surface text-ink shadow-sm' : 'text-ink-muted hover:text-ink'
+                    className={`px-3 py-1.5 rounded-lg font-label-sm text-label-sm font-medium transition-all ${
+                      activePreviewTab === 'preview' ? 'bg-surface border border-white/10 text-on-surface shadow-sm' : 'text-on-surface-variant hover:text-on-surface'
                     }`}
                   >
-                    <Eye className="h-3.5 w-3.5 inline mr-1.5" />{t('admin.vizLivePreview')}
+                    <span className="material-symbols-outlined text-[14px] align-text-bottom mr-1">visibility</span>
+                    {t('admin.vizLivePreview')}
                   </button>
                   <button
                     onClick={() => setActivePreviewTab('code')}
-                    className={`px-3 py-1.5 rounded-editorial-xs text-caption-sm font-medium transition-colors ${
-                      activePreviewTab === 'code' ? 'bg-surface text-ink shadow-sm' : 'text-ink-muted hover:text-ink'
+                    className={`px-3 py-1.5 rounded-lg font-label-sm text-label-sm font-medium transition-all ${
+                      activePreviewTab === 'code' ? 'bg-surface border border-white/10 text-on-surface shadow-sm' : 'text-on-surface-variant hover:text-on-surface'
                     }`}
                   >
-                    <Code2 className="h-3.5 w-3.5 inline mr-1.5" />{t('admin.vizCode')}
+                    <span className="material-symbols-outlined text-[14px] align-text-bottom mr-1">code</span>
+                    {t('admin.vizCode')}
                   </button>
                 </div>
                 {activePreviewTab === 'code' && (
-                  <Button variant="ghost" size="sm" className="h-7 text-caption-xs" onClick={() => { navigator.clipboard.writeText(code); toast.success('Code copied'); }}>
-                    <Copy className="h-3 w-3 mr-1" /> {t('common.copy')}
-                  </Button>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => { navigator.clipboard.writeText(code); toast.success('Code copied'); }}
+                      className="bg-transparent border border-white/20 text-on-surface-variant hover:text-on-surface hover:bg-white/5 rounded-lg px-2 py-1 text-label-sm font-label-sm transition-all flex items-center gap-1"
+                    >
+                      <span className="material-symbols-outlined text-[14px]">copy</span>
+                      {t('common.copy')}
+                    </button>
+                    <button
+                      onClick={() => {
+                        const blob = new Blob([code], { type: 'text/html' });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `${title.replace(/[^a-z0-9]/gi, '_')}.html`;
+                        a.click();
+                        URL.revokeObjectURL(url);
+                        toast.success(t('admin.vizDownloaded'));
+                      }}
+                      className="bg-transparent border border-white/20 text-on-surface-variant hover:text-on-surface hover:bg-white/5 rounded-lg px-2 py-1 text-label-sm font-label-sm transition-all flex items-center gap-1"
+                    >
+                      <span className="material-symbols-outlined text-[14px]">download</span>
+                      {t('common.download')}
+                    </button>
+                  </div>
                 )}
               </div>
 
               {activePreviewTab === 'preview' ? (
-                <div className="bg-white">
+                <div className="bg-surface-container-lowest">
                   {renderError && (
-                    <div className="p-4 border-b border-border bg-clay-pale">
+                    <div className="p-4 border-b border-white/5" style={{ background: 'rgba(255, 180, 171, 0.05)' }}>
                       <div className="flex items-start gap-3">
-                        <AlertCircle className="h-5 w-5 text-clay shrink-0 mt-0.5" />
+                        <span className="material-symbols-outlined text-error shrink-0 mt-0.5">warning</span>
                         <div className="flex-1 min-w-0">
-                          <p className="text-body-sm font-medium text-clay mb-1">{t('admin.vizRenderError')}</p>
-                          <p className="text-body-sm text-ink-muted">{renderError}</p>
+                          <p className="font-body-sm text-body-sm font-medium text-error mb-1">{t('admin.vizRenderError')}</p>
+                          <p className="font-body-sm text-body-sm text-on-surface-variant">{renderError}</p>
                         </div>
                       </div>
                     </div>
@@ -286,152 +377,231 @@ export default function EditVisualizationPage() {
               ) : (
                 <CodePreview code={code} dark />
               )}
-            </Card>
+            </div>
 
             {/* Refine */}
-            <Card className="border-border">
-              <CardContent className="p-5">
+            <div
+              className="rounded-xl"
+              style={{
+                background: 'rgba(34, 42, 61, 0.6)',
+                backdropFilter: 'blur(12px)',
+                WebkitBackdropFilter: 'blur(12px)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+              }}
+            >
+              <div className="p-5">
                 <div className="flex items-center gap-2 mb-3">
-                  <Wand2 className="h-4 w-4 text-clay" />
-                  <span className="text-body-sm font-semibold text-ink">{t('admin.vizAIRefine')}</span>
+                  <span className="material-symbols-outlined text-[18px] text-primary">auto_awesome</span>
+                  <span className="font-body-sm text-body-sm font-semibold text-on-surface">{t('admin.vizAIRefine')}</span>
                 </div>
                 <div className="flex gap-2">
-                  <Textarea
+                  <textarea
                     value={feedback}
                     onChange={e => setFeedback(e.target.value)}
                     placeholder={t('admin.vizRefinePlaceholder')}
                     rows={2}
-                    className="flex-1 resize-none text-body-sm"
+                    className="flex-1 resize-none bg-black/20 border border-white/10 rounded-lg px-4 py-2.5 text-body-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
                   />
-                  <Button
+                  <button
                     onClick={handleRefine}
                     disabled={!feedback.trim() || refining}
-                    className="self-end"
+                    className="self-end py-2 px-4 rounded-lg text-label-sm font-label-sm font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                    style={{
+                      background: 'linear-gradient(180deg, #548dff 0%, #0058c9 100%)',
+                      color: '#ffffff',
+                      border: '1px solid rgba(255,255,255,0.1)',
+                      boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.2)',
+                    }}
                   >
-                    {refining ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
-                    <span className="ml-1.5 hidden sm:inline">{t('admin.vizRefine')}</span>
-                  </Button>
+                    {refining ? <Spinner /> : <span className="material-symbols-outlined text-[16px]">auto_awesome</span>}
+                    <span className="hidden sm:inline">{t('admin.vizRefine')}</span>
+                  </button>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </div>
 
           {/* Sidebar */}
           <div className="space-y-4">
-            <Card className="border-border">
-              <CardContent className="p-5 space-y-4">
+            <div
+              className="rounded-xl"
+              style={{
+                background: 'rgba(34, 42, 61, 0.6)',
+                backdropFilter: 'blur(12px)',
+                WebkitBackdropFilter: 'blur(12px)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+              }}
+            >
+              <div className="p-5 space-y-4">
                 <div>
-                  <label className="text-caption-sm text-ink-muted font-semibold block mb-1">{t('admin.vizTitle')}</label>
-                  <Input value={title} onChange={e => setTitle(e.target.value)} className="text-body-sm" />
+                  <label className="font-label-sm text-label-sm text-on-surface-variant font-semibold block mb-1">{t('admin.vizTitle')}</label>
+                  <input
+                    value={title}
+                    onChange={e => setTitle(e.target.value)}
+                    className="w-full bg-black/20 border border-white/10 rounded-lg px-4 py-2.5 text-body-sm text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
+                  />
                 </div>
                 <div>
-                  <label className="text-caption-sm text-ink-muted font-semibold block mb-1">{t('admin.vizDescription')}</label>
-                  <Textarea
+                  <label className="font-label-sm text-label-sm text-on-surface-variant font-semibold block mb-1">{t('admin.vizDescription')}</label>
+                  <textarea
                     value={description}
                     onChange={e => setDescription(e.target.value)}
                     rows={2}
-                    className="resize-none text-body-sm"
+                    className="w-full resize-none bg-black/20 border border-white/10 rounded-lg px-4 py-2.5 text-body-sm text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
                   />
                 </div>
-                <Separator />
+                <div className="border-t border-white/5" />
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <label className="text-caption-sm text-ink-muted font-semibold">{t('admin.vizIntroduction')}</label>
+                    <label className="font-label-sm text-label-sm text-on-surface-variant font-semibold">{t('admin.vizIntroduction')}</label>
                     <button
                       type="button"
                       onClick={handleGenerateMetadata}
                       disabled={generatingMetadata}
-                      className="text-caption-xs text-clay hover:text-clay-dark transition-colors inline-flex items-center gap-1 disabled:opacity-50"
+                      className="font-label-sm text-label-sm text-primary hover:text-primary-fixed transition-colors inline-flex items-center gap-1 disabled:opacity-50"
                     >
-                      {generatingMetadata ? <Loader2 className="h-3 w-3 animate-spin" /> : <Wand2 className="h-3 w-3" />}
+                      {generatingMetadata ? <Spinner /> : <span className="material-symbols-outlined text-[14px]">auto_awesome</span>}
                       {t('admin.vizGenerateAI')}
                     </button>
                   </div>
-                  <Textarea
+                  <textarea
                     value={introduction}
                     onChange={e => setIntroduction(e.target.value)}
                     placeholder={t('admin.vizIntroductionPlaceholder')}
                     rows={2}
-                    className="resize-none text-body-sm"
+                    className="w-full resize-none bg-black/20 border border-white/10 rounded-lg px-4 py-2.5 text-body-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
                   />
                 </div>
                 <div>
-                  <label className="text-caption-sm text-ink-muted font-semibold block mb-1">{t('admin.vizDetailedExplanation')}</label>
-                  <Textarea
+                  <label className="font-label-sm text-label-sm text-on-surface-variant font-semibold block mb-1">{t('admin.vizDetailedExplanation')}</label>
+                  <textarea
                     value={detailedExplanation}
                     onChange={e => setDetailedExplanation(e.target.value)}
                     rows={3}
-                    className="resize-none text-body-sm"
+                    className="w-full resize-none bg-black/20 border border-white/10 rounded-lg px-4 py-2.5 text-body-sm text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
                   />
                 </div>
                 <div>
-                  <label className="text-caption-sm text-ink-muted font-semibold block mb-1">{t('admin.vizKnowledgeSummary')}</label>
-                  <Textarea
+                  <label className="font-label-sm text-label-sm text-on-surface-variant font-semibold block mb-1">{t('admin.vizKnowledgeSummary')}</label>
+                  <textarea
                     value={knowledgeSummary}
                     onChange={e => setKnowledgeSummary(e.target.value)}
                     rows={2}
-                    className="resize-none text-body-sm"
+                    className="w-full resize-none bg-black/20 border border-white/10 rounded-lg px-4 py-2.5 text-body-sm text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
                   />
                 </div>
-                <Separator />
-                <div className="text-caption-sm text-ink-muted space-y-1.5">
+                <div className="border-t border-white/5" />
+                <div className="font-body-sm text-body-sm text-on-surface-variant space-y-1.5">
                   <div className="flex justify-between">
                     <span>{t('admin.vizSubject')}</span>
-                    <span className="text-ink font-medium">{viz.subject === 'math' ? t('admin.vizMathematics') : t('admin.vizPhysics')}</span>
+                    <span className="text-on-surface font-medium">
+                      {viz.subject === 'math' ? t('admin.vizMathematics') : t('admin.vizPhysics')}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span>{t('admin.vizVersion')}</span>
-                    <span className="text-ink font-mono">{viz.version}</span>
+                    <span className="text-on-surface font-mono">{viz.version}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>{t('admin.vizViews')}</span>
-                    <span className="text-ink">{viz.viewCount}</span>
+                    <span className="text-on-surface">{viz.viewCount}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>{t('admin.vizInteractions')}</span>
-                    <span className="text-ink">{viz.interactCount}</span>
+                    <span className="text-on-surface">{viz.interactCount}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>{t('admin.vizCreated')}</span>
-                    <span className="text-ink">{new Date(viz.createdAt).toLocaleDateString()}</span>
+                    <span className="text-on-surface">{new Date(viz.createdAt).toLocaleDateString()}</span>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
             {/* Cover Image */}
-            <Card className="border-border">
-              <CardContent className="p-5 space-y-3">
-                <h4 className="text-caption-sm font-semibold text-ink">{t('admin.vizCoverImage')}</h4>
+            <div
+              className="rounded-xl"
+              style={{
+                background: 'rgba(34, 42, 61, 0.6)',
+                backdropFilter: 'blur(12px)',
+                WebkitBackdropFilter: 'blur(12px)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+              }}
+            >
+              <div className="p-5 space-y-3">
+                <h4 className="font-label-sm text-label-sm font-semibold text-on-surface">{t('admin.vizCoverImage')}</h4>
                 {viz.featuredImage ? (
                   <>
-                    <div className="aspect-video rounded-editorial-xs overflow-hidden bg-cream-300">
+                    <div className="aspect-video rounded-lg overflow-hidden bg-surface-container-low">
                       <img src={viz.featuredImage} alt={viz.title} className="w-full h-full object-cover" />
                     </div>
-                    <Button variant="outline" size="sm" className="w-full" onClick={handleGenerateCover} disabled={generatingCover}>
-                      {generatingCover ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Wand2 className="h-4 w-4 mr-2" />}
+                    <button
+                      onClick={handleGenerateCover}
+                      disabled={generatingCover}
+                      className="w-full bg-transparent border border-white/20 text-on-surface-variant hover:text-on-surface hover:bg-white/5 rounded-lg px-3 py-1.5 text-label-sm font-label-sm transition-all disabled:opacity-50 flex items-center justify-center gap-1"
+                    >
+                      {generatingCover ? <Spinner /> : <span className="material-symbols-outlined text-[16px]">auto_awesome</span>}
                       {t('admin.vizRegenerateAI')}
-                    </Button>
+                    </button>
                   </>
                 ) : (
                   <>
-                    <div className="aspect-video rounded-editorial-xs bg-cream-300 flex items-center justify-center">
-                      <ImagePlus className="h-10 w-10 text-ink-faint" />
+                    <div className="aspect-video rounded-lg bg-surface-container-low flex items-center justify-center">
+                      <span className="material-symbols-outlined text-3xl text-on-surface-variant/40">image</span>
                     </div>
-                    <Button size="sm" className="w-full" onClick={handleGenerateCover} disabled={generatingCover}>
-                      {generatingCover ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Wand2 className="h-4 w-4 mr-2" />}
+                    <button
+                      onClick={handleGenerateCover}
+                      disabled={generatingCover}
+                      className="w-full py-1.5 px-3 rounded-lg text-label-sm font-label-sm font-medium transition-all duration-200 disabled:opacity-50 flex items-center justify-center gap-1"
+                      style={{
+                        background: 'linear-gradient(180deg, #548dff 0%, #0058c9 100%)',
+                        color: '#ffffff',
+                        border: '1px solid rgba(255,255,255,0.1)',
+                        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.2)',
+                      }}
+                    >
+                      {generatingCover ? <Spinner /> : <span className="material-symbols-outlined text-[16px]">auto_awesome</span>}
                       {t('admin.vizGenerateCoverAI')}
-                    </Button>
+                    </button>
                   </>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
             {/* Version History (compact) */}
             <VersionPanelCompact visualizationId={id} currentCode={code} onRestore={handleRestore} />
           </div>
         </div>
       </div>
+
+      {/* Versions side panel */}
+      {versionsOpen && (
+        <div className="fixed inset-0 z-50 flex justify-end">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setVersionsOpen(false)} />
+          <div
+            className="relative w-[400px] h-full shadow-2xl overflow-y-auto z-10"
+            style={{
+              background: 'rgba(23, 31, 51, 0.95)',
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
+              borderLeft: '1px solid rgba(255, 255, 255, 0.08)',
+            }}
+          >
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="font-headline-md text-headline-md text-on-surface">{t('admin.vizVersions')}</h2>
+                <button
+                  onClick={() => setVersionsOpen(false)}
+                  className="p-1.5 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-white/5 transition-colors"
+                >
+                  <span className="material-symbols-outlined text-[20px]">close</span>
+                </button>
+              </div>
+              <VersionPanel visualizationId={id} currentCode={code} onRestore={handleRestore} />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
