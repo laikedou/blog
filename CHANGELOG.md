@@ -1,9 +1,41 @@
 # Changelog
 
-## 2026-05-19
+## 2026-05-20 — UI Enhancement
 
 ### Features
 - **Streaming AI Refine** — Visualization edit page AI Refine now uses SSE streaming: code area shows real-time token-by-token output as the AI refines, with live preview updating on completion. Added `POST /api/visualizations/refine-stream` endpoint with full SSE lifecycle (init/chunk/done/error), abort support, and client disconnect handling
+- **Classroom Module** — Real-time teacher-student sync via WebRTC/LiveKit. Includes `ClassroomGateway` (WebSocket), `ClassroomService`, `LivekitService`, and classroom controller. Teacher can broadcast parameter changes, students receive them in real-time
+- **Classroom UI** — `ClassroomPanel` for teacher controls, `ClassroomStudentView` for student side, `ClassroomAudioOverlay` for live audio, and `ConnectionStatus` indicator. Classroom page at `/classroom/[code]`
+- **Experiment Module** — A/B testing backend (`ExperimentService`, `ExperimentController`) with admin management page and public experiment page
+- **AI Narration (TTS)** — `AzureTtsService` and `EdgeTtsService` for generating audio narration from visualization content. `NarrationPlayer` component with playback controls
+- **Spam Checker** — Heuristic + AI-based spam detection for comments (`spam-checker.ts`)
+- **E2E Tests** — Playwright test suites for admin pages, classroom, visualization create, and visualization detail
+
+### Enhancements — Visualizations
+- **AI Tutor Sidebar** — `AITutorSidebar` component with contextual Q&A, `TutorChatBubble` for message display, and `useAITutor` hook
+- **Article Mode** — `ArticleLayout`, `ArticleSection`, `QuizPanel`, `ReadingProgress`, and `TableOfContents` components for structured learning
+- **Difficulty Switcher** — `DifficultySwitcher` component for beginner/intermediate/advanced variants
+- **Experiment Switcher** — `ExperimentSwitcher` for A/B variant selection on visualizations
+- **Narration Player** — `NarrationPlayer` with synchronized audio playback
+- **Perspective Cards** — `PerspectiveCard` for multiple-viewpoint explanations
+- **Version Diff** — `VersionDiff` component for comparing visualization versions side-by-side
+- **Content Tabs** — `VizContentTabs`, `VizMetadataSection`, `VizSocialTabs`, `VizStickyHeader`, `VizMobileBottomBar` for improved mobile/desktop UX
+- **Server-driven Sync** — `VizRendererCard` with `usePostMessageBridge` for teacher-to-student parameter sync
+
+### Enhancements — General
+- **Post Display** — New `PostHero` and `PostSidebar` components for improved article layout
+- **Comment Likes** — `CommentLikeButton` component
+- **UI Components** — New `checkbox` component (Radix UI). Extended `badge`, `button`, `card`, `dialog`, `dropdown-menu`, `input`, `label`, `popover`, `progress`, `select`, `sheet`, `skeleton`, `switch`, `tabs`, `textarea`, `tooltip`
+- **Markdown Rendering** — `markdown.tsx` utility for rich content display
+- **Embed Support** — Embeddable visualization page at `/embed/[id]`
+- **SEO** — Added `robots.txt` and `sitemap.xml`
+- **Admin** — New experiments management page, improved all admin pages with consistent styling
+
+### Infrastructure
+- **Prisma Migration** — `narration_audio_url` field for narration scripts
+- **Environment** — Added `AZURE_SPEECH_KEY`, `AZURE_SPEECH_REGION`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`, `LIVEKIT_URL` config variables
+- **Tailwind Config** — Extended with new animation and layout utilities
+- **Dependencies** — Updated backend and frontend package locks
 
 ## 2026-05-17
 
