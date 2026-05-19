@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-05-19
+
+### Features
+- **Streaming AI Refine** — Visualization edit page AI Refine now uses SSE streaming: code area shows real-time token-by-token output as the AI refines, with live preview updating on completion. Added `POST /api/visualizations/refine-stream` endpoint with full SSE lifecycle (init/chunk/done/error), abort support, and client disconnect handling
+
 ## 2026-05-17
 
 ### i18n Internationalization

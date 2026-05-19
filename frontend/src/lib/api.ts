@@ -129,6 +129,12 @@ export const comments = {
     request<any>(`/comments/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   delete: (id: number) =>
     request<any>(`/comments/${id}`, { method: 'DELETE' }),
+  batchUpdateStatus: (ids: number[], status: string) =>
+    request<any>('/comments/batch-update-status', { method: 'POST', body: JSON.stringify({ ids, status }) }),
+  like: (id: number) =>
+    request<any>(`/comments/${id}/like`, { method: 'POST' }),
+  getLikeStatus: (id: number) =>
+    request<any>(`/comments/${id}/like-status`),
 };
 
 // Media
@@ -137,10 +143,10 @@ export const media = {
     const searchParams = new URLSearchParams();
     if (params) {
       Object.entries(params).forEach(([k, v]) => {
-        if (v !== undefined) searchParams.set(k, String(v));
+        if (v !== undefined && v !== null && v !== '') searchParams.set(k, String(v));
       });
     }
-    return request<any>(`/media?${searchParams}`);
+    return request<any>(`/media?${searchParams.toString()}`);
   },
   upload: (file: File) => {
     const formData = new FormData();
@@ -149,6 +155,39 @@ export const media = {
   },
   delete: (id: number) =>
     request<any>(`/media/${id}`, { method: 'DELETE' }),
+  batchDelete: (ids: number[]) =>
+    request<any>('/media/batch-delete', { method: 'POST', body: JSON.stringify({ ids }) }),
+  batchDownload: (ids: number[]) => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    return fetch('/api/media/batch-download', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ ids }),
+    }).then(async (res) => {
+      if (!res.ok) throw new Error('Download failed');
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `media-${Date.now()}.zip`;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+  },
+  batchMove: (ids: number[], folderId?: number | null) =>
+    request<any>('/media/batch-move', { method: 'POST', body: JSON.stringify({ ids, folderId }) }),
+  folders: {
+    list: () => request<any[]>('/media/folders'),
+    create: (name: string, parentId?: number) =>
+      request<any>('/media/folders', { method: 'POST', body: JSON.stringify({ name, parentId }) }),
+    update: (id: number, name: string) =>
+      request<any>(`/media/folders/${id}`, { method: 'PUT', body: JSON.stringify({ name }) }),
+    delete: (id: number) =>
+      request<any>(`/media/folders/${id}`, { method: 'DELETE' }),
+  },
 };
 
 // Crawl
@@ -218,7 +257,10 @@ export const seo = {
 // Banners
 export const banners = {
   list: () => request<any[]>('/banners'),
-  active: () => request<any[]>('/banners/active'),
+  active: (params?: { zone?: string }) => {
+    const qs = params?.zone ? `?zone=${encodeURIComponent(params.zone)}` : '';
+    return request<any[]>(`/banners/active${qs}`);
+  },
   get: (id: number) => request<any>(`/banners/${id}`),
   create: (data: any) =>
     request<any>('/banners', { method: 'POST', body: JSON.stringify(data) }),
@@ -226,6 +268,8 @@ export const banners = {
     request<any>(`/banners/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   delete: (id: number) =>
     request<any>(`/banners/${id}`, { method: 'DELETE' }),
+  trackClick: (id: number) =>
+    request<any>(`/banners/${id}/click`, { method: 'POST' }),
 };
 
 // Chat
@@ -319,9 +363,71 @@ export const visualizations = {
       }
     });
   },
-  refine: (data: { visualizationId: number; feedback: string }) =>
+  refine: (data: { visualizationId: number; feedback: string; language?: string }) =>
     request<any>('/visualizations/refine', { method: 'POST', body: JSON.stringify(data) }),
-  fixError: (data: { visualizationId: number; error: string }) =>
+  refineStream: (data: { visualizationId: number; feedback: string; language?: string }, callbacks: {
+    onChunk?: (text: string) => void;
+    onDone?: (data: { id: number; htmlContent: string; version: number }) => void;
+    onError?: (message: string) => void;
+  }, signal?: AbortSignal) => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    return fetch(`${SSE_BASE}/visualizations/refine-stream`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(data),
+      signal,
+    }).then(async (res) => {
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({ message: 'Refine failed' }));
+        throw new Error(errBody.message || `HTTP ${res.status}`);
+      }
+
+      const reader = res.body?.getReader();
+      if (!reader) throw new Error('No response body');
+
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let currentEvent = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (trimmed.startsWith('event: ')) {
+            currentEvent = trimmed.slice(7).trim();
+          } else if (trimmed.startsWith('data: ')) {
+            const payload = trimmed.slice(6).trim();
+            try {
+              const parsed = JSON.parse(payload);
+              switch (currentEvent) {
+                case 'chunk':
+                  callbacks.onChunk?.(parsed.text);
+                  break;
+                case 'done':
+                  callbacks.onDone?.(parsed);
+                  break;
+                case 'error':
+                  callbacks.onError?.(parsed.message);
+                  break;
+              }
+            } catch {
+              // skip malformed JSON
+            }
+          }
+        }
+      }
+    });
+  },
+  fixError: (data: { visualizationId: number; error: string; language?: string }) =>
     request<any>('/visualizations/fix-error', { method: 'POST', body: JSON.stringify(data) }),
   getProviders: () => request<{ providers: string[]; default: string }>('/visualizations/providers'),
   list: (params?: Record<string, any>) => {
@@ -343,10 +449,78 @@ export const visualizations = {
     request<any>(`/visualizations/${id}/publish`, { method: 'PUT', body: JSON.stringify({ status }) }),
   generateCover: (id: number) =>
     request<any>(`/visualizations/${id}/generate-cover`, { method: 'POST' }),
-  generateMetadata: (id: number) =>
-    request<{ introduction: string; detailedExplanation: string; knowledgeSummary: string }>(`/visualizations/${id}/generate-metadata`, { method: 'POST' }),
+  generateMetadata: (id: number, language?: string) =>
+    request<{ introduction: string; detailedExplanation: string; knowledgeSummary: string }>(`/visualizations/${id}/generate-metadata`, { method: 'POST', body: JSON.stringify({ language }) }),
+  generateMetadataStream: (id: number, language: string | undefined, callbacks: {
+    onFieldChunk?: (field: string, text: string) => void;
+    onDone?: (data: { introduction: string; detailedExplanation: string; knowledgeSummary: string }) => void;
+    onError?: (message: string) => void;
+  }, signal?: AbortSignal) => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    return fetch(`${SSE_BASE}/visualizations/${id}/generate-metadata-stream`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ language }),
+      signal,
+    }).then(async (res) => {
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({ message: 'Metadata generation failed' }));
+        throw new Error(errBody.message || `HTTP ${res.status}`);
+      }
+
+      const reader = res.body?.getReader();
+      if (!reader) throw new Error('No response body');
+
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let currentEvent = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (trimmed.startsWith('event: ')) {
+            currentEvent = trimmed.slice(7).trim();
+          } else if (trimmed.startsWith('data: ')) {
+            const payload = trimmed.slice(6).trim();
+            try {
+              const parsed = JSON.parse(payload);
+              switch (currentEvent) {
+                case 'chunk':
+                  callbacks.onFieldChunk?.(parsed.field, parsed.text);
+                  break;
+                case 'done':
+                  callbacks.onDone?.(parsed);
+                  break;
+                case 'error':
+                  callbacks.onError?.(parsed.message);
+                  break;
+              }
+            } catch {
+              // skip malformed JSON
+            }
+          }
+        }
+      }
+    });
+  },
   delete: (id: number) =>
     request<any>(`/visualizations/${id}`, { method: 'DELETE' }),
+  batchUpdateStatus: (ids: number[], status: string) =>
+    request<any>('/visualizations/batch-update-status', { method: 'POST', body: JSON.stringify({ ids, status }) }),
+  batchDelete: (ids: number[]) =>
+    request<any>('/visualizations/batch-delete', { method: 'POST', body: JSON.stringify({ ids }) }),
+  fork: (id: number) =>
+    request<any>(`/visualizations/${id}/fork`, { method: 'POST' }),
   recordStat: (id: number, action: string, metadata?: any) =>
     request<any>(`/visualizations/${id}/stats`, { method: 'POST', body: JSON.stringify({ action, metadata }) }),
   getStats: (id: number) => request<any>(`/visualizations/${id}/stats`),
@@ -358,6 +532,18 @@ export const visualizations = {
     request<any>(`/visualizations/${id}/comments`, { method: 'POST', body: JSON.stringify(data) }),
   deleteComment: (commentId: number) =>
     request<any>(`/visualizations/comments/${commentId}`, { method: 'DELETE' }),
+  // Admin: visualization comment moderation
+  listVizComments: (params?: Record<string, any>) => {
+    const sp = new URLSearchParams();
+    if (params) Object.entries(params).forEach(([k, v]) => { if (v !== undefined && v !== '') sp.set(k, String(v)); });
+    return request<any>(`/visualizations/admin/viz-comments?${sp}`);
+  },
+  updateVizComment: (id: number, data: { content?: string; status?: string }) =>
+    request<any>(`/visualizations/admin/viz-comments/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteVizComment: (id: number) =>
+    request<any>(`/visualizations/admin/viz-comments/${id}`, { method: 'DELETE' }),
+  batchUpdateVizCommentStatus: (ids: number[], status: string) =>
+    request<any>('/visualizations/admin/viz-comments/batch-update-status', { method: 'POST', body: JSON.stringify({ ids, status }) }),
   getRelated: (id: number) => request<any[]>(`/visualizations/${id}/related`),
 
   // ── Version Management ──
@@ -375,6 +561,34 @@ export const visualizations = {
     if (params?.count) sp.set('count', String(params.count));
     const qs = sp.toString();
     return request<any[]>(`/visualizations/topics/suggest${qs ? `?${qs}` : ''}`);
+  },
+
+  // ── Article Mode (Feature 5) ──
+  generateArticleQuiz: (id: number, language?: string) =>
+    request<any>(`/visualizations/${id}/article/generate`, { method: 'POST', body: JSON.stringify({ language }) }),
+  updateArticleConfig: (id: number, data: { articleMode?: boolean; quiz?: string }) =>
+    request<any>(`/visualizations/${id}/article/config`, { method: 'PUT', body: JSON.stringify(data) }),
+
+  // ── AI Tutor (Feature 1) ──
+  askTutor: (id: number, data: { sessionId: string; interactionType: string; parameterName?: string; parameterValue?: string; question?: string; language?: string }) =>
+    request<any>(`/visualizations/${id}/tutor/ask`, { method: 'POST', body: JSON.stringify(data) }),
+  getTutorHistory: (id: number, sessionId: string) =>
+    request<any[]>(`/visualizations/${id}/tutor/history?sessionId=${encodeURIComponent(sessionId)}`),
+
+  // ── Difficulty (Feature 4) ──
+  generateDifficulty: (id: number, data: { levels: string[]; language?: string }) =>
+    request<any>(`/visualizations/${id}/difficulty/generate`, { method: 'POST', body: JSON.stringify(data) }),
+  getDifficulty: (id: number) =>
+    request<any>(`/visualizations/${id}/difficulty`),
+
+  // ── Narration (Feature 3) ──
+  generateNarration: (id: number, locale?: string) =>
+    request<any>(`/visualizations/${id}/narration/generate`, { method: 'POST', body: JSON.stringify({ locale }) }),
+  getNarration: (id: number, locale?: string) => {
+    const sp = new URLSearchParams();
+    if (locale) sp.set('locale', locale);
+    const qs = sp.toString();
+    return request<any>(`/visualizations/${id}/narration${qs ? `?${qs}` : ''}`);
   },
 };
 
@@ -448,4 +662,32 @@ export const aiUsage = {
 // i18n
 export const i18nApi = {
   detectLocale: () => request<{ locale: string; supportedLocales: string[] }>('/i18n/detect'),
+};
+
+// ── Classroom (Feature 2) ──
+export const classrooms = {
+  create: (data: { name: string; visualizationId: number }) =>
+    request<any>('/classrooms', { method: 'POST', body: JSON.stringify(data) }),
+  get: (id: number) => request<any>(`/classrooms/${id}`),
+  join: (joinCode: string) =>
+    request<any>('/classrooms/join', { method: 'POST', body: JSON.stringify({ joinCode }) }),
+  leave: (id: number) => request<any>(`/classrooms/${id}/leave`, { method: 'POST' }),
+  remove: (id: number) => request<any>(`/classrooms/${id}`, { method: 'DELETE' }),
+  getEvents: (id: number, since?: string) => {
+    const sp = new URLSearchParams();
+    if (since) sp.set('since', since);
+    const qs = sp.toString();
+    return request<any[]>(`/classrooms/${id}/events${qs ? `?${qs}` : ''}`);
+  },
+  getLivekitToken: (id: number) =>
+    request<any>(`/classrooms/${id}/livekit-token`),
+};
+
+// ── Experiments (Feature 6) ──
+export const experiments = {
+  create: (data: { concept: string; subject: string; perspectiveCount?: number; language?: string }) =>
+    request<any>('/experiments', { method: 'POST', body: JSON.stringify(data) }),
+  list: () => request<any[]>('/experiments'),
+  get: (id: number) => request<any>(`/experiments/${id}`),
+  remove: (id: number) => request<any>(`/experiments/${id}`, { method: 'DELETE' }),
 };
