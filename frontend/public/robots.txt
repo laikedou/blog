@@ -1,0 +1,18 @@
+# *
+User-agent: *
+Allow: /
+
+# Baiduspider
+User-agent: Baiduspider
+Allow: /
+
+# Googlebot
+User-agent: Googlebot
+Allow: /
+
+# Host
+Host: https://yourdomain.com
+
+# Sitemaps
+Sitemap: https://yourdomain.com/sitemap.xml
+Sitemap: https://yourdomain.com/server-sitemap.xml

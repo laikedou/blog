@@ -26,6 +26,8 @@ import { CloudflareAiModule } from './common/cloudflare-ai.module';
 import { GrokImageModule } from './common/grok-image.module';
 import { NotificationsModule } from './common/notifications.module';
 import { I18nModule } from './i18n/i18n.module';
+import { ClassroomModule } from './classroom/classroom.module';
+import { ExperimentModule } from './experiment/experiment.module';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 
 @Module({
@@ -58,6 +60,8 @@ import { AllExceptionsFilter } from './common/filters/http-exception.filter';
     GrokImageModule,
     NotificationsModule,
     I18nModule,
+    ClassroomModule,
+    ExperimentModule,
   ],
   providers: [
     {

@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { visualizations } from '@/lib/api';
 import { HtmlVisualizationRenderer } from './VisualizationRenderer';
+import VersionDiff from './VersionDiff';
 import CodePreview from './CodePreview';
 import { useVisualizationStream } from '@/hooks/useVisualizationStream';
 import { Button } from '@/components/ui/button';
@@ -234,7 +235,7 @@ interface GenerateStepProps {
 }
 
 function GenerateStep({ title, subject, prompt, onGenerated, onBack }: GenerateStepProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { state, start, abort } = useVisualizationStream();
   const generatedRef = useRef(false);
   const codeContainerRef = useRef<HTMLPreElement>(null);
@@ -252,7 +253,7 @@ function GenerateStep({ title, subject, prompt, onGenerated, onBack }: GenerateS
   useEffect(() => {
     if (generatedRef.current) return;
     generatedRef.current = true;
-    start({ prompt, subject, title });
+    start({ prompt, subject, title, language: i18n.language });
   }, []);
 
   useEffect(() => {
@@ -578,11 +579,13 @@ function VersionPanel({
         )}
       </ScrollArea>
 
-      {/* Preview panel when version selected */}
+      {/* Preview / Diff panel when version selected */}
       {selectedVersion && previewCode && !selectedVersion.isCurrent && (
         <div className="mt-4 pt-4 border-t border-border">
           <div className="flex items-center justify-between mb-2">
-            <h4 className="text-caption-sm font-semibold text-ink">{t('admin.vizPreviewVersion', { version: selectedVersion.version })}</h4>
+            <h4 className="text-caption-sm font-semibold text-ink">
+              {showDiff ? t('admin.vizComparing') : t('admin.vizPreviewVersion', { version: selectedVersion.version })}
+            </h4>
             <Button
               variant="ghost"
               size="sm"
@@ -592,13 +595,23 @@ function VersionPanel({
               <X className="h-3 w-3" />
             </Button>
           </div>
-          <div className="border border-border rounded-editorial-xs overflow-hidden bg-white" style={{ height: 200 }}>
-            <HtmlVisualizationRenderer
-              htmlContent={previewCode}
+          {showDiff ? (
+            <VersionDiff
               visualizationId={visualizationId}
-              className="h-full"
+              fromVersionId={selectedVersion.id}
+              toVersionId={versions.find(v => v.isCurrent)?.id || selectedVersion.id}
+              fromLabel={`v${selectedVersion.version}`}
+              toLabel={t('admin.vizCurrent')}
             />
-          </div>
+          ) : (
+            <div className="border border-border rounded-editorial-xs overflow-hidden bg-white" style={{ height: 200 }}>
+              <HtmlVisualizationRenderer
+                htmlContent={previewCode}
+                visualizationId={visualizationId}
+                className="h-full"
+              />
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -619,19 +632,26 @@ function ReviewStep({ visualizationId, initialCode, onSave, onBack }: ReviewStep
   const [feedback, setFeedback] = useState('');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [introduction, setIntroduction] = useState('');
+  const [detailedExplanation, setDetailedExplanation] = useState('');
+  const [knowledgeSummary, setKnowledgeSummary] = useState('');
   const [refining, setRefining] = useState(false);
   const [fixing, setFixing] = useState(false);
+  const [generatingMeta, setGeneratingMeta] = useState(false);
   const [savingDraft, setSavingDraft] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [renderError, setRenderError] = useState<string | null>(null);
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [activeTab, setActiveTab] = useState<'preview' | 'code'>('preview');
 
   useEffect(() => {
     visualizations.get(visualizationId).then(v => {
       setTitle(v.title);
       setDescription(v.description || '');
+      setIntroduction(v.introduction || '');
+      setDetailedExplanation(v.detailedExplanation || '');
+      setKnowledgeSummary(v.knowledgeSummary || '');
     }).catch(() => {});
   }, [visualizationId]);
 
@@ -640,7 +660,7 @@ function ReviewStep({ visualizationId, initialCode, onSave, onBack }: ReviewStep
     setRefining(true);
     setError(null);
     try {
-      const result = await visualizations.refine({ visualizationId, feedback: feedback.trim() });
+      const result = await visualizations.refine({ visualizationId, feedback: feedback.trim(), language: i18n.language });
       setCode(result.htmlContent);
       setRenderError(null);
       setFeedback('');
@@ -657,7 +677,7 @@ function ReviewStep({ visualizationId, initialCode, onSave, onBack }: ReviewStep
     setFixing(true);
     setError(null);
     try {
-      const result = await visualizations.fixError({ visualizationId, error: renderError });
+      const result = await visualizations.fixError({ visualizationId, error: renderError, language: i18n.language });
       setCode(result.htmlContent);
       setRenderError(null);
       toast.success(t('admin.vizErrorFixed'));
@@ -673,10 +693,55 @@ function ReviewStep({ visualizationId, initialCode, onSave, onBack }: ReviewStep
     setRenderError(null);
   };
 
+  const handleGenerateMeta = async () => {
+    setGeneratingMeta(true);
+    setIntroduction('');
+    setDetailedExplanation('');
+    setKnowledgeSummary('');
+
+    const abortController = new AbortController();
+
+    try {
+      await visualizations.generateMetadataStream(visualizationId, i18n.language, {
+        onFieldChunk: (field, text) => {
+          switch (field) {
+            case 'introduction':
+              setIntroduction(prev => prev + text);
+              break;
+            case 'detailedExplanation':
+              setDetailedExplanation(prev => prev + text);
+              break;
+            case 'knowledgeSummary':
+              setKnowledgeSummary(prev => prev + text);
+              break;
+          }
+        },
+        onDone: (data) => {
+          setIntroduction(data.introduction);
+          setDetailedExplanation(data.detailedExplanation);
+          setKnowledgeSummary(data.knowledgeSummary);
+          toast.success(t('admin.vizMetadataGenerated'));
+        },
+        onError: (message) => {
+          toast.error(message);
+        },
+      }, abortController.signal);
+    } catch (e: any) {
+      if (e.name !== 'AbortError') {
+        toast.error(e.message);
+      }
+    } finally {
+      setGeneratingMeta(false);
+    }
+  };
+
   const handleSave = async () => {
     setSavingDraft(true);
     try {
-      await visualizations.update(visualizationId, { title, description, htmlContent: code });
+      await visualizations.update(visualizationId, {
+        title, description, introduction, detailedExplanation, knowledgeSummary,
+        htmlContent: code,
+      });
       onSave();
     } catch (e: any) {
       toast.error(e.message);
@@ -688,6 +753,10 @@ function ReviewStep({ visualizationId, initialCode, onSave, onBack }: ReviewStep
   const handlePublish = async () => {
     setPublishing(true);
     try {
+      await visualizations.update(visualizationId, {
+        title, description, introduction, detailedExplanation, knowledgeSummary,
+        htmlContent: code,
+      });
       await visualizations.publish(visualizationId, 'published');
       onSave();
     } catch (e: any) {
@@ -700,7 +769,10 @@ function ReviewStep({ visualizationId, initialCode, onSave, onBack }: ReviewStep
   const handleSaveDraft = async () => {
     setSavingDraft(true);
     try {
-      await visualizations.update(visualizationId, { title, description, htmlContent: code });
+      await visualizations.update(visualizationId, {
+        title, description, introduction, detailedExplanation, knowledgeSummary,
+        htmlContent: code,
+      });
       await visualizations.publish(visualizationId, 'draft');
       onSave();
     } catch (e: any) {
@@ -871,9 +943,56 @@ function ReviewStep({ visualizationId, initialCode, onSave, onBack }: ReviewStep
                 value={description}
                 onChange={e => setDescription(e.target.value)}
                 placeholder={t('admin.vizDescriptionPlaceholder')}
-                rows={3}
+                rows={2}
                 className="w-full resize-none text-body-sm"
               />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <span className="text-caption-sm text-ink-muted font-semibold">{t('viz.detailedExplanation')}</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleGenerateMeta}
+                disabled={generatingMeta}
+                className="h-7 text-caption-xs"
+              >
+                {generatingMeta ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Sparkles className="h-3 w-3 mr-1" />}
+                {t('admin.vizGenerateAI')}
+              </Button>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className="text-caption-sm text-ink-muted block mb-1">{t('viz.introduction')}</label>
+                <Textarea
+                  value={introduction}
+                  onChange={e => setIntroduction(e.target.value)}
+                  placeholder={t('admin.vizIntroductionPlaceholder')}
+                  rows={2}
+                  className="w-full resize-none text-body-sm"
+                />
+              </div>
+              <div>
+                <label className="text-caption-sm text-ink-muted block mb-1">{t('viz.detailedExplanation')}</label>
+                <Textarea
+                  value={detailedExplanation}
+                  onChange={e => setDetailedExplanation(e.target.value)}
+                  placeholder={t('admin.vizRefinePlaceholder')}
+                  rows={3}
+                  className="w-full resize-none text-body-sm"
+                />
+              </div>
+              <div>
+                <label className="text-caption-sm text-ink-muted block mb-1">{t('viz.knowledgeSummary')}</label>
+                <Textarea
+                  value={knowledgeSummary}
+                  onChange={e => setKnowledgeSummary(e.target.value)}
+                  placeholder={t('admin.vizIntroductionPlaceholder')}
+                  rows={2}
+                  className="w-full resize-none text-body-sm"
+                />
+              </div>
             </div>
 
             <Separator />

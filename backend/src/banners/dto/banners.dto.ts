@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsNumber, IsBoolean } from 'class-validator';
+import { IsString, IsOptional, IsNumber, IsBoolean, IsDateString, IsIn } from 'class-validator';
 
 export class CreateBannerDto {
   @IsString()
@@ -27,6 +27,19 @@ export class CreateBannerDto {
   @IsBoolean()
   @IsOptional()
   isActive?: boolean;
+
+  @IsString()
+  @IsOptional()
+  @IsIn(['hero', 'sidebar', 'inline', 'footer'])
+  zone?: string;
+
+  @IsDateString()
+  @IsOptional()
+  startDate?: string;
+
+  @IsDateString()
+  @IsOptional()
+  endDate?: string;
 }
 
 export class UpdateBannerDto {
@@ -57,4 +70,17 @@ export class UpdateBannerDto {
   @IsBoolean()
   @IsOptional()
   isActive?: boolean;
+
+  @IsString()
+  @IsOptional()
+  @IsIn(['hero', 'sidebar', 'inline', 'footer'])
+  zone?: string;
+
+  @IsDateString()
+  @IsOptional()
+  startDate?: string;
+
+  @IsDateString()
+  @IsOptional()
+  endDate?: string;
 }

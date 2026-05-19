@@ -1,28 +1,43 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState, useCallback } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/lib/auth';
 import { siteConfig as siteConfigApi } from '@/lib/api';
 import LanguageSwitcher from '@/components/ui/language/LanguageSwitcher';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Toaster } from '@/components/Toaster';
 import NotificationBell from '@/components/NotificationBell';
 import { NotificationProvider } from '@/lib/notification-context';
 import { ConfirmProvider } from '@/lib/confirm-dialog';
-import { LayoutDashboard, FileText, FolderTree, Tags, MessageSquare, Image, Globe, LogOut, ExternalLink, Menu, Layout, MessageCircle, BarChart3, Bug, Settings, Loader2 } from 'lucide-react';
+
+const navItems = [
+  { href: '/admin', label: 'admin.dashboard', icon: 'grid_view' },
+  { href: '/admin/posts', label: 'admin.posts', icon: 'description' },
+  { href: '/admin/visualizations', label: 'admin.visualizations', icon: 'monitoring' },
+  { href: '/admin/experiments', label: 'admin.experiments', icon: 'science' },
+  { href: '/admin/banners', label: 'admin.banners', icon: 'view_carousel' },
+  { href: '/admin/categories', label: 'admin.categories', icon: 'category' },
+  { href: '/admin/tags', label: 'admin.tags', icon: 'label' },
+  { href: '/admin/comments', label: 'admin.comments', icon: 'forum' },
+  { href: '/admin/chat-analytics', label: 'admin.chatAnalytics', icon: 'bar_chart' },
+  { href: '/admin/media', label: 'admin.media', icon: 'perm_media' },
+  { href: '/admin/seo', label: 'admin.seo', icon: 'search' },
+  { href: '/admin/crawl', label: 'admin.crawl', icon: 'bug_report' },
+  { href: '/admin/logs', label: 'admin.logs', icon: 'settings' },
+  { href: '/admin/ai-usage', label: 'admin.aiUsage', icon: 'spark' },
+  { href: '/admin/settings', label: 'admin.settings', icon: 'settings' },
+];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading, user, logout } = useAuth();
   const { t } = useTranslation();
   const router = useRouter();
+  const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [adminTitle, setAdminTitle] = useState('Blog Admin');
   const [siteTitle, setSiteTitle] = useState('AI Blog');
-  const [logoUrl, setLogoUrl] = useState('');
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -34,114 +49,128 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     siteConfigApi.get().then(config => {
       if (config.adminTitle) setAdminTitle(config.adminTitle);
       if (config.siteTitle) setSiteTitle(config.siteTitle);
-      if (config.logoUrl) setLogoUrl(config.logoUrl);
     }).catch(() => {});
   }, []);
 
+  const isActive = useCallback((href: string) => {
+    if (href === '/admin') return pathname === '/admin';
+    return pathname.startsWith(href);
+  }, [pathname]);
+
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-cream-200">
-        <Loader2 className="h-8 w-8 animate-spin text-clay" />
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-3">
+          <span className="material-symbols-outlined text-primary text-3xl animate-pulse">spark</span>
+          <span className="text-on-surface-variant text-sm font-label-sm">{t('common.loading')}</span>
+        </div>
       </div>
     );
   }
 
   if (!isAuthenticated) return null;
 
-  const navItems = [
-    { href: '/admin', label: t('admin.dashboard'), icon: LayoutDashboard },
-    { href: '/admin/posts', label: t('admin.posts'), icon: FileText },
-    { href: '/admin/visualizations', label: t('admin.visualizations'), icon: BarChart3 },
-    { href: '/admin/banners', label: t('admin.banners'), icon: Layout },
-    { href: '/admin/categories', label: t('admin.categories'), icon: FolderTree },
-    { href: '/admin/tags', label: t('admin.tags'), icon: Tags },
-    { href: '/admin/comments', label: t('admin.comments'), icon: MessageSquare },
-    { href: '/admin/chat-analytics', label: t('admin.chatAnalytics'), icon: MessageCircle },
-    { href: '/admin/media', label: t('admin.media'), icon: Image },
-    { href: '/admin/seo', label: t('admin.seo'), icon: BarChart3 },
-    { href: '/admin/crawl', label: t('admin.crawl'), icon: Globe },
-    { href: '/admin/logs', label: t('admin.logs'), icon: Bug },
-    { href: '/admin/ai-usage', label: t('admin.aiUsage'), icon: BarChart3 },
-    { href: '/admin/settings', label: t('admin.settings'), icon: Settings },
-  ];
-
   return (
-    <div className="min-h-screen flex bg-cream-200">
+    <div className="min-h-screen bg-background text-on-surface font-body antialiased flex overflow-hidden">
+      {/* Ambient background glow */}
+      <div className="fixed top-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full bg-primary/5 blur-[120px] pointer-events-none z-0"></div>
+      <div className="fixed bottom-[-20%] left-[-10%] w-[500px] h-[500px] rounded-full bg-secondary/5 blur-[100px] pointer-events-none z-0"></div>
+
       {/* Sidebar */}
-      <aside className={`bg-surface-tile text-white flex flex-col h-screen sticky top-0 transition-all duration-300 ${sidebarOpen ? 'w-64' : 'w-0 overflow-hidden'}`}>
-        <div className="h-16 flex items-center px-5 border-b border-white/10 shrink-0">
-          {sidebarOpen && (
-            <>
-              <Link href="/admin" className="font-display text-display-sm tracking-tight">{logoUrl ? <img src={logoUrl} alt={siteTitle} className="h-7 w-auto inline" /> : siteTitle}</Link>
-              <span className="text-caption-sm text-white/40 ml-auto uppercase tracking-wider">{adminTitle === 'Blog Admin' ? t('nav.admin') : adminTitle}</span>
-            </>
-          )}
+      <aside className={`hidden md:flex flex-col h-screen w-[260px] fixed left-0 top-0 border-r border-outline-variant/20 z-50 bg-surface/60 backdrop-blur-xl shadow-xl transition-all duration-300 ${sidebarOpen ? '' : '-ml-[260px]'}`}>
+        {/* Logo area */}
+        <div className="flex items-center gap-3 px-5 py-6 border-b border-outline-variant/10">
+          <div className="w-10 h-10 rounded-lg bg-primary-container/20 flex items-center justify-center border border-primary/20 inner-glow shrink-0">
+            <span className="material-symbols-outlined text-primary">token</span>
+          </div>
+          <div className="min-w-0">
+            <h1 className="font-headline-md text-headline-md font-bold text-on-surface tracking-tight truncate">{siteTitle}</h1>
+            <p className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider truncate">{adminTitle}</p>
+          </div>
         </div>
-        <nav className="flex-1 py-4 px-3 space-y-1 overflow-y-auto min-h-0">
+
+        {/* Navigation */}
+        <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
           {navItems.map(item => {
-            const Icon = item.icon;
+            const active = isActive(item.href);
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-editorial-sm text-body-sm text-white/60 hover:text-white hover:bg-white/10 transition-all"
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group ${
+                  active
+                    ? 'bg-primary/10 text-primary border-l-[3px] border-primary shadow-[inset_1px_0_10px_rgba(175,198,255,0.05)]'
+                    : 'text-on-surface-variant hover:text-on-surface hover:bg-white/5'
+                }`}
               >
-                <Icon className="h-4 w-4 shrink-0" />
-                <span>{item.label}</span>
+                <span className={`material-symbols-outlined text-[20px] ${active ? 'fill' : ''}`}>{item.icon}</span>
+                <span className={`font-body-md text-body-md ${active ? 'font-semibold' : 'font-medium'}`}>{t(item.label)}</span>
               </Link>
             );
           })}
         </nav>
-        <div className="p-4 border-t border-white/10 shrink-0">
-          {sidebarOpen && (
-            <>
-              <div className="flex items-center gap-3 mb-3 px-1">
-                <Avatar className="h-8 w-8">
-                  <AvatarFallback className="bg-clay text-white text-body-sm">
-                    {user?.displayName?.charAt(0).toUpperCase() || 'U'}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0">
-                  <p className="text-body-sm font-medium truncate text-white/80">{user?.displayName}</p>
-                  <p className="text-caption-sm text-white/40 truncate">{user?.email}</p>
-                </div>
+
+        {/* Footer */}
+        <div className="mt-auto pt-4 px-3 pb-4 border-t border-outline-variant/10 space-y-1">
+          <div className="flex items-center gap-3 px-3 py-2 mb-1">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-primary to-secondary-container p-[1px]">
+              <div className="w-full h-full rounded-full bg-surface flex items-center justify-center text-primary font-label-md text-sm">
+                {user?.displayName?.charAt(0).toUpperCase() || 'U'}
               </div>
-              <div className="flex gap-1">
-                <Link href="/" className="flex-1 text-center text-caption-sm text-white/40 hover:text-white py-1.5 rounded-editorial-xs hover:bg-white/10 transition-colors">
-                  <ExternalLink className="h-3 w-3 inline mr-1" />{t('nav.viewSite')}
-                </Link>
-                <button onClick={logout} className="flex-1 text-center text-caption-sm text-clay/60 hover:text-clay py-1.5 rounded-editorial-xs hover:bg-white/10 transition-colors">
-                  <LogOut className="h-3 w-3 inline mr-1" />{t('nav.signOut')}
-                </button>
-              </div>
-            </>
-          )}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-body-sm text-on-surface font-medium truncate leading-tight">{user?.displayName}</p>
+              <p className="font-label-sm text-[11px] text-on-surface-variant truncate">{user?.email}</p>
+            </div>
+          </div>
+          <Link href="/" className="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-white/5 transition-colors text-sm">
+            <span className="material-symbols-outlined text-[18px]">open_in_new</span>
+            <span className="font-body-sm">View Site</span>
+          </Link>
+          <button onClick={logout} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-error/80 hover:text-error hover:bg-error/10 transition-colors text-sm">
+            <span className="material-symbols-outlined text-[18px]">logout</span>
+            <span className="font-body-sm">Logout</span>
+          </button>
         </div>
       </aside>
 
-      <div className="flex-1 flex flex-col min-h-screen">
+      {/* Main Content */}
+      <div className={`flex-1 flex flex-col min-h-screen relative ${sidebarOpen ? 'md:ml-[260px]' : ''}`}>
         <NotificationProvider>
           <ConfirmProvider>
-            {/* Top bar */}
-          <div className="h-16 bg-cream-100 border-b border-border flex items-center px-6 gap-3">
-            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-ink-soft hover:text-ink transition-colors p-1.5 rounded-editorial-xs hover:bg-cream-300">
-              <Menu className="h-5 w-5" />
-            </button>
-            <span className="text-body-sm text-ink-muted uppercase tracking-wider">{adminTitle}</span>
-            <div className="flex-1" />
-            <LanguageSwitcher variant="icon" />
-            <NotificationBell />
-          </div>
+            {/* Topbar */}
+            <header className="h-16 bg-surface/80 backdrop-blur-md border-b border-outline-variant/10 flex items-center justify-between px-6 sticky top-0 z-40 w-full">
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={() => setSidebarOpen(!sidebarOpen)}
+                  className="text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/50 rounded-full p-2 transition-all"
+                >
+                  <span className="material-symbols-outlined">menu</span>
+                </button>
+                <div className="hidden md:flex items-center gap-2 text-on-surface-variant">
+                  <span className="font-label-md text-label-md">{adminTitle}</span>
+                  <span className="material-symbols-outlined text-[16px]">chevron_right</span>
+                  <span className="font-label-md text-label-md text-primary font-bold">
+                    {navItems.find(i => isActive(i.href)) ? t(navItems.find(i => isActive(i.href))!.label) : ''}
+                  </span>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <LanguageSwitcher variant="icon" />
+                <NotificationBell />
+              </div>
+            </header>
 
-          <main className="flex-1 overflow-auto">
-            <div className="section-container py-8">
-              {children}
-            </div>
-          </main>
-          <Toaster />
+            {/* Content */}
+            <main className="flex-1 overflow-auto z-10">
+              <div className="p-container-padding max-w-[1600px] w-full mx-auto">
+                {children}
+              </div>
+            </main>
+            <Toaster />
           </ConfirmProvider>
-          </NotificationProvider>
-        </div>
+        </NotificationProvider>
       </div>
+    </div>
   );
 }

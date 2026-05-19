@@ -5,8 +5,13 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/lib/auth';
 import { visualizations } from '@/lib/api';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import { markdownComponents } from '@/lib/markdown';
+import CommentLikeButton from '@/components/CommentLikeButton';
 import { MessageSquare, Trash2, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { VisualizationComment } from '@/types';
@@ -139,11 +144,16 @@ export default function VisualizationComments({ visualizationId }: Props) {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-body-sm font-medium text-ink">{comment.author.displayName}</span>
+                    {comment.author.role === 'admin' && (
+                      <Badge variant="outline" className="ml-1 text-[10px] px-1.5 py-0 bg-primary/10 text-primary border-primary/20">STAFF</Badge>
+                    )}
                     <span className="text-caption-sm text-ink-muted">
                       {new Date(comment.createdAt).toLocaleDateString()}
                     </span>
                   </div>
-                  <p className="text-body-sm text-ink-soft whitespace-pre-wrap">{comment.content}</p>
+                  <div className="text-body-sm text-ink-soft">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>{comment.content}</ReactMarkdown>
+                  </div>
                   <div className="flex items-center gap-3 mt-2">
                     {isAuthenticated && (
                       <button
@@ -163,6 +173,9 @@ export default function VisualizationComments({ visualizationId }: Props) {
                         {t('viz.deleteComment')}
                       </button>
                     )}
+                    <div className="mt-1">
+                      <CommentLikeButton commentId={comment.id} initialLikes={(comment as any).likesCount} />
+                    </div>
                   </div>
 
                   {replyTo === comment.id && (
@@ -196,11 +209,16 @@ export default function VisualizationComments({ visualizationId }: Props) {
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2 mb-0.5">
                               <span className="text-caption-sm font-medium text-ink">{reply.author.displayName}</span>
+                              {reply.author.role === 'admin' && (
+                                <Badge variant="outline" className="ml-1 text-[10px] px-1.5 py-0 bg-primary/10 text-primary border-primary/20">STAFF</Badge>
+                              )}
                               <span className="text-caption-sm text-ink-muted">
                                 {new Date(reply.createdAt).toLocaleDateString()}
                               </span>
                             </div>
-                            <p className="text-body-sm text-ink-soft">{reply.content}</p>
+                            <div className="text-body-sm text-ink-soft">
+                              <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>{reply.content}</ReactMarkdown>
+                            </div>
                             {canDelete(reply.authorId) && (
                               <button
                                 onClick={() => handleDelete(reply.id)}

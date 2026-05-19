@@ -18,12 +18,16 @@ model User {
   role      String    @default("user") // user | admin
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
-  posts     Post[]
-  comments  Comment[]
-  media     Media[]
-  visualizations Visualization[]
-  visualizationLikes VisualizationLike[]
-  visualizationComments VisualizationComment[]
+  posts                  Post[]
+  comments               Comment[]
+  media                  Media[]
+  visualizations         Visualization[]
+  visualizationLikes     VisualizationLike[]
+  visualizationComments  VisualizationComment[]
+  commentLikes           CommentLike[]
+  tutorInteractions      TutorInteraction[]
+  classrooms             Classroom[]             @relation("TeacherClassrooms")
+  classroomParticipants  ClassroomParticipant[]
 }
 
 model Post {
@@ -47,6 +51,7 @@ model Post {
 
   tags        PostTag[]
   comments    Comment[]
+  banners     Banner[]
 
   seoTitle       String @default("")
   seoDescription String @default("")
@@ -96,9 +101,22 @@ model Comment {
   authorId  Int
   author    User      @relation(fields: [authorId], references: [id])
 
-  parentId  Int?
-  parent    Comment?  @relation("CommentReplies", fields: [parentId], references: [id])
-  replies   Comment[] @relation("CommentReplies")
+  parentId   Int?
+  parent     Comment?       @relation("CommentReplies", fields: [parentId], references: [id])
+  replies    Comment[]      @relation("CommentReplies")
+  likes      CommentLike[]
+  likesCount Int            @default(0)
+}
+
+model CommentLike {
+  id        Int      @id @default(autoincrement())
+  commentId Int
+  comment   Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([commentId, userId])
 }
 
 model Media {
@@ -113,6 +131,20 @@ model Media {
 
   uploaderId  Int
   uploader    User      @relation(fields: [uploaderId], references: [id])
+
+  folderId    Int?
+  folder      MediaFolder? @relation(fields: [folderId], references: [id], onDelete: SetNull)
+}
+
+model MediaFolder {
+  id        Int       @id @default(autoincrement())
+  name      String
+  parentId  Int?
+  parent    MediaFolder? @relation("FolderChildren", fields: [parentId], references: [id])
+  children  MediaFolder[] @relation("FolderChildren")
+  media     Media[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 }
 
 model CrawlSource {
@@ -153,8 +185,13 @@ model Banner {
   imageUrl    String
   linkUrl     String    @default("")
   postId      Int?      // link to featured post
+  post        Post?     @relation(fields: [postId], references: [id], onDelete: SetNull)
   sortOrder   Int       @default(0)
   isActive    Boolean   @default(true)
+  zone        String    @default("hero") // hero | sidebar | inline | footer
+  startDate   DateTime?
+  endDate     DateTime?
+  clickCount  Int       @default(0)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 }
@@ -295,6 +332,10 @@ model Visualization {
   introduction        String    @default("")       // brief introduction/overview of the concept
   detailedExplanation String    @default("")       // in-depth explanation of the visualization topic
   knowledgeSummary    String    @default("")       // key knowledge points summary
+  articleMode        Boolean   @default(false)    // Feature 5: interactive article mode
+  quiz               String    @default("")       // JSON: [{ question, options[], correctIndex, explanation }]
+  difficultyLevels   String    @default("")       // JSON: { beginner: <id>, intermediate: <id>, advanced: <id> }
+  isDifficultyRoot   Boolean   @default(false)    // Feature 4: parent of difficulty variants
   tags                String    @default("")       // comma-separated
   featuredImage       String    @default("")       // AI-generated cover image URL
   htmlContent         String                      // the generated HTML code
@@ -311,10 +352,14 @@ model Visualization {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
-  versions    VisualizationVersion[]
-  stats       VisualizationStat[]
-  likes       VisualizationLike[]
-  comments    VisualizationComment[]
+  versions              VisualizationVersion[]
+  stats                 VisualizationStat[]
+  likes                 VisualizationLike[]
+  comments              VisualizationComment[]
+  tutorInteractions     TutorInteraction[]
+  classrooms            Classroom[]
+  narrationScripts      NarrationScript[]
+  experimentPerspectives ExperimentPerspective[]
 }
 
 model VisualizationVersion {
@@ -348,9 +393,24 @@ model VisualizationLike {
   @@unique([visualizationId, userId])
 }
 
+model TutorInteraction {
+  id               Int            @id @default(autoincrement())
+  visualizationId  Int
+  visualization    Visualization  @relation(fields: [visualizationId], references: [id], onDelete: Cascade)
+  userId           Int?
+  user             User?          @relation(fields: [userId], references: [id])
+  sessionId        String
+  interactionType  String         // param_change | button_click | question
+  parameterName    String         @default("")
+  parameterValue   String         @default("")
+  aiResponse       String
+  createdAt        DateTime       @default(now())
+}
+
 model VisualizationComment {
   id               Int            @id @default(autoincrement())
   content          String
+  status           String         @default("approved") // approved | pending | spam
   visualizationId  Int
   visualization    Visualization @relation(fields: [visualizationId], references: [id], onDelete: Cascade)
   authorId         Int
@@ -362,6 +422,77 @@ model VisualizationComment {
   updatedAt        DateTime      @updatedAt
 }
 
+
+// ─── Classroom (Feature 2) ─────────────────────────────────────
+
+model Classroom {
+  id              Int       @id @default(autoincrement())
+  name            String
+  joinCode        String    @unique
+  visualizationId Int
+  visualization   Visualization @relation(fields: [visualizationId], references: [id], onDelete: Cascade)
+  teacherId       Int
+  teacher         User      @relation("TeacherClassrooms", fields: [teacherId], references: [id])
+  status          String    @default("active")  // active | ended
+  settings        String    @default("{}")      // JSON: { allowStudentControl, muteAll }
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  participants    ClassroomParticipant[]
+}
+
+model ClassroomParticipant {
+  id           Int       @id @default(autoincrement())
+  classroomId  Int
+  classroom    Classroom @relation(fields: [classroomId], references: [id], onDelete: Cascade)
+  userId       Int
+  user         User      @relation(fields: [userId], references: [id])
+  role         String    @default("student")  // teacher | student
+  joinedAt     DateTime  @default(now())
+  lastActiveAt DateTime  @default(now())
+
+  @@unique([classroomId, userId])
+}
+
+// ─── Narration (Feature 3) ─────────────────────────────────────
+
+model NarrationScript {
+  id              Int       @id @default(autoincrement())
+  visualizationId Int
+  visualization   Visualization @relation(fields: [visualizationId], references: [id], onDelete: Cascade)
+  locale          String    // zh-CN | zh-TW | en | ja
+  title           String    @default("")
+  segments        String    // JSON: [{ startTime, endTime, text, cuePoint }]
+  fullText        String
+  audioUrl        String    @default("")
+  generatedAt     DateTime  @default(now())
+  version         Int       @default(1)
+
+  @@unique([visualizationId, locale])
+}
+
+// ─── Experiments (Feature 6) ────────────────────────────────────
+
+model ExperimentGroup {
+  id          Int       @id @default(autoincrement())
+  title       String
+  description String    @default("")
+  concept     String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  perspectives ExperimentPerspective[]
+}
+
+model ExperimentPerspective {
+  id              Int       @id @default(autoincrement())
+  groupId         Int
+  group           ExperimentGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  visualizationId Int
+  visualization   Visualization @relation(fields: [visualizationId], references: [id], onDelete: Cascade)
+  perspectiveName String
+  subtitle        String    @default("")
+  sortOrder       Int       @default(0)
+  createdAt       DateTime  @default(now())
+}
 
 model AiUsageLog {
   id               Int       @id @default(autoincrement())

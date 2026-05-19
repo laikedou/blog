@@ -3,12 +3,17 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ai as aiApi } from '@/lib/api';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { toast } from 'sonner';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { toast } from 'sonner';
+import { Separator } from '@/components/ui/separator';
 import MediaPickerDialog from './MediaPickerDialog';
-import { Sparkles, Image, Loader2, Wand2 } from 'lucide-react';
 
 interface ImageActionsDialogProps {
   open: boolean;
@@ -39,23 +44,23 @@ export default function ImageActionsDialog({ open, onOpenChange, imageUrl, onRep
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Image className="h-5 w-5 text-clay" /> {t('common.imageActions')}
+            <DialogTitle className="flex items-center gap-2 text-on-surface">
+              <span className="material-symbols-outlined text-primary">image</span>
+              {t('common.imageActions')}
             </DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4">
-            {/* Preview */}
-            <div className="aspect-video rounded-editorial-sm overflow-hidden border border-border bg-cream-100">
+            <div className="aspect-video rounded-lg overflow-hidden border border-white/10 bg-surface-container-low">
               <img src={imageUrl} alt="" className="w-full h-full object-cover" />
             </div>
 
-            {/* Replace with AI */}
             <div className="space-y-2.5">
-              <h4 className="text-body-sm font-medium text-ink flex items-center gap-2">
-                <Wand2 className="h-4 w-4 text-clay" /> {t('common.replaceWithAI')}
+              <h4 className="text-body-sm font-medium text-on-surface flex items-center gap-2">
+                <span className="material-symbols-outlined text-[16px] text-primary">auto_awesome</span>
+                {t('common.replaceWithAI')}
               </h4>
               <Input
                 value={aiPrompt}
@@ -63,34 +68,41 @@ export default function ImageActionsDialog({ open, onOpenChange, imageUrl, onRep
                 placeholder={t('common.describeNewImage')}
               />
               <Button
-                type="button"
                 onClick={handleAiReplace}
                 disabled={generating || !aiPrompt.trim()}
                 className="w-full"
+                variant="default"
               >
                 {generating ? (
-                  <><Loader2 className="h-4 w-4 animate-spin mr-2" /> {t('common.generating')}</>
+                  <>
+                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    {t('common.generating')}
+                  </>
                 ) : (
-                  <><Sparkles className="h-4 w-4 mr-2" /> {t('common.generateAndReplace')}</>
+                  <>
+                    <span className="material-symbols-outlined text-[18px]">auto_awesome</span>
+                    {t('common.generateAndReplace')}
+                  </>
                 )}
               </Button>
             </div>
 
-            {/* Divider */}
             <div className="flex items-center gap-3">
-              <div className="flex-1 h-px bg-border" />
-              <span className="text-caption-sm text-ink-muted">{t('common.or')}</span>
-              <div className="flex-1 h-px bg-border" />
+              <Separator className="flex-1" />
+              <span className="text-label-sm text-on-surface-variant">{t('common.or')}</span>
+              <Separator className="flex-1" />
             </div>
 
-            {/* Replace from Media */}
             <Button
-              type="button"
               variant="outline"
               onClick={() => setShowMediaPicker(true)}
               className="w-full"
             >
-              <Image className="h-4 w-4 mr-2" /> {t('common.chooseFromLibrary')}
+              <span className="material-symbols-outlined text-[16px]">image</span>
+              {t('common.chooseFromLibrary')}
             </Button>
           </div>
         </DialogContent>

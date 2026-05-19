@@ -1,6 +1,7 @@
 import { AiProvider, GenerateResult, StreamChunk } from '../interfaces/ai-provider.interface';
 import { createOpenAI } from '@ai-sdk/openai';
 import { streamText } from 'ai';
+import { getLanguageInstruction, SupportedLocale } from '../../common/language.helper';
 
 export class OpenAIProvider implements AiProvider {
   readonly name = 'openai';
@@ -45,25 +46,27 @@ export class OpenAIProvider implements AiProvider {
     }
   }
 
-  private systemPrompt(): string {
+  private systemPrompt(language?: string): string {
+    const langInstruction = language ? getLanguageInstruction(language as SupportedLocale) : '';
     return `You are a visualization expert creating interactive HTML/CSS/JS content for K-12 math and physics education.
 
 ## RULES:
 1. Return ONLY the HTML inside a \`\`\`html code block. No explanations.
-2. Root element: <div class="viz-root">. viz-root's max-width is always 100%.All content inside it.
+2. Root element: <div class="viz-root">. viz-root's width is always 100%.All content inside it.
 3. Use <style> for ALL styling — scoped selectors prefixed with "viz-".
 4. Use <script> for ALL interactivity — vanilla JavaScript only. NO imports.
 5. SVG for math diagrams. <canvas> for physics simulations.
-6. Interactive: buttons, sliders (input type="range"), click-to-toggle.
-7. CSS animations + requestAnimationFrame for smooth motion.
+6. Interactive: buttons, sliders (input type="range"), click-to-toggle. For EVERY interactive element, emit a postMessage event in its event handler: window.parent.postMessage({ type: 'viz:interact', payload: { parameter: '<name>', value: <currentValue>, action: '<drag|click|change>', timestamp: Date.now() } }, '*');
+7. ALSO add a window.addEventListener('message', (e) => { if (e.data?.type === 'viz:sync' && e.data?.payload) { const p = e.data.payload; /* update the interactive element matching p.parameter to p.value */ } }) to receive real-time sync events from a teacher in classroom mode.
+8. CSS animations + requestAnimationFrame for smooth motion.
 8. The .viz-root container MUST have: max-width: 100%; width: 100%; NO box-shadow, border, or outline on .viz-root (inner elements can have them).
 9. Clean inner design: rounded corners, subtle shadows on inner elements, readable typography, accent colors.
 10. Labels, annotations, formulas, step-by-step explanations.
 11. Wrap logic in try-catch. On error call: window.__vizError(error.message).
-12. NOT a full HTML document — just the fragment.`;
+12. NOT a full HTML document — just the fragment.${langInstruction}`;
   }
 
-  async generateVisualization(prompt: string, _subject: string): Promise<GenerateResult> {
+  async generateVisualization(prompt: string, _subject: string, language?: string): Promise<GenerateResult> {
     const response = await this.fetchWithTimeout(`${this.baseUrl}/chat/completions`, {
       method: 'POST',
       headers: {
@@ -75,7 +78,7 @@ export class OpenAIProvider implements AiProvider {
         max_tokens: this.maxTokens,
         temperature: 0.7,
         messages: [
-          { role: 'system', content: this.systemPrompt() },
+          { role: 'system', content: this.systemPrompt(language) },
           { role: 'user', content: prompt },
         ],
       }),
@@ -102,11 +105,12 @@ export class OpenAIProvider implements AiProvider {
     prompt: string,
     _subject: string,
     signal?: AbortSignal,
+    language?: string,
   ): AsyncGenerator<StreamChunk, void, undefined> {
     try {
       const result = streamText({
         model: this.openai(this.model),
-        system: this.systemPrompt(),
+        system: this.systemPrompt(language),
         prompt,
         maxOutputTokens: this.maxTokens,
         temperature: 0.7,
@@ -122,7 +126,8 @@ export class OpenAIProvider implements AiProvider {
     }
   }
 
-  async refineVisualization(code: string, feedback: string): Promise<GenerateResult> {
+  async refineVisualization(code: string, feedback: string, language?: string): Promise<GenerateResult> {
+    const langInstruction = language ? getLanguageInstruction(language as SupportedLocale) : '';
     const response = await this.fetchWithTimeout(`${this.baseUrl}/chat/completions`, {
       method: 'POST',
       headers: {
@@ -134,7 +139,7 @@ export class OpenAIProvider implements AiProvider {
         max_tokens: this.maxTokens,
         temperature: 0.5,
         messages: [
-          { role: 'system', content: `Existing HTML code:\n${code}\n\nRevise based on feedback. Return only code in \`\`\`html.` },
+          { role: 'system', content: `Existing HTML code:\n${code}\n\nRevise based on feedback. Return only code in \`\`\`html.${langInstruction}` },
           { role: 'user', content: feedback },
         ],
       }),
@@ -152,7 +157,8 @@ export class OpenAIProvider implements AiProvider {
     return { code: this.extractCode(text), raw: text, usage };
   }
 
-  async fixError(code: string, error: string): Promise<GenerateResult> {
+  async fixError(code: string, error: string, language?: string): Promise<GenerateResult> {
+    const langInstruction = language ? getLanguageInstruction(language as SupportedLocale) : '';
     const response = await this.fetchWithTimeout(`${this.baseUrl}/chat/completions`, {
       method: 'POST',
       headers: {
@@ -179,7 +185,7 @@ ${code}
 Error:
 ${error}
 
-Return the COMPLETE corrected HTML in a single \`\`\`html block.`,
+Return the COMPLETE corrected HTML in a single \`\`\`html block.${langInstruction}`,
           },
         ],
       }),
@@ -202,7 +208,8 @@ Return the COMPLETE corrected HTML in a single \`\`\`html block.`,
     return { valid: true };
   }
 
-  async generateText(prompt: string): Promise<string> {
+  async generateText(prompt: string, language?: string): Promise<string> {
+    const langInstruction = language ? getLanguageInstruction(language as SupportedLocale) : '';
     const response = await this.fetchWithTimeout(`${this.baseUrl}/chat/completions`, {
       method: 'POST',
       headers: {
@@ -214,7 +221,7 @@ Return the COMPLETE corrected HTML in a single \`\`\`html block.`,
         max_tokens: 4096,
         temperature: 0.5,
         messages: [
-          { role: 'system', content: 'You are an educational content writer for K-12 math and physics. Generate clear, concise, and accurate explanations.' },
+          { role: 'system', content: `You are an educational content writer for K-12 math and physics. Generate clear, concise, and accurate explanations.${langInstruction}` },
           { role: 'user', content: prompt },
         ],
       }),
@@ -227,6 +234,30 @@ Return the COMPLETE corrected HTML in a single \`\`\`html block.`,
 
     const data = await response.json();
     return data?.choices?.[0]?.message?.content || '';
+  }
+
+  async *generateTextStream(
+    prompt: string,
+    signal?: AbortSignal,
+    language?: string,
+  ): AsyncGenerator<StreamChunk, void, undefined> {
+    try {
+      const langInstruction = language ? getLanguageInstruction(language as SupportedLocale) : '';
+      const result = streamText({
+        model: this.openai(this.model),
+        system: `You are an educational content writer for K-12 math and physics. Generate clear, concise, and accurate explanations.${langInstruction}`,
+        prompt,
+        maxOutputTokens: 4096,
+        temperature: 0.5,
+        abortSignal: signal,
+        timeout: this.timeout,
+      });
+      for await (const chunk of result.textStream) {
+        yield { type: 'text', text: chunk };
+      }
+    } catch (error: any) {
+      throw new Error(`OpenAI text generation error: ${error.message}`);
+    }
   }
 
   private extractCode(text: string): string {

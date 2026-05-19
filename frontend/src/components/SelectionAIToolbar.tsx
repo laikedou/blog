@@ -3,13 +3,19 @@
 import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ai } from '@/lib/api';
-import { Languages, RefreshCw, Loader2, Sparkles, ImageIcon } from 'lucide-react';
 
 interface SelectionAIToolbarProps {
   editor: any;
   editorContainer: HTMLElement | null;
   onImageAction?: (src: string) => void;
 }
+
+const Spinner = () => (
+  <svg className="animate-spin h-3.5 w-3.5" viewBox="0 0 24 24" fill="none">
+    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+  </svg>
+);
 
 export default function SelectionAIToolbar({ editor, editorContainer, onImageAction }: SelectionAIToolbarProps) {
   const { t } = useTranslation();
@@ -22,7 +28,6 @@ export default function SelectionAIToolbar({ editor, editorContainer, onImageAct
   const toolbarRef = useRef<HTMLDivElement>(null);
   const suppressHideRef = useRef(false);
 
-  // Handle text selection
   useEffect(() => {
     const handleSelectionChange = () => {
       if (loading || suppressHideRef.current) {
@@ -36,14 +41,12 @@ export default function SelectionAIToolbar({ editor, editorContainer, onImageAct
         return;
       }
 
-      // Check if selection is within the editor
       const range = sel.getRangeAt(0);
       if (!editorContainer.contains(range.commonAncestorContainer)) {
         setVisible(false);
         return;
       }
 
-      // Don't show if toolbar itself is selected
       if (toolbarRef.current && toolbarRef.current.contains(sel.focusNode as Node)) {
         return;
       }
@@ -62,7 +65,6 @@ export default function SelectionAIToolbar({ editor, editorContainer, onImageAct
     return () => document.removeEventListener('selectionchange', handleSelectionChange);
   }, [editorContainer, loading]);
 
-  // Handle image click
   useEffect(() => {
     if (!editorContainer) return;
 
@@ -87,7 +89,6 @@ export default function SelectionAIToolbar({ editor, editorContainer, onImageAct
     return () => editorContainer.removeEventListener('click', handleClick, true);
   }, [editorContainer]);
 
-  // Hide on Escape
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setVisible(false);
@@ -96,7 +97,6 @@ export default function SelectionAIToolbar({ editor, editorContainer, onImageAct
     return () => document.removeEventListener('keydown', handleKey);
   }, []);
 
-  // Hide when clicking outside the toolbar
   useEffect(() => {
     if (!visible) return;
     const handleOutside = (e: MouseEvent) => {
@@ -132,12 +132,12 @@ export default function SelectionAIToolbar({ editor, editorContainer, onImageAct
       className="fixed z-50 -translate-x-1/2 -translate-y-full pointer-events-none"
       style={{ top: position.top, left: position.left }}
     >
-      <div className="pointer-events-auto flex items-center gap-1 bg-white/95 backdrop-blur-xl rounded-editorial-sm border border-border shadow-elevated px-2 py-1.5 animate-fade-in">
-        <div className="flex items-center gap-1.5 px-1.5 text-caption-sm text-ink-muted">
-          <Sparkles className="h-3 w-3 text-clay" />
+      <div className="pointer-events-auto flex items-center gap-1 rounded-xl shadow-2xl px-2 py-1.5 animate-fade-in bg-surface-container-high/95 backdrop-blur-xl border border-white/10">
+        <div className="flex items-center gap-1.5 px-1.5 text-label-sm text-on-surface-variant">
+          <span className="material-symbols-outlined text-[14px] text-primary">auto_awesome</span>
           <span>{t('common.aiLabel')}</span>
         </div>
-        <div className="w-px h-4 bg-border" />
+        <div className="w-px h-4 bg-white/10" />
 
         {mode === 'text' && (
           <>
@@ -145,9 +145,9 @@ export default function SelectionAIToolbar({ editor, editorContainer, onImageAct
               type="button"
               onClick={() => handleEnhance('polish')}
               disabled={!!loading}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-editorial-xs text-body-sm text-ink-soft hover:bg-cream-200 hover:text-clay transition-colors disabled:opacity-40"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-body-sm text-on-surface-variant hover:bg-white/5 hover:text-on-surface transition-colors disabled:opacity-40"
             >
-              {loading === 'polish' ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Languages className="h-3.5 w-3.5" />}
+              {loading === 'polish' ? <Spinner /> : <span className="material-symbols-outlined text-[14px]">globe</span>}
               {t('common.polish')}
             </button>
 
@@ -155,9 +155,9 @@ export default function SelectionAIToolbar({ editor, editorContainer, onImageAct
               type="button"
               onClick={() => handleEnhance('rewrite')}
               disabled={!!loading}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-editorial-xs text-body-sm text-ink-soft hover:bg-cream-200 hover:text-clay transition-colors disabled:opacity-40"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-body-sm text-on-surface-variant hover:bg-white/5 hover:text-on-surface transition-colors disabled:opacity-40"
             >
-              {loading === 'rewrite' ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+              {loading === 'rewrite' ? <Spinner /> : <span className="material-symbols-outlined text-[14px]">refresh</span>}
               {t('common.rewrite')}
             </button>
           </>
@@ -167,15 +167,15 @@ export default function SelectionAIToolbar({ editor, editorContainer, onImageAct
           <button
             type="button"
             onClick={() => { onImageAction?.(imageSrc); setVisible(false); }}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-editorial-xs text-body-sm text-ink-soft hover:bg-cream-200 hover:text-clay transition-colors"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-body-sm text-on-surface-variant hover:bg-white/5 hover:text-on-surface transition-colors"
           >
-            <ImageIcon className="h-3.5 w-3.5" />
+            <span className="material-symbols-outlined text-[14px]">image</span>
             {t('common.aiImage')}
           </button>
         )}
 
         {error && (
-          <span className="text-body-xs text-clay ml-1">{error}</span>
+          <span className="text-body-sm text-error ml-1">{error}</span>
         )}
       </div>
     </div>

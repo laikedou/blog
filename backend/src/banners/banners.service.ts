@@ -12,10 +12,19 @@ export class BannersService {
     });
   }
 
-  async findActive() {
+  async findActive(zone?: string) {
+    const now = new Date();
     return this.prisma.banner.findMany({
-      where: { isActive: true },
+      where: {
+        isActive: true,
+        ...(zone ? { zone } : {}),
+        AND: [
+          { OR: [{ startDate: null }, { startDate: { lte: now } }] },
+          { OR: [{ endDate: null }, { endDate: { gte: now } }] },
+        ],
+      },
       orderBy: { sortOrder: 'asc' },
+      include: { post: { select: { id: true, slug: true } } },
     });
   }
 
@@ -37,5 +46,12 @@ export class BannersService {
   async remove(id: number) {
     await this.findOne(id);
     return this.prisma.banner.delete({ where: { id } });
+  }
+
+  async incrementClick(id: number) {
+    return this.prisma.banner.update({
+      where: { id },
+      data: { clickCount: { increment: 1 } },
+    });
   }
 }

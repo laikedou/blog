@@ -13,20 +13,21 @@ interface Banner {
   imageUrl: string;
   linkUrl: string;
   postId: number | null;
+  post?: { id: number; slug: string } | null;
 }
 
-export default function BannerCarousel() {
+export default function BannerCarousel({ zone = 'hero' }: { zone?: string }) {
   const { t } = useTranslation();
   const [banners, setBanners] = useState<Banner[]>([]);
   const [current, setCurrent] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    bannersApi.active()
+    bannersApi.active({ zone })
       .then(data => setBanners(data))
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, []);
+  }, [zone]);
 
   const goTo = useCallback((index: number) => {
     setCurrent(index);
@@ -64,11 +65,15 @@ export default function BannerCarousel() {
   const Wrapper = banner.linkUrl || banner.postId ? Link : 'div';
   const wrapperProps: any = {};
   if (banner.linkUrl) wrapperProps.href = banner.linkUrl;
-  else if (banner.postId) wrapperProps.href = `/admin/posts/${banner.postId}/edit`;
+  else if (banner.postId) wrapperProps.href = banner.post?.slug ? `/posts/${banner.post.slug}` : `/posts/${banner.postId}`;
   if (wrapperProps.href) wrapperProps.className = 'block relative w-full overflow-hidden group';
+  const handleBannerClick = () => {
+    bannersApi.trackClick(banner.id).catch(() => {});
+  };
 
   return (
     <section className="relative w-full overflow-hidden bg-cream-100">
+      <Wrapper {...wrapperProps} onClick={handleBannerClick}>
       <div className="relative w-full" style={{ aspectRatio: '1920/400', maxHeight: '500px' }}>
         {banners.map((b, i) => (
           <div
@@ -121,6 +126,7 @@ export default function BannerCarousel() {
           ))}
         </div>
       )}
+      </Wrapper>
     </section>
   );
 }

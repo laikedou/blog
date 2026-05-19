@@ -4,13 +4,6 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ai } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Sparkles, Send, Wand2, Search, Tags, MessageSquare, X } from 'lucide-react';
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle,
-} from '@/components/ui/dialog';
 
 interface AIToolsProps {
   onGenerate: (data: any) => void;
@@ -21,8 +14,9 @@ interface AIToolsProps {
 }
 
 export default function AITools({ onGenerate, currentContent, currentTitle, isOpen: controlledOpen, onClose }: AIToolsProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { isAuthenticated } = useAuth();
+  const currentLang = i18n.language;
   const [internalOpen, setInternalOpen] = useState(false);
   const isOpen = controlledOpen !== undefined ? controlledOpen : internalOpen;
   const setIsOpen = (v: boolean) => {
@@ -42,7 +36,7 @@ export default function AITools({ onGenerate, currentContent, currentTitle, isOp
   const handleGeneratePost = async () => {
     if (!topic.trim()) return;
     setLoading('generate'); setError('');
-    try { const r = await ai.generatePost({ topic, style, wordCount }); onGenerate(r); setIsOpen(false); }
+    try { const r = await ai.generatePost({ topic, style, wordCount }, currentLang); onGenerate(r); setIsOpen(false); }
     catch (err: any) { setError(err.message); }
     setLoading(null);
   };
@@ -50,7 +44,7 @@ export default function AITools({ onGenerate, currentContent, currentTitle, isOp
   const handleEnhance = async (mode: string) => {
     if (!currentContent) return;
     setLoading(mode); setError('');
-    try { const r = await ai.enhanceContent({ content: currentContent, mode }); onGenerate({ content: r.enhancedContent }); }
+    try { const r = await ai.enhanceContent({ content: currentContent, mode }, currentLang); onGenerate({ content: r.enhancedContent }); }
     catch (err: any) { setError(err.message); }
     setLoading(null);
   };
@@ -58,7 +52,7 @@ export default function AITools({ onGenerate, currentContent, currentTitle, isOp
   const handleGenerateSeo = async () => {
     if (!currentTitle) return;
     setLoading('seo'); setError('');
-    try { const r = await ai.generateSeo({ title: currentTitle, content: currentContent }); onGenerate(r); }
+    try { const r = await ai.generateSeo({ title: currentTitle, content: currentContent }, currentLang); onGenerate(r); }
     catch (err: any) { setError(err.message); }
     setLoading(null);
   };
@@ -84,91 +78,189 @@ export default function AITools({ onGenerate, currentContent, currentTitle, isOp
   return (
     <>
       {controlledOpen === undefined && (
-        <Button type="button" onClick={() => setInternalOpen(true)}>
-          <Sparkles className="h-4 w-4 mr-2" /> {t('common.aiTools')}
-        </Button>
+        <button
+          type="button"
+          onClick={() => setInternalOpen(true)}
+          className="py-2.5 px-4 rounded-lg text-label-md font-label-md font-medium transition-all duration-200 active:scale-[0.98] flex items-center gap-2"
+          style={{
+            background: 'linear-gradient(180deg, #548dff 0%, #0058c9 100%)',
+            color: '#ffffff',
+            border: '1px solid rgba(255,255,255,0.1)',
+            boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.2)',
+          }}
+        >
+          <span className="material-symbols-outlined text-[18px]">auto_awesome</span>
+          {t('common.aiTools')}
+        </button>
       )}
 
-      <Dialog open={isOpen} onOpenChange={(open) => { if (!open) { if (controlledOpen !== undefined) onClose?.(); else setInternalOpen(false); } }}>
-        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto bg-surface rounded-editorial">
-          <DialogHeader className="sticky top-0 bg-surface border-b border-border">
-            <div className="flex items-center justify-between">
-              <DialogTitle className="font-display text-display-sm text-ink flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-clay" /> {t('common.aiAssistant')}
-              </DialogTitle>
+      {isOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsOpen(false)} />
+
+          <div
+            className="relative w-full max-w-2xl max-h-[85vh] overflow-y-auto rounded-xl shadow-2xl z-10"
+            style={{
+              background: 'rgba(23, 31, 51, 0.95)',
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+            }}
+          >
+            {/* Header */}
+            <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-white/5" style={{ background: 'rgba(23, 31, 51, 0.95)' }}>
+              <h2 className="font-headline-md text-headline-md text-on-surface flex items-center gap-2">
+                <span className="material-symbols-outlined text-primary">auto_awesome</span>
+                {t('common.aiAssistant')}
+              </h2>
+              <button
+                onClick={() => setIsOpen(false)}
+                className="p-1.5 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-white/5 transition-colors"
+              >
+                <span className="material-symbols-outlined text-[20px]">close</span>
+              </button>
             </div>
-          </DialogHeader>
 
-          <div className="p-6 space-y-5">
-            {error && <div className="bg-clay-subtle text-clay text-body-sm rounded-editorial-sm p-3 border border-clay/20">{error}</div>}
+            <div className="p-6 space-y-5">
+              {error && (
+                <div className="bg-error/10 text-error font-body-sm text-body-sm rounded-lg p-3 border border-error/20">
+                  {error}
+                </div>
+              )}
 
-            <div className="space-y-3">
-              <h3 className="text-body-sm font-medium text-ink flex items-center gap-2"><Wand2 className="h-4 w-4 text-clay" /> {t('common.generatePost')}</h3>
-              <Input value={topic} onChange={e => setTopic(e.target.value)} placeholder={t('common.topicPlaceholder')} />
+              {/* Generate Post */}
+              <div className="space-y-3">
+                <h3 className="font-body-sm text-body-sm font-medium text-on-surface flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[16px] text-primary">auto_awesome</span>
+                  {t('common.generatePost')}
+                </h3>
+                <input
+                  value={topic}
+                  onChange={e => setTopic(e.target.value)}
+                  placeholder={t('common.topicPlaceholder')}
+                  className="w-full bg-black/20 border border-white/10 rounded-lg px-4 py-2.5 text-body-md text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
+                />
+                <div className="flex gap-2">
+                  <select
+                    value={style}
+                    onChange={e => setStyle(e.target.value)}
+                    className="flex-1 bg-black/20 border border-white/10 rounded-lg px-4 py-2.5 text-body-md text-on-surface appearance-none focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                  >
+                    <option value="professional">{t('common.professional')}</option>
+                    <option value="casual">{t('common.casual')}</option>
+                    <option value="technical">{t('common.technical')}</option>
+                    <option value="storytelling">{t('common.storytelling')}</option>
+                  </select>
+                  <input
+                    type="number"
+                    value={wordCount}
+                    onChange={e => setWordCount(Number(e.target.value))}
+                    className="w-24 bg-black/20 border border-white/10 rounded-lg px-4 py-2.5 text-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                  />
+                </div>
+                <button
+                  onClick={handleGeneratePost}
+                  disabled={loading === 'generate' || !topic.trim()}
+                  className="w-full py-2.5 rounded-lg text-label-md font-label-md font-medium transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{
+                    background: 'linear-gradient(180deg, #548dff 0%, #0058c9 100%)',
+                    color: '#ffffff',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.2)',
+                  }}
+                >
+                  {loading === 'generate' ? t('common.generating') : t('common.generatePost')}
+                </button>
+              </div>
+
+              {/* Enhance */}
+              <div className="border-t border-white/5 pt-5">
+                <h3 className="font-body-sm text-body-sm font-medium text-on-surface mb-3 flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[16px] text-primary">auto_awesome</span>
+                  {t('common.enhance')}
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {['improve-grammar', 'polish', 'rewrite', 'summarize', 'expand'].map(mode => (
+                    <button
+                      key={mode}
+                      onClick={() => handleEnhance(mode)}
+                      disabled={!!loading}
+                      className="bg-transparent border border-white/20 text-on-surface-variant hover:text-on-surface hover:bg-white/5 rounded-lg px-3 py-1.5 text-label-sm font-label-sm transition-all disabled:opacity-50"
+                    >
+                      {loading === mode ? '...' : t(`common.${mode === 'improve-grammar' ? 'grammar' : mode}`)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* SEO + Tags */}
               <div className="flex gap-2">
-                <select value={style} onChange={e => setStyle(e.target.value)} className="flex h-11 flex-1 rounded-editorial-sm border border-border bg-surface px-4 py-2.5 text-body">
-                  <option value="professional">{t('common.professional')}</option>
-                  <option value="casual">{t('common.casual')}</option>
-                  <option value="technical">{t('common.technical')}</option>
-                  <option value="storytelling">{t('common.storytelling')}</option>
-                </select>
-                <Input type="number" value={wordCount} onChange={e => setWordCount(Number(e.target.value))} className="w-24" placeholder={t('common.words')} />
+                <button
+                  onClick={handleGenerateSeo}
+                  disabled={!!loading}
+                  className="flex-1 bg-transparent border border-white/20 text-on-surface-variant hover:text-on-surface hover:bg-white/5 rounded-lg px-4 py-2 text-label-sm font-label-sm transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  <span className="material-symbols-outlined text-[16px]">search</span>
+                  {loading === 'seo' ? '...' : t('common.seo')}
+                </button>
+                <button
+                  onClick={handleSuggestTags}
+                  disabled={!!loading}
+                  className="flex-1 bg-transparent border border-white/20 text-on-surface-variant hover:text-on-surface hover:bg-white/5 rounded-lg px-4 py-2 text-label-sm font-label-sm transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  <span className="material-symbols-outlined text-[16px]">label</span>
+                  {loading === 'tags' ? '...' : t('common.tags')}
+                </button>
               </div>
-              <Button onClick={handleGeneratePost} disabled={loading === 'generate' || !topic.trim()} className="w-full">
-                {loading === 'generate' ? t('common.generating') : t('common.generatePost')}
-              </Button>
-            </div>
 
-            <div className="border-t border-border pt-5">
-              <h3 className="text-body-sm font-medium text-ink mb-3 flex items-center gap-2"><Wand2 className="h-4 w-4 text-clay" /> {t('common.enhance')}</h3>
-              <div className="flex flex-wrap gap-2">
-                <Button variant="outline" size="sm" onClick={() => handleEnhance('improve-grammar')} disabled={!!loading}>
-                  {loading === 'improve-grammar' ? '...' : t('common.grammar')}
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => handleEnhance('polish')} disabled={!!loading}>
-                  {loading === 'polish' ? '...' : t('common.polish')}
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => handleEnhance('rewrite')} disabled={!!loading}>
-                  {loading === 'rewrite' ? '...' : t('common.rewrite')}
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => handleEnhance('summarize')} disabled={!!loading}>
-                  {loading === 'summarize' ? '...' : t('common.summarize')}
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => handleEnhance('expand')} disabled={!!loading}>
-                  {loading === 'expand' ? '...' : t('common.expand')}
-                </Button>
-              </div>
-            </div>
-
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={handleGenerateSeo} disabled={!!loading} className="flex-1">
-                <Search className="h-4 w-4 mr-2" />{loading === 'seo' ? '...' : t('common.seo')}
-              </Button>
-              <Button variant="outline" onClick={handleSuggestTags} disabled={!!loading} className="flex-1">
-                <Tags className="h-4 w-4 mr-2" />{loading === 'tags' ? '...' : t('common.tags')}
-              </Button>
-            </div>
-
-            <div className="border-t border-border pt-5">
-              <h3 className="text-body-sm font-medium text-ink mb-3 flex items-center gap-2"><MessageSquare className="h-4 w-4 text-clay" /> {t('common.chat')}</h3>
-              <div className="h-48 overflow-y-auto mb-3 space-y-2.5 bg-cream-200 rounded-editorial-sm p-4">
-                {chatHistory.length === 0 && <p className="text-body-sm text-ink-muted text-center pt-8">{t('common.writeAdvice')}</p>}
-                {chatHistory.map((msg, i) => (
-                  <div key={i} className={`text-body-sm ${msg.role === 'user' ? 'text-right' : ''}`}>
-                    <span className={`inline-block rounded-pill px-4 py-2 max-w-[80%] ${
-                      msg.role === 'user' ? 'bg-clay text-white' : 'bg-surface text-ink border border-border'
-                    }`}>{msg.content}</span>
-                  </div>
-                ))}
-              </div>
-              <div className="flex gap-2">
-                <Input value={chatMessage} onChange={e => setChatMessage(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleChat()} placeholder={t('common.askAiPrompt')} />
-                <Button onClick={handleChat} disabled={loading === 'chat' || !chatMessage.trim()}><Send className="h-4 w-4" /></Button>
+              {/* Chat */}
+              <div className="border-t border-white/5 pt-5">
+                <h3 className="font-body-sm text-body-sm font-medium text-on-surface mb-3 flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[16px] text-primary">forum</span>
+                  {t('common.chat')}
+                </h3>
+                <div className="h-48 overflow-y-auto mb-3 space-y-2.5 bg-surface-container-low rounded-lg p-4 border border-white/5">
+                  {chatHistory.length === 0 && (
+                    <p className="font-body-sm text-body-sm text-on-surface-variant text-center pt-8">{t('common.writeAdvice')}</p>
+                  )}
+                  {chatHistory.map((msg, i) => (
+                    <div key={i} className={`font-body-sm text-body-sm ${msg.role === 'user' ? 'text-right' : ''}`}>
+                      <span className={`inline-block rounded-xl px-4 py-2 max-w-[80%] ${
+                        msg.role === 'user'
+                          ? 'bg-primary text-on-primary'
+                          : 'bg-surface-container-high text-on-surface border border-white/10'
+                      }`}>{msg.content}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    value={chatMessage}
+                    onChange={e => setChatMessage(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && handleChat()}
+                    placeholder={t('common.askAiPrompt')}
+                    className="flex-1 bg-black/20 border border-white/10 rounded-lg px-4 py-2.5 text-body-md text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                  />
+                  <button
+                    onClick={handleChat}
+                    disabled={loading === 'chat' || !chatMessage.trim()}
+                    className="bg-transparent border border-white/20 text-on-surface-variant hover:text-on-surface hover:bg-white/5 rounded-lg px-3 py-2 transition-all disabled:opacity-50"
+                  >
+                    {loading === 'chat' ? (
+                      <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                      </svg>
+                    ) : (
+                      <span className="material-symbols-outlined text-[18px]">send</span>
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </DialogContent>
-      </Dialog>
+        </div>
+      )}
     </>
   );
 }

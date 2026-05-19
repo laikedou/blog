@@ -21,6 +21,19 @@ export function getLanguageName(locale: SupportedLocale): string {
   return LANGUAGE_MAP[locale];
 }
 
+/**
+ * Normalize a locale string to one of the supported locales.
+ * Falls back to 'en' for unknown locales.
+ */
+export function normalizeLocale(locale?: string): SupportedLocale {
+  if (!locale) return 'en';
+  const normalized = locale.toLowerCase().replace(/_/g, '-');
+  if (normalized.startsWith('zh-cn') || normalized === 'zh' || normalized.startsWith('zh-hans')) return 'zh-CN';
+  if (normalized.startsWith('zh-tw') || normalized.startsWith('zh-hk') || normalized.startsWith('zh-hant')) return 'zh-TW';
+  if (normalized.startsWith('ja')) return 'ja';
+  return 'en';
+}
+
 export function getLanguageInstruction(locale?: SupportedLocale): string {
   if (!locale || !LANGUAGE_INSTRUCTIONS[locale]) return '';
   return `\n\n[语言要求/Language Requirement]\n${LANGUAGE_INSTRUCTIONS[locale]}\n\n你必须严格遵循上述语言要求。`;

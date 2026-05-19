@@ -3,14 +3,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { aiUsage as aiUsageApi } from '@/lib/api';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
-import { RefreshCw, Search, ChevronLeft, ChevronRight, BarChart3, AlertCircle } from 'lucide-react';
 
 function formatTokens(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
@@ -24,22 +21,35 @@ function formatDuration(ms: number): string {
   return `${ms}ms`;
 }
 
+const providerColors: Record<string, string> = {
+  deepseek: 'bg-tertiary/20 text-tertiary border-tertiary/30',
+  openai: 'bg-primary/20 text-primary border-primary/30',
+  claude: 'bg-warning/20 text-warning border-warning/30',
+  gemini: 'bg-[#4fc3f7]/20 text-[#4fc3f7] border-[#4fc3f7]/30',
+  grok: 'bg-secondary/20 text-secondary border-secondary/30',
+};
+
 function ProviderBadge({ provider }: { provider: string }) {
-  const colors: Record<string, string> = {
-    deepseek: 'bg-indigo-100 text-indigo-700 border-indigo-300',
-    openai: 'bg-emerald-100 text-emerald-700 border-emerald-300',
-    claude: 'bg-amber-100 text-amber-700 border-amber-300',
-    gemini: 'bg-blue-100 text-blue-700 border-blue-300',
-    grok: 'bg-rose-100 text-rose-700 border-rose-300',
-  };
-  return <Badge className={colors[provider] || 'bg-gray-100 text-gray-700 border-gray-300'}>{provider}</Badge>;
+  return (
+    <Badge variant="outline" className={providerColors[provider] || 'bg-white/5 text-on-surface-variant border-white/10'}>
+      {provider}
+    </Badge>
+  );
 }
 
 function StatusBadge({ status }: { status: string }) {
   const { t } = useTranslation();
-  return status === 'success'
-    ? <Badge className="bg-green-100 text-green-700 border-green-300">{t('admin.aiUsageSuccess')}</Badge>
-    : <Badge className="bg-red-100 text-red-700 border-red-300">{t('admin.aiUsageError')}</Badge>;
+  return status === 'success' ? (
+    <div className="flex items-center gap-1.5">
+      <span className="w-2 h-2 rounded-full bg-primary shadow-[0_0_8px_rgba(175,198,255,0.8)]" />
+      <span className="text-label-sm font-medium tracking-wider text-primary">{t('admin.aiUsageSuccess')}</span>
+    </div>
+  ) : (
+    <div className="flex items-center gap-1.5">
+      <span className="w-2 h-2 rounded-full bg-error shadow-[0_0_8px_rgba(255,180,171,0.8)]" />
+      <span className="text-label-sm font-medium tracking-wider text-error">{t('admin.aiUsageError')}</span>
+    </div>
+  );
 }
 
 export default function AdminAiUsagePage() {
@@ -99,88 +109,148 @@ export default function AdminAiUsagePage() {
 
   const hasFilters = providerFilter || statusFilter || featureSearch;
 
-  // ── Loading Skeleton ──
-  if (loading && records.length === 0 && !stats) {
-    return (
-      <div className="space-y-6">
-        <h1 className="text-heading-sm font-display font-bold text-ink">{t('admin.aiUsageTitle')}</h1>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {[...Array(4)].map((_, i) => (
-            <Card key={i}><CardContent className="p-6"><Skeleton className="h-16 w-full" /></CardContent></Card>
-          ))}
-        </div>
-        <Card><CardContent className="p-6"><Skeleton className="h-64 w-full" /></CardContent></Card>
+  const LoadingSkeleton = () => (
+    <div className="flex flex-col gap-6">
+      <h1 className="font-headline-lg text-headline-lg text-on-surface">{t('admin.aiUsageTitle')}</h1>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
+        {[...Array(4)].map((_, i) => (
+          <Card key={i}>
+            <CardContent className="p-6">
+              <div className="h-16 w-full rounded-lg bg-surface-container-high/50 animate-pulse" />
+            </CardContent>
+          </Card>
+        ))}
       </div>
-    );
-  }
+      <Card>
+        <CardContent className="p-6">
+          <div className="h-64 w-full rounded-lg bg-surface-container-high/50 animate-pulse" />
+        </CardContent>
+      </Card>
+    </div>
+  );
+
+  const ErrorState = () => (
+    <div className="flex flex-col gap-6">
+      <h1 className="font-headline-lg text-headline-lg text-on-surface">{t('admin.aiUsageTitle')}</h1>
+      <Card>
+        <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+          <span className="material-symbols-outlined text-5xl text-error mb-4">error</span>
+          <p className="text-body-sm text-on-surface-variant mb-4">{error}</p>
+          <Button variant="outline" onClick={() => fetchData(page)}>
+            <span className="material-symbols-outlined text-[18px]">refresh</span>
+            <span className="text-label-sm font-medium">{t('common.retry')}</span>
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
+  );
+
+  // ── Loading Skeleton ──
+  if (loading && records.length === 0 && !stats) return <LoadingSkeleton />;
 
   // ── Error State ──
-  if (error && records.length === 0) {
-    return (
-      <div className="space-y-6">
-        <h1 className="text-heading-sm font-display font-bold text-ink">{t('admin.aiUsageTitle')}</h1>
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-            <AlertCircle className="h-12 w-12 text-red-400 mb-4" />
-            <p className="text-body-sm text-ink-muted mb-4">{error}</p>
-            <Button onClick={() => fetchData(page)}>
-              <RefreshCw className="h-4 w-4 mr-2" /> {t('common.retry')}
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  if (error && records.length === 0) return <ErrorState />;
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-heading-sm font-display font-bold text-ink">{t('admin.aiUsageTitle')}</h1>
+    <div className="flex flex-col gap-6">
+      {/* ── Header ── */}
+      <div className="flex items-end justify-between">
+        <h1 className="font-headline-lg text-headline-lg text-on-surface">
+          {t('admin.aiUsageTitle')}
+        </h1>
         <Button variant="outline" size="sm" onClick={() => fetchData(page)} disabled={loading}>
-          <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+          <span className={`material-symbols-outlined text-[18px] ${loading ? 'animate-spin' : ''}`}>
+            refresh
+          </span>
           {t('common.refresh')}
         </Button>
       </div>
 
-      {/* Summary Cards */}
+      {/* ── Summary Cards ── */}
       {stats && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+          {/* Total Tokens */}
           <Card>
-            <CardContent className="p-6">
-              <p className="text-caption-sm text-ink-muted uppercase tracking-wider mb-1">{t('admin.aiUsageTotalTokens')}</p>
-              <p className="text-heading-sm font-bold font-display">{formatTokens(stats.summary.totalTokens)}</p>
-              <div className="flex gap-4 mt-2 text-caption-sm text-ink-muted">
-                <span>P: {formatTokens(stats.summary.totalPromptTokens)}</span>
-                <span>C: {formatTokens(stats.summary.totalCompletionTokens)}</span>
+            <CardContent className="p-6 flex flex-col gap-4">
+              <div className="flex justify-between items-start">
+                <span className="text-label-sm text-on-surface-variant uppercase tracking-wider">
+                  {t('admin.aiUsageTotalTokens')}
+                </span>
+                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                  <span className="material-symbols-outlined text-[18px]">data_usage</span>
+                </div>
+              </div>
+              <div>
+                <div className="text-display-lg font-display-lg text-on-surface">
+                  {formatTokens(stats.summary.totalTokens)}
+                </div>
+                <div className="flex gap-4 mt-2 text-label-sm text-on-surface-variant">
+                  <span>P: {formatTokens(stats.summary.totalPromptTokens)}</span>
+                  <span>C: {formatTokens(stats.summary.totalCompletionTokens)}</span>
+                </div>
               </div>
             </CardContent>
           </Card>
+
+          {/* Total Calls */}
           <Card>
-            <CardContent className="p-6">
-              <p className="text-caption-sm text-ink-muted uppercase tracking-wider mb-1">{t('admin.aiUsageTotalCalls')}</p>
-              <p className="text-heading-sm font-bold font-display">{stats.summary.totalCalls}</p>
+            <CardContent className="p-6 flex flex-col gap-4">
+              <div className="flex justify-between items-start">
+                <span className="text-label-sm text-on-surface-variant uppercase tracking-wider">
+                  {t('admin.aiUsageTotalCalls')}
+                </span>
+                <div className="w-8 h-8 rounded-full bg-secondary/10 flex items-center justify-center text-secondary">
+                  <span className="material-symbols-outlined text-[18px]">swap_calls</span>
+                </div>
+              </div>
+              <div className="text-display-lg font-display-lg text-on-surface">{stats.summary.totalCalls}</div>
             </CardContent>
           </Card>
+
+          {/* Today's Tokens */}
           <Card>
-            <CardContent className="p-6">
-              <p className="text-caption-sm text-ink-muted uppercase tracking-wider mb-1">{t('admin.aiUsageTodayTokens')}</p>
-              <p className="text-heading-sm font-bold font-display">{formatTokens(stats.summary.todayTokens)}</p>
-              <p className="text-caption-sm text-ink-muted mt-2">{t('admin.aiUsageCallsToday', { count: stats.summary.todayCalls })}</p>
+            <CardContent className="p-6 flex flex-col gap-4">
+              <div className="flex justify-between items-start">
+                <span className="text-label-sm text-on-surface-variant uppercase tracking-wider">
+                  {t('admin.aiUsageTodayTokens')}
+                </span>
+                <div className="w-8 h-8 rounded-full bg-tertiary/10 flex items-center justify-center text-tertiary">
+                  <span className="material-symbols-outlined text-[18px]">today</span>
+                </div>
+              </div>
+              <div>
+                <div className="text-display-lg font-display-lg text-on-surface">
+                  {formatTokens(stats.summary.todayTokens)}
+                </div>
+                <div className="mt-2 text-label-sm text-on-surface-variant">
+                  {t('admin.aiUsageCallsToday', { count: stats.summary.todayCalls })}
+                </div>
+              </div>
             </CardContent>
           </Card>
+
+          {/* Providers */}
           <Card>
-            <CardContent className="p-6">
-              <p className="text-caption-sm text-ink-muted uppercase tracking-wider mb-1">Providers</p>
-              <div className="space-y-1">
+            <CardContent className="p-6 flex flex-col gap-4">
+              <div className="flex justify-between items-start">
+                <span className="text-label-sm text-on-surface-variant uppercase tracking-wider">Providers</span>
+                <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-on-surface">
+                  <span className="material-symbols-outlined text-[18px]">hub</span>
+                </div>
+              </div>
+              <div className="flex-1 flex flex-col justify-end gap-3">
                 {stats.byProvider.map((p: any) => (
-                  <div key={p.provider} className="flex items-center justify-between text-body-sm">
+                  <div key={p.provider} className="flex items-center justify-between">
                     <ProviderBadge provider={p.provider} />
-                    <span className="text-ink-muted">{formatTokens(p.totalTokens)}</span>
+                    <span className="text-label-sm text-on-surface-variant">
+                      {formatTokens(p.totalTokens)}
+                    </span>
                   </div>
                 ))}
                 {stats.byProvider.length === 0 && (
-                  <p className="text-caption-sm text-ink-muted">{t('admin.aiUsageNoData')}</p>
+                  <span className="text-label-sm text-on-surface-variant">
+                    {t('admin.aiUsageNoData')}
+                  </span>
                 )}
               </div>
             </CardContent>
@@ -188,98 +258,130 @@ export default function AdminAiUsagePage() {
         </div>
       )}
 
-      {/* Filters */}
+      {/* ── Log Section ── */}
       <Card>
-        <CardContent className="p-4">
-          <div className="flex flex-wrap gap-3 items-end">
-            <div className="flex flex-col gap-1">
-              <label className="text-caption-sm text-ink-muted">{t('admin.aiUsageProvider')}</label>
-              <Select value={providerFilter} onValueChange={(v) => { setProviderFilter(v === '__all' ? '' : v); setPage(1); }}>
-                <SelectTrigger className="w-32">
-                  <SelectValue placeholder={t('admin.aiUsageAll')} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__all">{t('admin.aiUsageAll')}</SelectItem>
-                  <SelectItem value="deepseek">DeepSeek</SelectItem>
-                  <SelectItem value="openai">OpenAI</SelectItem>
-                  <SelectItem value="claude">Claude</SelectItem>
-                  <SelectItem value="gemini">Gemini</SelectItem>
-                  <SelectItem value="grok">Grok</SelectItem>
-                </SelectContent>
-              </Select>
+        {/* Filters */}
+        <div className="p-6 border-b border-border flex flex-wrap gap-4 items-center justify-between">
+          <div className="flex gap-4 items-center">
+            {/* Provider Filter */}
+            <div className="relative">
+              <select
+                value={providerFilter || '__all'}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setProviderFilter(v === '__all' ? '' : v);
+                  setPage(1);
+                }}
+                className="appearance-none bg-surface-container px-4 py-2 pr-10 rounded-lg border border-white/10 text-body-sm text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary min-w-[140px] cursor-pointer"
+              >
+                <option value="__all">{t('admin.aiUsageAll')}</option>
+                <option value="deepseek">DeepSeek</option>
+                <option value="openai">OpenAI</option>
+                <option value="claude">Claude</option>
+                <option value="gemini">Gemini</option>
+                <option value="grok">Grok</option>
+              </select>
+              <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant text-sm">
+                expand_more
+              </span>
             </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-caption-sm text-ink-muted">{t('admin.aiUsageStatus')}</label>
-              <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v === '__all' ? '' : v); setPage(1); }}>
-                <SelectTrigger className="w-28">
-                  <SelectValue placeholder={t('admin.aiUsageAll')} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__all">{t('admin.aiUsageAll')}</SelectItem>
-                  <SelectItem value="success">Success</SelectItem>
-                  <SelectItem value="error">Error</SelectItem>
-                </SelectContent>
-              </Select>
+
+            {/* Status Filter */}
+            <div className="relative">
+              <select
+                value={statusFilter || '__all'}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setStatusFilter(v === '__all' ? '' : v);
+                  setPage(1);
+                }}
+                className="appearance-none bg-surface-container px-4 py-2 pr-10 rounded-lg border border-white/10 text-body-sm text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary min-w-[140px] cursor-pointer"
+              >
+                <option value="__all">{t('admin.aiUsageAll')}</option>
+                <option value="success">Success</option>
+                <option value="error">Error</option>
+              </select>
+              <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant text-sm">
+                expand_more
+              </span>
             </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-caption-sm text-ink-muted">{t('admin.aiUsageFeature')}</label>
-              <div className="flex gap-1">
-                <Input
-                  placeholder={t('admin.aiUsageSearchFeature')}
-                  value={searchInput}
-                  onChange={(e) => setSearchInput(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                  className="w-44"
-                />
-                <Button size="icon" variant="outline" onClick={handleSearch}>
-                  <Search className="h-4 w-4" />
-                </Button>
-              </div>
+          </div>
+
+          <div className="flex gap-2 items-center">
+            {/* Feature Search */}
+            <div className="relative">
+              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm pointer-events-none">
+                search
+              </span>
+              <Input
+                type="text"
+                placeholder={t('admin.aiUsageSearchFeature')}
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                className="pl-10 w-44"
+              />
             </div>
+
+            <Button variant="outline" size="icon" onClick={handleSearch}>
+              <span className="material-symbols-outlined text-[18px]">search</span>
+            </Button>
+
             {hasFilters && (
               <Button variant="ghost" size="sm" onClick={clearFilters}>
                 {t('admin.aiUsageClearFilters')}
               </Button>
             )}
           </div>
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* Table */}
-      <Card>
-        <CardContent className="p-0">
+        {/* Table */}
+        <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>{t('admin.aiUsageId')}</TableHead>
-                <TableHead>{t('admin.aiUsageProvider')}</TableHead>
-                <TableHead>{t('admin.aiUsageFeature')}</TableHead>
-                <TableHead>{t('admin.aiUsageTokensBreakdown')}</TableHead>
-                <TableHead>{t('admin.aiUsageDuration')}</TableHead>
-                <TableHead>{t('admin.aiUsageStatus')}</TableHead>
-                <TableHead>{t('admin.aiUsageTime')}</TableHead>
+                <TableHead className="text-label-sm uppercase tracking-wider">{t('admin.aiUsageId')}</TableHead>
+                <TableHead className="text-label-sm uppercase tracking-wider">{t('admin.aiUsageProvider')}</TableHead>
+                <TableHead className="text-label-sm uppercase tracking-wider">{t('admin.aiUsageFeature')}</TableHead>
+                <TableHead className="text-label-sm uppercase tracking-wider">{t('admin.aiUsageTokensBreakdown')}</TableHead>
+                <TableHead className="text-label-sm uppercase tracking-wider">{t('admin.aiUsageDuration')}</TableHead>
+                <TableHead className="text-label-sm uppercase tracking-wider">{t('admin.aiUsageStatus')}</TableHead>
+                <TableHead className="text-label-sm uppercase tracking-wider">{t('admin.aiUsageTime')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {records.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-12 text-ink-muted">
-                    <BarChart3 className="h-8 w-8 mx-auto mb-2 opacity-40" />
-                    {t('admin.aiUsageNoRecords')}
+                  <TableCell colSpan={7} className="py-12 text-center">
+                    <div className="flex flex-col items-center gap-2">
+                      <span className="material-symbols-outlined text-3xl text-on-surface-variant opacity-40">
+                        monitoring
+                      </span>
+                      <span className="text-body-sm text-on-surface-variant">{t('admin.aiUsageNoRecords')}</span>
+                    </div>
                   </TableCell>
                 </TableRow>
               ) : (
                 records.map((r: any) => (
-                  <TableRow key={r.id}>
-                    <TableCell className="font-mono text-caption-sm">{r.id}</TableCell>
+                  <TableRow
+                    key={r.id}
+                    className={r.status === 'error' ? 'bg-error/5' : ''}
+                  >
+                    <TableCell className="text-label-sm font-mono text-on-surface-variant">{r.id}</TableCell>
                     <TableCell><ProviderBadge provider={r.provider} /></TableCell>
-                    <TableCell className="text-body-sm">{r.feature}</TableCell>
-                    <TableCell className="text-caption-sm font-mono text-ink-muted">
-                      {r.promptTokens}/{r.completionTokens}/{r.totalTokens}
+                    <TableCell className="text-body-sm text-on-surface">{r.feature}</TableCell>
+                    <TableCell className="text-label-sm font-mono text-on-surface-variant">
+                      <span className="text-tertiary">{r.promptTokens}</span>
+                      <span className="text-on-surface-variant"> / </span>
+                      <span className="text-primary">{r.completionTokens}</span>
+                      <span className="text-on-surface-variant"> / </span>
+                      <span>{r.totalTokens}</span>
                     </TableCell>
-                    <TableCell className="text-caption-sm text-ink-muted">{formatDuration(r.durationMs)}</TableCell>
+                    <TableCell className="text-label-sm font-mono text-on-surface-variant">
+                      {formatDuration(r.durationMs)}
+                    </TableCell>
                     <TableCell><StatusBadge status={r.status} /></TableCell>
-                    <TableCell className="text-caption-sm text-ink-muted">
+                    <TableCell className="text-label-sm font-mono text-on-surface-variant">
                       {new Date(r.createdAt).toLocaleString()}
                     </TableCell>
                   </TableRow>
@@ -287,33 +389,35 @@ export default function AdminAiUsagePage() {
               )}
             </TableBody>
           </Table>
-        </CardContent>
-      </Card>
-
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between text-body-sm text-ink-muted">
-          <span>{t('common.pageOfTotal', { page, totalPages, total })}</span>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={page <= 1}
-              onClick={() => setPage(p => Math.max(1, p - 1))}
-            >
-              <ChevronLeft className="h-4 w-4 mr-1" /> {t('common.prev')}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={page >= totalPages}
-              onClick={() => setPage(p => p + 1)}
-            >
-              {t('common.next')} <ChevronRight className="h-4 w-4 ml-1" />
-            </Button>
-          </div>
         </div>
-      )}
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="p-4 border-t border-border flex items-center justify-between text-label-sm text-on-surface-variant">
+            <span>{t('common.pageOfTotal', { page, totalPages, total })}</span>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page <= 1}
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+              >
+                <span className="material-symbols-outlined text-sm">chevron_left</span>
+                <span>{t('common.prev')}</span>
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page >= totalPages}
+                onClick={() => setPage(p => p + 1)}
+              >
+                <span>{t('common.next')}</span>
+                <span className="material-symbols-outlined text-sm">chevron_right</span>
+              </Button>
+            </div>
+          </div>
+        )}
+      </Card>
     </div>
   );
 }

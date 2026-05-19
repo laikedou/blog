@@ -79,7 +79,7 @@ export class PostsService {
         comments: {
           where: { status: 'approved' },
           include: {
-            author: { select: { id: true, username: true, displayName: true, avatar: true } },
+            author: { select: { id: true, username: true, displayName: true, avatar: true, role: true } },
           },
           orderBy: { createdAt: 'desc' },
         },
@@ -103,7 +103,7 @@ export class PostsService {
         comments: {
           where: { status: 'approved' },
           include: {
-            author: { select: { id: true, username: true, displayName: true, avatar: true } },
+            author: { select: { id: true, username: true, displayName: true, avatar: true, role: true } },
           },
           orderBy: { createdAt: 'desc' },
         },

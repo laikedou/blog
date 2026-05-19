@@ -3,20 +3,24 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
+import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { posts as postsApi, categories as categoriesApi, tags as tagsApi, ai as aiApi } from '@/lib/api';
 import AITools from '@/components/AITools';
 import FloatingAIMenu from '@/components/FloatingAIMenu';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import { toast } from 'sonner';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const RichEditor = dynamic(() => import('@/components/RichEditor'), { ssr: false });
+
+const dotColors = [
+  'bg-primary/80', 'bg-tertiary/80', 'bg-on-surface-variant/40',
+  'bg-primary/40', 'bg-secondary/80',
+];
 
 export default function EditPostPage() {
   const { t } = useTranslation();
@@ -27,6 +31,8 @@ export default function EditPostPage() {
   const [loading, setLoading] = useState(true);
   const [showFullTools, setShowFullTools] = useState(false);
   const [orbLeft, setOrbLeft] = useState(24);
+  const [openStatusSelect, setOpenStatusSelect] = useState(false);
+  const [openCategorySelect, setOpenCategorySelect] = useState(false);
   const editorRef = useRef<HTMLDivElement>(null);
   const [categories, setCategories] = useState<any[]>([]);
   const [allTags, setAllTags] = useState<any[]>([]);
@@ -46,7 +52,6 @@ export default function EditPostPage() {
     };
     updatePosition();
     window.addEventListener('resize', updatePosition);
-    // Re-check after a short delay in case layout shifts
     const timer = setTimeout(updatePosition, 100);
     return () => {
       window.removeEventListener('resize', updatePosition);
@@ -124,77 +129,288 @@ export default function EditPostPage() {
 
   if (loading) return (
     <div className="space-y-6">
-      <Skeleton className="h-[34px] w-48" />
+      <div className="h-[34px] w-48 bg-white/5 animate-pulse rounded-lg" />
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2"><Skeleton className="h-96 w-full rounded-editorial" /></div>
-        <div className="space-y-4"><Skeleton className="h-32 w-full rounded-editorial" /><Skeleton className="h-24 w-full rounded-editorial" /></div>
+        <div className="lg:col-span-2">
+          <div className="h-96 bg-white/5 animate-pulse rounded-xl" />
+        </div>
+        <div className="space-y-4">
+          <div className="h-32 bg-white/5 animate-pulse rounded-xl" />
+          <div className="h-24 bg-white/5 animate-pulse rounded-xl" />
+        </div>
       </div>
     </div>
   );
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="font-display text-display-md text-ink">{t('admin.editPost')}</h1>
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          <Link
+            href="/admin/posts"
+            className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-white/5 transition-colors"
+          >
+            <span className="material-symbols-outlined text-[18px]">arrow_back</span>
+          </Link>
+          <h1 className="font-headline-md text-headline-md text-on-surface">{t('admin.editPost')}</h1>
+        </div>
+        {form.status === 'published' ? (
+          <Badge variant="outline" className="bg-tertiary/10 text-tertiary border-tertiary/20 flex items-center gap-1">
+            <span className="material-symbols-outlined text-[14px]">check_circle</span>
+            {t('admin.published')}
+          </Badge>
+        ) : (
+          <Badge variant="outline" className="bg-on-surface-variant/10 text-on-surface-variant flex items-center gap-1">
+            <span className="material-symbols-outlined text-[14px]">edit_note</span>
+            {t('admin.draft')}
+          </Badge>
+        )}
       </div>
 
       <form onSubmit={handleSubmit}>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Main content - Editor */}
           <div className="lg:col-span-2 space-y-6">
-            <Card ref={editorRef} className="p-6">
-              <Input value={form.title} onChange={e => handleChange('title', e.target.value)} placeholder={t('admin.postTitle')} className="font-display text-display-md border-0 border-b-2 border-border rounded-none px-0 pb-3 mb-6 shadow-none focus-visible:ring-0" required />
-              <RichEditor value={form.content} onChange={val => handleChange('content', val)} placeholder={t('admin.writeContent')} />
+            <Card ref={editorRef}>
+              <CardContent className="p-6">
+                <Input
+                  type="text"
+                  value={form.title}
+                  onChange={e => handleChange('title', e.target.value)}
+                  placeholder={t('admin.postTitle')}
+                  required
+                  className="border-0 border-b border-border rounded-none px-0 pb-3 mb-6 font-headline-md text-headline-md"
+                />
+                <RichEditor value={form.content} onChange={val => handleChange('content', val)} placeholder={t('admin.writeContent')} />
+              </CardContent>
             </Card>
           </div>
 
+          {/* Sidebar */}
           <div className="space-y-4">
-            <Card><CardHeader><CardTitle>{t('admin.publish')}</CardTitle></CardHeader><CardContent className="space-y-3">
-              <Select value={form.status} onValueChange={val => handleChange('status', val)}>
-                <SelectTrigger><SelectValue placeholder={t('admin.selectStatus')} /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="draft">{t('admin.draft')}</SelectItem>
-                  <SelectItem value="published">{t('admin.published')}</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button type="submit" disabled={saving} className="w-full">{saving ? t('admin.saving') : t('admin.update')}</Button>
-            </CardContent></Card>
+            {/* Publish */}
+            <Card>
+              <CardContent className="p-5 space-y-4">
+                <h2 className="font-headline-sm text-headline-sm text-on-surface">{t('admin.publish')}</h2>
 
-            <Card><CardHeader><CardTitle>{t('admin.category')}</CardTitle></CardHeader><CardContent>
-              <Select value={form.categoryId} onValueChange={val => handleChange('categoryId', val)}>
-                <SelectTrigger><SelectValue placeholder={t('admin.uncategorized')} /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">{t('admin.uncategorized')}</SelectItem>
-                  {categories.map(cat => <SelectItem key={cat.id} value={String(cat.id)}>{cat.name}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </CardContent></Card>
+                {/* Status select */}
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setOpenStatusSelect(!openStatusSelect)}
+                    className="w-full bg-black/20 border border-border rounded-lg px-4 py-2.5 text-body-sm text-on-surface flex items-center justify-between hover:border-white/20 transition-colors"
+                  >
+                    <span className="flex items-center gap-2">
+                      {form.status === 'published' ? (
+                        <span className="material-symbols-outlined text-[16px] text-tertiary">check_circle</span>
+                      ) : (
+                        <span className="material-symbols-outlined text-[16px] text-on-surface-variant">edit_note</span>
+                      )}
+                      {form.status === 'draft' ? t('admin.draft') : t('admin.published')}
+                    </span>
+                    <span className="material-symbols-outlined text-[16px] text-on-surface-variant">expand_more</span>
+                  </button>
+                  {openStatusSelect && (
+                    <>
+                      <div className="fixed inset-0 z-10" onClick={() => setOpenStatusSelect(false)} />
+                      <div
+                        className="absolute z-20 mt-1 w-full rounded-lg shadow-lg shadow-black/40 overflow-hidden bg-surface/90 backdrop-blur-xl border border-border"
+                      >
+                        <button
+                          type="button"
+                          onClick={() => { handleChange('status', 'draft'); setOpenStatusSelect(false); }}
+                          className="w-full px-4 py-2.5 text-body-sm text-on-surface hover:bg-white/5 text-left flex items-center gap-2 transition-colors"
+                        >
+                          <span className="material-symbols-outlined text-[16px] text-on-surface-variant">edit_note</span>
+                          {t('admin.draft')}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => { handleChange('status', 'published'); setOpenStatusSelect(false); }}
+                          className="w-full px-4 py-2.5 text-body-sm text-on-surface hover:bg-white/5 text-left flex items-center gap-2 transition-colors"
+                        >
+                          <span className="material-symbols-outlined text-[16px] text-tertiary">check_circle</span>
+                          {t('admin.published')}
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
 
-            <Card><CardHeader><CardTitle>{t('admin.tags')}</CardTitle></CardHeader><CardContent>
-              <div className="flex flex-wrap gap-1.5">
-                {allTags.map(tag => (
-                  <Badge key={tag.id} variant={form.tagIds.includes(tag.id) ? 'default' : 'outline'} className="cursor-pointer" onClick={() => toggleTag(tag.id)}>{tag.name}</Badge>
-                ))}
-              </div>
-            </CardContent></Card>
+                <Button type="submit" disabled={saving} className="w-full">
+                  {saving ? (
+                    <>
+                      <span className="material-symbols-outlined text-[16px] animate-spin">progress_activity</span>
+                      {t('admin.saving')}
+                    </>
+                  ) : (
+                    <>
+                      <span className="material-symbols-outlined text-[16px]">publish</span>
+                      {t('admin.update')}
+                    </>
+                  )}
+                </Button>
+              </CardContent>
+            </Card>
 
-            <Card><CardHeader><CardTitle>{t('admin.seo')}</CardTitle></CardHeader><CardContent className="space-y-3">
-              <Input value={form.seoTitle} onChange={e => handleChange('seoTitle', e.target.value)} placeholder={t('admin.seoTitle')} />
-              <Textarea value={form.seoDescription} onChange={e => handleChange('seoDescription', e.target.value)} placeholder={t('admin.seoDescription')} rows={2} />
-              <Input value={form.slug} onChange={e => handleChange('slug', e.target.value)} placeholder={t('admin.slug')} />
-            </CardContent></Card>
+            {/* Category */}
+            <Card>
+              <CardContent className="p-5 space-y-4">
+                <h2 className="font-headline-sm text-headline-sm text-on-surface flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[16px] text-on-surface-variant">folder</span>
+                  {t('admin.category')}
+                </h2>
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setOpenCategorySelect(!openCategorySelect)}
+                    className="w-full bg-black/20 border border-border rounded-lg px-4 py-2.5 text-body-sm text-on-surface flex items-center justify-between hover:border-white/20 transition-colors"
+                  >
+                    <span>
+                      {form.categoryId && form.categoryId !== 'none'
+                        ? categories.find(c => c.id.toString() === form.categoryId)?.name
+                        : t('admin.uncategorized')}
+                    </span>
+                    <span className="material-symbols-outlined text-[16px] text-on-surface-variant">expand_more</span>
+                  </button>
+                  {openCategorySelect && (
+                    <>
+                      <div className="fixed inset-0 z-10" onClick={() => setOpenCategorySelect(false)} />
+                      <div className="absolute z-20 mt-1 w-full rounded-lg shadow-lg shadow-black/40 max-h-48 overflow-y-auto bg-surface/90 backdrop-blur-xl border border-border">
+                        <button
+                          type="button"
+                          onClick={() => { handleChange('categoryId', 'none'); setOpenCategorySelect(false); }}
+                          className="w-full px-4 py-2.5 text-body-sm text-on-surface-variant hover:bg-white/5 text-left transition-colors"
+                        >
+                          {t('admin.uncategorized')}
+                        </button>
+                        {categories.map(cat => (
+                          <button
+                            key={cat.id}
+                            type="button"
+                            onClick={() => { handleChange('categoryId', String(cat.id)); setOpenCategorySelect(false); }}
+                            className="w-full px-4 py-2.5 text-body-sm text-on-surface hover:bg-white/5 text-left transition-colors"
+                          >
+                            {cat.name}
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
 
-            <Card><CardHeader><CardTitle>{t('admin.featuredImage')}</CardTitle></CardHeader><CardContent className="space-y-3">
-              <Input value={form.featuredImage} onChange={e => handleChange('featuredImage', e.target.value)} placeholder={t('admin.featuredImageUrl')} />
-              <Button type="button" variant="outline" onClick={handleGenerateCover} disabled={generatingCover} className="w-full">
-                {generatingCover ? t('admin.generating') : t('admin.generateCover')}
-              </Button>
-              {form.featuredImage && <img src={form.featuredImage} alt="" className="mt-3 rounded-editorial w-full h-32 object-cover" loading="lazy" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />}
-            </CardContent></Card>
+            {/* Tags */}
+            <Card>
+              <CardContent className="p-5 space-y-4">
+                <h2 className="font-headline-sm text-headline-sm text-on-surface flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[16px] text-on-surface-variant">label</span>
+                  {t('admin.tags')}
+                </h2>
+                {allTags.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {allTags.map((tag, i) => (
+                      <button
+                        key={tag.id}
+                        type="button"
+                        onClick={() => toggleTag(tag.id)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all duration-200 text-label-sm font-label-sm border"
+                        style={{
+                          background: form.tagIds.includes(tag.id) ? 'rgba(175, 198, 255, 0.15)' : 'rgba(23, 31, 51, 0.6)',
+                          backdropFilter: 'blur(8px)',
+                          borderColor: form.tagIds.includes(tag.id) ? 'rgba(175, 198, 255, 0.3)' : 'rgba(255, 255, 255, 0.08)',
+                          color: form.tagIds.includes(tag.id) ? '#afc6ff' : 'rgba(200, 210, 230, 0.8)',
+                        }}
+                      >
+                        <div className={`w-1.5 h-1.5 rounded-full ${dotColors[i % dotColors.length]}`} />
+                        {tag.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* SEO */}
+            <Card>
+              <CardContent className="p-5 space-y-4">
+                <h2 className="font-headline-sm text-headline-sm text-on-surface flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[16px] text-on-surface-variant">travel_explore</span>
+                  {t('admin.seo')}
+                </h2>
+                <Input
+                  type="text"
+                  value={form.seoTitle}
+                  onChange={e => handleChange('seoTitle', e.target.value)}
+                  placeholder={t('admin.seoTitle')}
+                />
+                <Textarea
+                  value={form.seoDescription}
+                  onChange={e => handleChange('seoDescription', e.target.value)}
+                  placeholder={t('admin.seoDescription')}
+                  rows={2}
+                  className="resize-none"
+                />
+                <Input
+                  type="text"
+                  value={form.slug}
+                  onChange={e => handleChange('slug', e.target.value)}
+                  placeholder={t('admin.slug')}
+                  className="font-mono"
+                />
+              </CardContent>
+            </Card>
+
+            {/* Featured Image */}
+            <Card>
+              <CardContent className="p-5 space-y-4">
+                <h2 className="font-headline-sm text-headline-sm text-on-surface flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[16px] text-on-surface-variant">image</span>
+                  {t('admin.featuredImage')}
+                </h2>
+                <Input
+                  type="text"
+                  value={form.featuredImage}
+                  onChange={e => handleChange('featuredImage', e.target.value)}
+                  placeholder={t('admin.featuredImageUrl')}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleGenerateCover}
+                  disabled={generatingCover}
+                  className="w-full"
+                >
+                  {generatingCover ? (
+                    <>
+                      <span className="material-symbols-outlined text-[16px] animate-spin">progress_activity</span>
+                      {t('admin.generating')}
+                    </>
+                  ) : (
+                    <>
+                      <span className="material-symbols-outlined text-[16px]">auto_awesome</span>
+                      {t('admin.generateCover')}
+                    </>
+                  )}
+                </Button>
+                {form.featuredImage && (
+                  <img
+                    src={form.featuredImage}
+                    alt=""
+                    className="mt-1 rounded-lg w-full h-32 object-cover border border-border"
+                    loading="lazy"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                  />
+                )}
+              </CardContent>
+            </Card>
           </div>
         </div>
       </form>
 
-      {/* Full AI Tools modal (controlled by FloatingAIMenu) */}
+      {/* Full AI Tools modal */}
       <AITools
         onGenerate={handleAIGenerate}
         currentContent={form.content}
@@ -203,7 +419,7 @@ export default function EditPostPage() {
         onClose={() => setShowFullTools(false)}
       />
 
-      {/* Floating AI orb - always visible on screen */}
+      {/* Floating AI orb */}
       <FloatingAIMenu
         onGenerate={handleAIGenerate}
         currentContent={form.content}

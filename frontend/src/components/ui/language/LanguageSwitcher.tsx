@@ -3,15 +3,13 @@
 import { useTranslation } from 'react-i18next';
 import { useLanguage } from '@/lib/i18n/LanguageProvider';
 import { SUPPORTED_LOCALES, LOCALE_LABELS, LOCALE_FLAGS, type SupportedLocale } from '@/lib/i18n/i18n';
-import { Globe } from 'lucide-react';
 import {
   DropdownMenu,
-  DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Button } from '@/components/ui/button';
-import { useState } from 'react';
 
 interface LanguageSwitcherProps {
   variant?: 'icon' | 'full' | 'minimal';
@@ -20,7 +18,6 @@ interface LanguageSwitcherProps {
 export default function LanguageSwitcher({ variant = 'icon' }: LanguageSwitcherProps) {
   const { t } = useTranslation();
   const { locale, setLocale } = useLanguage();
-  const [open, setOpen] = useState(false);
 
   if (variant === 'minimal') {
     return (
@@ -31,8 +28,8 @@ export default function LanguageSwitcher({ variant = 'icon' }: LanguageSwitcherP
             onClick={() => setLocale(lng as SupportedLocale)}
             className={`px-1.5 py-0.5 text-xs rounded transition-colors ${
               locale === lng
-                ? 'bg-clay text-white font-medium'
-                : 'text-ink-muted hover:text-ink hover:bg-cream-200'
+                ? 'bg-primary text-on-primary font-medium'
+                : 'text-on-surface-variant hover:text-on-surface hover:bg-white/5'
             }`}
             title={LOCALE_LABELS[lng as SupportedLocale]}
           >
@@ -44,40 +41,37 @@ export default function LanguageSwitcher({ variant = 'icon' }: LanguageSwitcherP
   }
 
   return (
-    <DropdownMenu open={open} onOpenChange={setOpen}>
+    <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="gap-1.5 text-ink-soft hover:text-ink"
+        <button
+          className="flex items-center gap-1.5 text-on-surface-variant hover:text-on-surface transition-colors p-2 rounded-lg hover:bg-white/5"
           aria-label={t('common.switchLanguage')}
         >
-          <Globe className="h-4 w-4" aria-hidden="true" />
+          <span className="material-symbols-outlined text-[20px]">translate</span>
           {variant === 'full' && (
             <span className="hidden sm:inline text-body-sm">
               {LOCALE_FLAGS[locale]} {LOCALE_LABELS[locale]}
             </span>
           )}
-        </Button>
+        </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-48 mt-2">
-        <div className="px-3 py-2 border-b border-border mb-1">
-          <p className="text-caption text-ink-muted font-medium">{t('common.languageMenu')}</p>
-        </div>
-        {SUPPORTED_LOCALES.map((lng) => (
-          <DropdownMenuItem
-            key={lng}
-            onClick={() => {
-              setLocale(lng as SupportedLocale);
-              setOpen(false);
-            }}
-            className={locale === lng ? 'bg-clay/10 text-clay font-medium' : ''}
-          >
-            <span className="mr-2">{LOCALE_FLAGS[lng as SupportedLocale]}</span>
-            {LOCALE_LABELS[lng as SupportedLocale]}
-            {locale === lng && <span className="ml-auto text-caption">✓</span>}
-          </DropdownMenuItem>
-        ))}
+      <DropdownMenuContent align="end" className="w-48">
+        <div className="px-2 py-1.5 text-label-sm text-on-surface-variant">{t('common.languageMenu')}</div>
+        <DropdownMenuSeparator />
+        {SUPPORTED_LOCALES.map((lng) => {
+          const isActive = locale === lng;
+          return (
+            <DropdownMenuItem
+              key={lng}
+              onClick={() => setLocale(lng as SupportedLocale)}
+              className={isActive ? 'bg-primary/10 text-primary font-medium' : ''}
+            >
+              <span>{LOCALE_FLAGS[lng as SupportedLocale]}</span>
+              <span className="flex-1">{LOCALE_LABELS[lng as SupportedLocale]}</span>
+              {isActive && <span className="material-symbols-outlined text-[16px]">check</span>}
+            </DropdownMenuItem>
+          );
+        })}
       </DropdownMenuContent>
     </DropdownMenu>
   );

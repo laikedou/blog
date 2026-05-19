@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ai } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
-import { Sparkles, Languages, RefreshCw, SpellCheck, Minimize2, Maximize2, Search, Tags, MessageSquare, ChevronRight, Loader2 } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 interface FloatingAIMenuProps {
   onGenerate: (data: any) => void;
@@ -15,34 +15,26 @@ interface FloatingAIMenuProps {
 }
 
 const quickActions = [
-  { mode: 'polish', labelKey: 'common.polish', icon: Languages },
-  { mode: 'rewrite', labelKey: 'common.rewrite', icon: RefreshCw },
-  { mode: 'improve-grammar', labelKey: 'common.grammar', icon: SpellCheck },
-  { mode: 'summarize', labelKey: 'common.summarize', icon: Minimize2 },
-  { mode: 'expand', labelKey: 'common.expand', icon: Maximize2 },
+  { mode: 'polish', labelKey: 'common.polish', icon: 'globe' },
+  { mode: 'rewrite', labelKey: 'common.rewrite', icon: 'refresh' },
+  { mode: 'improve-grammar', labelKey: 'common.grammar', icon: 'spellcheck' },
+  { mode: 'summarize', labelKey: 'common.summarize', icon: 'contract' },
+  { mode: 'expand', labelKey: 'common.expand', icon: 'expand' },
 ] as const;
+
+const Spinner = () => (
+  <svg className="animate-spin h-4 w-4 text-primary" viewBox="0 0 24 24" fill="none">
+    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+  </svg>
+);
 
 export default function FloatingAIMenu({ onGenerate, currentContent, currentTitle, onOpenFullTools, style }: FloatingAIMenuProps) {
   const { t } = useTranslation();
   const { isAuthenticated } = useAuth();
-  const [isOpen, setIsOpen] = useState(false);
+  const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState('');
-  const menuRef = useRef<HTMLDivElement>(null);
-  const orbRef = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (
-        menuRef.current && !menuRef.current.contains(e.target as Node) &&
-        orbRef.current && !orbRef.current.contains(e.target as Node)
-      ) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
 
   if (!isAuthenticated) return null;
 
@@ -53,7 +45,7 @@ export default function FloatingAIMenu({ onGenerate, currentContent, currentTitl
     try {
       const r = await ai.enhanceContent({ content: currentContent, mode });
       onGenerate({ content: r.enhancedContent });
-      setIsOpen(false);
+      setOpen(false);
     } catch (err: any) {
       setError(err.message);
     }
@@ -87,124 +79,104 @@ export default function FloatingAIMenu({ onGenerate, currentContent, currentTitl
   };
 
   return (
-    <div className="fixed bottom-32 z-50 flex flex-col items-end" style={style}>
-      {/* Popover menu (opens above) */}
-      {isOpen && (
-        <div
-          ref={menuRef}
-          className="mb-3 w-56 origin-bottom-right
-            bg-white/95 backdrop-blur-xl rounded-editorial-sm border border-border
-            shadow-elevated animate-scale-in overflow-hidden"
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="group flex items-center justify-center w-11 h-11 rounded-full transition-all duration-300 ease-out active:scale-95 bg-primary/20 backdrop-blur-xl border border-primary/30 shadow-[0_0_20px_rgba(175,198,255,0.15)]"
+          title={t('common.aiTools')}
         >
-          {/* Header */}
-          <div className="px-3.5 py-2.5 border-b border-border/60">
-            <div className="flex items-center gap-2">
-              <Sparkles className="h-3.5 w-3.5 text-clay" />
-              <span className="text-caption uppercase tracking-wider text-ink-muted">{t('common.quickActions')}</span>
-            </div>
+          <span className="material-symbols-outlined text-[20px] text-primary">auto_awesome</span>
+        </button>
+      </PopoverTrigger>
+      <PopoverContent
+        side="top"
+        align="end"
+        className="w-56 p-0"
+        style={style}
+      >
+        {/* Header */}
+        <div className="px-3.5 py-2.5 border-b border-border">
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined text-[16px] text-primary">auto_awesome</span>
+            <span className="text-label-sm uppercase tracking-wider text-on-surface-variant">{t('common.quickActions')}</span>
           </div>
+        </div>
 
-          {/* Error message */}
-          {error && (
-            <div className="mx-3.5 mt-2 px-3 py-2 bg-clay-subtle text-clay text-body-xs rounded-editorial-xs border border-clay/20">
-              {error}
-            </div>
-          )}
-
-          {/* Quick actions grid */}
-          <div className="p-2.5">
-            <div className="grid grid-cols-5 gap-1">
-              {quickActions.map(({ mode, labelKey, icon: Icon }) => (
-                <button
-                  key={mode}
-                  type="button"
-                  onClick={() => handleEnhance(mode)}
-                  disabled={!!loading || !currentContent}
-                  className="flex flex-col items-center gap-1 py-2 px-1 rounded-editorial-xs
-                    hover:bg-cream-200 transition-colors duration-150
-                    disabled:opacity-40 disabled:cursor-not-allowed
-                    group/action"
-                >
-                  {loading === mode ? (
-                    <Loader2 className="h-4 w-4 text-clay animate-spin" />
-                  ) : (
-                    <Icon className="h-4 w-4 text-ink-soft group-hover/action:text-clay transition-colors" />
-                  )}
-                  <span className="text-[10px] font-medium text-ink-muted group-hover/action:text-ink-soft transition-colors whitespace-nowrap">
-                    {t(labelKey)}
-                  </span>
-                </button>
-              ))}
-            </div>
+        {/* Error */}
+        {error && (
+          <div className="mx-3.5 mt-2 px-3 py-2 bg-error/10 text-error text-body-sm rounded-lg border border-error/20">
+            {error}
           </div>
+        )}
 
-          {/* Divider */}
-          <div className="border-t border-border/60" />
-
-          {/* Secondary actions */}
-          <div className="p-1.5 space-y-0.5">
-            <button
-              type="button"
-              onClick={handleSeo}
-              disabled={!!loading || !currentTitle}
-              className="flex items-center gap-2.5 w-full px-3 py-2 rounded-editorial-xs
-                hover:bg-cream-200 transition-colors duration-150
-                disabled:opacity-40 disabled:cursor-not-allowed text-body-sm text-ink-soft"
-            >
-              {loading === 'seo' ? <Loader2 className="h-4 w-4 text-clay animate-spin" /> : <Search className="h-4 w-4" />}
-              <span>{t('common.seo')}</span>
-            </button>
-            <button
-              type="button"
-              onClick={handleTags}
-              disabled={!!loading || !currentContent}
-              className="flex items-center gap-2.5 w-full px-3 py-2 rounded-editorial-xs
-                hover:bg-cream-200 transition-colors duration-150
-                disabled:opacity-40 disabled:cursor-not-allowed text-body-sm text-ink-soft"
-            >
-              {loading === 'tags' ? <Loader2 className="h-4 w-4 text-clay animate-spin" /> : <Tags className="h-4 w-4" />}
-              <span>{t('common.tags')}</span>
-            </button>
+        {/* Quick actions grid */}
+        <div className="p-2.5">
+          <div className="grid grid-cols-5 gap-1">
+            {quickActions.map(({ mode, labelKey, icon }) => (
+              <button
+                key={mode}
+                type="button"
+                onClick={() => handleEnhance(mode)}
+                disabled={!!loading || !currentContent}
+                className="flex flex-col items-center gap-1 py-2 px-1 rounded-lg hover:bg-white/5 transition-colors disabled:opacity-40 disabled:cursor-not-allowed group/action"
+              >
+                {loading === mode ? (
+                  <Spinner />
+                ) : (
+                  <span className="material-symbols-outlined text-[16px] text-on-surface-variant group-hover/action:text-primary transition-colors">{icon}</span>
+                )}
+                <span className="text-[10px] font-medium text-on-surface-variant/70 group-hover/action:text-on-surface-variant transition-colors whitespace-nowrap">
+                  {t(labelKey)}
+                </span>
+              </button>
+            ))}
           </div>
+        </div>
 
-          {/* Divider */}
-          {onOpenFullTools && <div className="border-t border-border/60" />}
+        <div className="border-t border-border" />
 
-          {/* Open full tools */}
-          {onOpenFullTools && (
+        {/* Secondary actions */}
+        <div className="p-1.5 space-y-0.5">
+          <button
+            type="button"
+            onClick={handleSeo}
+            disabled={!!loading || !currentTitle}
+            className="flex items-center gap-2.5 w-full px-3 py-2 rounded-lg hover:bg-white/5 transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-body-sm text-on-surface-variant"
+          >
+            {loading === 'seo' ? <Spinner /> : <span className="material-symbols-outlined text-[16px]">search</span>}
+            <span>{t('common.seo')}</span>
+          </button>
+          <button
+            type="button"
+            onClick={handleTags}
+            disabled={!!loading || !currentContent}
+            className="flex items-center gap-2.5 w-full px-3 py-2 rounded-lg hover:bg-white/5 transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-body-sm text-on-surface-variant"
+          >
+            {loading === 'tags' ? <Spinner /> : <span className="material-symbols-outlined text-[16px]">label</span>}
+            <span>{t('common.tags')}</span>
+          </button>
+        </div>
+
+        {onOpenFullTools && (
+          <>
+            <div className="border-t border-border" />
             <div className="p-1.5">
               <button
                 type="button"
-                onClick={() => { setIsOpen(false); onOpenFullTools(); }}
-                className="flex items-center justify-between w-full px-3 py-2.5 rounded-editorial-xs
-                  hover:bg-cream-200 transition-colors duration-150 text-body-sm text-ink"
+                onClick={() => { setOpen(false); onOpenFullTools(); }}
+                className="flex items-center justify-between w-full px-3 py-2.5 rounded-lg hover:bg-white/5 transition-colors text-body-sm text-on-surface"
               >
                 <span className="flex items-center gap-2.5">
-                  <MessageSquare className="h-4 w-4" />
+                  <span className="material-symbols-outlined text-[16px]">forum</span>
                   <span>{t('common.openFullTools')}</span>
                 </span>
-                <ChevronRight className="h-3.5 w-3.5 text-ink-muted" />
+                <span className="material-symbols-outlined text-[16px] text-on-surface-variant">chevron_right</span>
               </button>
             </div>
-          )}
-        </div>
-      )}
-
-      {/* Orb button */}
-      <button
-        ref={orbRef}
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className="group flex items-center justify-center w-11 h-11 rounded-full
-          bg-white/80 backdrop-blur-md border border-border shadow-card
-          hover:shadow-card-hover hover:bg-white
-          transition-all duration-300 ease-out
-          active:scale-95"
-        title={t('common.aiTools')}
-      >
-        <Sparkles className="h-5 w-5 text-clay" />
-        <span className="absolute inset-0 rounded-full ring-1 ring-clay/20 group-hover:ring-clay/40 transition-all duration-300" />
-      </button>
-    </div>
+          </>
+        )}
+      </PopoverContent>
+    </Popover>
   );
 }
