@@ -37,6 +37,11 @@ export class RefineVisualizationDto {
   @ApiProperty({ description: 'Feedback or edit instructions' })
   @IsString()
   feedback: string;
+
+  @ApiPropertyOptional({ description: 'Output language', enum: SUPPORTED_VIZ_LOCALES })
+  @IsOptional()
+  @IsIn(SUPPORTED_VIZ_LOCALES)
+  language?: string;
 }
 
 export class CreateVisualizationDto {
@@ -139,6 +144,11 @@ export class FixErrorDto {
   @ApiProperty({ description: 'The compilation or runtime error message to fix' })
   @IsString()
   error: string;
+
+  @ApiPropertyOptional({ description: 'Output language', enum: SUPPORTED_VIZ_LOCALES })
+  @IsOptional()
+  @IsIn(SUPPORTED_VIZ_LOCALES)
+  language?: string;
 }
 
 export class QueryVisualizationDto {
@@ -170,6 +180,36 @@ export class QueryVisualizationDto {
   @IsOptional()
   @IsIn(['draft', 'published'])
   status?: string;
+
+  @ApiPropertyOptional({ enum: ['createdAt', 'updatedAt', 'title', 'viewCount', 'interactCount', 'likesCount', 'version'] })
+  @IsOptional()
+  @IsIn(['createdAt', 'updatedAt', 'title', 'viewCount', 'interactCount', 'likesCount', 'version'])
+  sortBy?: string;
+
+  @ApiPropertyOptional({ enum: ['asc', 'desc'] })
+  @IsOptional()
+  @IsIn(['asc', 'desc'])
+  sortOrder?: string;
+}
+
+// ─── Batch Operations ────────────────────────────────────────
+
+export class BatchUpdateStatusDto {
+  @ApiProperty({ description: 'Array of visualization IDs' })
+  @IsArray()
+  @IsInt({ each: true })
+  ids: number[];
+
+  @ApiProperty({ enum: ['draft', 'published'] })
+  @IsIn(['draft', 'published'])
+  status: string;
+}
+
+export class BatchDeleteDto {
+  @ApiProperty({ description: 'Array of visualization IDs' })
+  @IsArray()
+  @IsInt({ each: true })
+  ids: number[];
 }
 
 // ─── Version Management ──────────────────────────────────────
@@ -223,4 +263,114 @@ export class SuggestTopicsDto {
   @IsInt()
   @Min(1)
   count?: number;
+}
+
+// ─── Article Mode ──────────────────────────────────────────────
+
+export class UpdateArticleConfigDto {
+  @ApiPropertyOptional({ description: 'Enable interactive article mode' })
+  @IsOptional()
+  articleMode?: boolean;
+
+  @ApiPropertyOptional({ description: 'Quiz JSON string' })
+  @IsOptional()
+  @IsString()
+  quiz?: string;
+}
+
+// ─── AI Tutor ──────────────────────────────────────────────────
+
+export class AskTutorDto {
+  @ApiProperty({ description: 'Session identifier (anonymous or user-based)' })
+  @IsString()
+  sessionId: string;
+
+  @ApiProperty({ enum: ['param_change', 'button_click', 'question'] })
+  @IsIn(['param_change', 'button_click', 'question'])
+  interactionType: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  parameterName?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  parameterValue?: string;
+
+  @ApiPropertyOptional({ description: 'Free-text question from user' })
+  @IsOptional()
+  @IsString()
+  question?: string;
+
+  @ApiPropertyOptional({ description: 'Output language', enum: SUPPORTED_VIZ_LOCALES })
+  @IsOptional()
+  @IsIn(SUPPORTED_VIZ_LOCALES)
+  language?: string;
+}
+
+// ─── Classroom ─────────────────────────────────────────────────
+
+export class CreateClassroomDto {
+  @ApiProperty({ description: 'Classroom name' })
+  @IsString()
+  name: string;
+
+  @ApiProperty({ description: 'Visualization ID to share' })
+  @IsInt()
+  visualizationId: number;
+}
+
+export class JoinClassroomDto {
+  @ApiProperty({ description: '6-character join code' })
+  @IsString()
+  joinCode: string;
+}
+
+// ─── Narration ─────────────────────────────────────────────────
+
+export class GenerateNarrationDto {
+  @ApiPropertyOptional({ description: 'Target locale', enum: SUPPORTED_VIZ_LOCALES })
+  @IsOptional()
+  @IsIn(SUPPORTED_VIZ_LOCALES)
+  locale?: string;
+}
+
+// ─── Difficulty ────────────────────────────────────────────────
+
+export class GenerateDifficultyDto {
+  @ApiProperty({ description: 'Difficulty levels to generate' })
+  @IsArray()
+  @IsIn(['beginner', 'intermediate', 'advanced'], { each: true })
+  levels: string[];
+
+  @ApiPropertyOptional({ description: 'Output language', enum: SUPPORTED_VIZ_LOCALES })
+  @IsOptional()
+  @IsIn(SUPPORTED_VIZ_LOCALES)
+  language?: string;
+}
+
+// ─── Experiments ───────────────────────────────────────────────
+
+export class CreateExperimentDto {
+  @ApiProperty({ description: 'Core concept to explain' })
+  @IsString()
+  concept: string;
+
+  @ApiProperty({ enum: ['math', 'physics'] })
+  @IsIn(['math', 'physics'])
+  subject: string;
+
+  @ApiPropertyOptional({ description: 'Number of perspectives to generate' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(2)
+  perspectiveCount?: number;
+
+  @ApiPropertyOptional({ description: 'Output language', enum: SUPPORTED_VIZ_LOCALES })
+  @IsOptional()
+  @IsIn(SUPPORTED_VIZ_LOCALES)
+  language?: string;
 }

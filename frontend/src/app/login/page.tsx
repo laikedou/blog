@@ -4,13 +4,10 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
 import { useAuth } from '@/lib/auth';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent } from '@/components/ui/card';
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
@@ -30,47 +27,118 @@ export default function LoginPage() {
   };
 
   return (
-    <>
-      <Header />
-      <main className="flex-1 bg-cream-200 flex items-center justify-center py-20 px-4">
-        <div className="w-full max-w-md">
-          <Card className="shadow-elevated">
-            <CardHeader className="text-center">
-              <CardTitle className="font-display text-display-md">{t('auth.login')}</CardTitle>
-              <CardDescription>{t('auth.login')}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {error && <div className="bg-clay-subtle text-clay text-body-sm rounded-editorial-sm p-3 mb-4 border border-clay/20">{error}</div>}
-              <form onSubmit={handleSubmit} className="space-y-5">
-                <div className="space-y-2">
-                  <Label htmlFor="username" className="text-body-sm text-ink-soft">{t('auth.username')}</Label>
-                  <Input id="username" value={username} onChange={e => setUsername(e.target.value)} placeholder={t('auth.username')} required />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="password" className="text-body-sm text-ink-soft">{t('auth.password')}</Label>
-                  <Input id="password" type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder={t('auth.password')} required />
-                </div>
-                <Button type="submit" disabled={loading} className="w-full">
-                  {loading ? t('auth.loggingIn') : t('auth.login')}
-                </Button>
-              </form>
-            </CardContent>
-            <CardFooter className="flex-col gap-5">
-              <div className="divider-wave" />
-              <p className="text-body-sm text-ink-muted">
-                {t('auth.noAccount')}{' '}
-                <Link href="/register" className="text-clay hover:text-clay-dark font-medium">{t('auth.register')}</Link>
+    <main className="min-h-screen bg-background flex items-center justify-center p-margin-md relative overflow-hidden">
+      {/* Ambient background glow elements */}
+      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary-container/20 rounded-full blur-[100px] pointer-events-none" />
+      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-secondary-container/20 rounded-full blur-[100px] pointer-events-none" />
+
+      {/* Glassmorphic login card */}
+      <div className="relative z-10 w-full max-w-md animate-fade-up">
+        <Card>
+          <CardContent className="p-container-padding flex flex-col gap-margin-sm">
+            {/* Header */}
+            <div className="text-center mb-margin-sm">
+              <h1 className="font-headline-lg text-headline-lg text-on-surface mb-unit tracking-tighter">
+                {t('auth.login')}
+              </h1>
+              <p className="font-body-sm text-body-sm text-on-surface-variant">
+                {t('auth.login')}
               </p>
-              <div className="w-full p-4 bg-cream-200 rounded-editorial-sm text-body-sm text-ink-muted space-y-1">
-                <p className="font-medium text-ink-soft">Demo accounts:</p>
+            </div>
+
+            {/* Error message */}
+            {error && (
+              <div className="bg-error-container/20 text-error text-body-sm rounded-lg p-3 border border-error/20 animate-slide-down">
+                {error}
+              </div>
+            )}
+
+            {/* Form */}
+            <form onSubmit={handleSubmit} className="flex flex-col gap-gutter">
+              {/* Username field */}
+              <div className="flex flex-col gap-unit">
+                <label htmlFor="username" className="font-label-sm text-label-sm text-on-surface">
+                  {t('auth.username')}
+                </label>
+                <div className="relative">
+                  <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">person</span>
+                  <Input
+                    id="username"
+                    type="text"
+                    value={username}
+                    onChange={e => setUsername(e.target.value)}
+                    placeholder={t('auth.username')}
+                    required
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+
+              {/* Password field */}
+              <div className="flex flex-col gap-unit">
+                <label htmlFor="password" className="font-label-sm text-label-sm text-on-surface">
+                  {t('auth.password')}
+                </label>
+                <div className="relative">
+                  <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">lock</span>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    placeholder={t('auth.password')}
+                    required
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+
+              {/* Submit button */}
+              <Button
+                type="submit"
+                disabled={loading}
+                className="mt-unit w-full"
+              >
+                {loading ? (
+                  <>
+                    <span className="material-symbols-outlined text-[18px] animate-spin">progress_activity</span>
+                    {t('auth.loggingIn')}
+                  </>
+                ) : (
+                  <>
+                    {t('auth.login')}
+                    <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
+                  </>
+                )}
+              </Button>
+            </form>
+
+            {/* Register link */}
+            <div className="text-center mt-unit">
+              <span className="font-body-sm text-body-sm text-on-surface-variant">
+                {t('auth.noAccount')}{' '}
+              </span>
+              <Link
+                href="/register"
+                className="font-label-sm text-label-sm text-primary hover:text-primary-fixed transition-colors"
+              >
+                {t('auth.register')}
+              </Link>
+            </div>
+
+            {/* Demo accounts card */}
+            <div className="mt-margin-sm bg-surface-container/50 border border-border rounded-lg p-margin-sm flex flex-col gap-unit">
+              <h3 className="font-label-sm text-label-sm text-on-surface-variant">
+                Demo accounts:
+              </h3>
+              <div className="font-label-sm text-label-sm text-on-surface-variant/70 flex flex-col gap-1">
                 <p>Admin: admin / admin123</p>
                 <p>User: demo / user123</p>
               </div>
-            </CardFooter>
-          </Card>
-        </div>
-      </main>
-      <Footer />
-    </>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </main>
   );
 }

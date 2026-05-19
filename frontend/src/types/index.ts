@@ -177,7 +177,7 @@ export interface VisualizationComment {
   content: string;
   visualizationId: number;
   authorId: number;
-  author: { id: number; username: string; displayName: string; avatar: string };
+  author: { id: number; username: string; displayName: string; avatar: string; role: string };
   parentId: number | null;
   replies?: VisualizationComment[];
   createdAt: string;

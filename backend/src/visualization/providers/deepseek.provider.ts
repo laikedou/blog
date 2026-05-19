@@ -1,5 +1,6 @@
 import { AiProvider, GenerateResult, StreamChunk } from '../interfaces/ai-provider.interface';
 import { extractHtmlCode } from '../extract-code';
+import { getLanguageInstruction, SupportedLocale } from '../../common/language.helper';
 
 export class DeepSeekProvider implements AiProvider {
   readonly name = 'deepseek';
@@ -42,28 +43,30 @@ export class DeepSeekProvider implements AiProvider {
     }
   }
 
-  private systemPrompt(): string {
+  private systemPrompt(language?: string): string {
+    const langInstruction = language ? getLanguageInstruction(language as SupportedLocale) : '';
     return `You are a visualization expert creating interactive HTML/CSS/JS content for K-12 math and physics education.
 
 ## OUTPUT RULES
 - Return ONLY the HTML code inside a single \`\`\`html code block. No explanations.
-- Root element: <div class="viz-root">.  viz-root's max-width is always 100%. All content inside it.
+- Root element: <div class="viz-root">.  viz-root's width is always 100%. All content inside it.
 - Use <style> for ALL styling — scoped class selectors prefixed with "viz-".
 - Use <script> for ALL interactivity — vanilla JavaScript only. NO imports.
 - NOT a full HTML document — just the fragment.
 
 ## VISUALIZATION QUALITY
 1. SVG for math diagrams (coordinates, shapes, graphs, angles). <canvas> for physics (particles, motion, waves).
-2. Every visualization MUST have interactivity: sliders, buttons, click-to-toggle, or draggable elements.
-3. CSS animations (@keyframes, transitions) and requestAnimationFrame for smooth motion.
+2. Every visualization MUST have interactivity: sliders, buttons, click-to-toggle, or draggable elements. For EVERY interactive element, emit a postMessage event in its event handler: window.parent.postMessage({ type: 'viz:interact', payload: { parameter: '<name>', value: <currentValue>, action: '<drag|click|change>', timestamp: Date.now() } }, '*');
+3. ALSO add a window.addEventListener('message', (e) => { if (e.data?.type === 'viz:sync' && e.data?.payload) { const p = e.data.payload; /* update the interactive element matching p.parameter to p.value */ } }) to receive real-time sync events from a teacher in classroom mode.
+4. CSS animations (@keyframes, transitions) and requestAnimationFrame for smooth motion.
 4. Clean design: rounded corners, subtle shadows, readable fonts, accent colors, good spacing.
 5. Use Flexbox/Grid for responsive layout within the container.
 6. Label axes, annotate key points, show formulas, include brief instructions.
 7. Color-code related elements for clarity — avoid raw hex colors, use semantic palette.
-8. Wrap main logic in try-catch. On error call: window.__vizError(error.message)`;
+8. Wrap main logic in try-catch. On error call: window.__vizError(error.message)${langInstruction}`;
   }
 
-  async generateVisualization(prompt: string, _subject: string): Promise<GenerateResult> {
+  async generateVisualization(prompt: string, _subject: string, language?: string): Promise<GenerateResult> {
     const response = await this.fetchWithTimeout(`${this.baseUrl}/chat/completions`, {
       method: 'POST',
       headers: {
@@ -74,7 +77,7 @@ export class DeepSeekProvider implements AiProvider {
         model: this.model,
         temperature: 0.7,
         messages: [
-          { role: 'system', content: this.systemPrompt() },
+          { role: 'system', content: this.systemPrompt(language) },
           { role: 'user', content: prompt },
         ],
       }),
@@ -101,6 +104,7 @@ export class DeepSeekProvider implements AiProvider {
     prompt: string,
     _subject: string,
     signal?: AbortSignal,
+    language?: string,
   ): AsyncGenerator<StreamChunk, void, undefined> {
     const response = await this.fetchWithTimeout(`${this.baseUrl}/chat/completions`, {
       method: 'POST',
@@ -113,7 +117,7 @@ export class DeepSeekProvider implements AiProvider {
         temperature: 0.7,
         stream: true,
         messages: [
-          { role: 'system', content: this.systemPrompt() },
+          { role: 'system', content: this.systemPrompt(language) },
           { role: 'user', content: prompt },
         ],
       }),
@@ -162,7 +166,8 @@ export class DeepSeekProvider implements AiProvider {
     }
   }
 
-  async refineVisualization(code: string, feedback: string): Promise<GenerateResult> {
+  async refineVisualization(code: string, feedback: string, language?: string): Promise<GenerateResult> {
+    const langInstruction = language ? getLanguageInstruction(language as SupportedLocale) : '';
     const response = await this.fetchWithTimeout(`${this.baseUrl}/chat/completions`, {
       method: 'POST',
       headers: {
@@ -173,7 +178,7 @@ export class DeepSeekProvider implements AiProvider {
         model: this.model,
         temperature: 0.5,
         messages: [
-          { role: 'system', content: `Existing HTML code:\n${code}\n\nRevise according to feedback. Follow the same quality guidelines. Return only code in \`\`\`html.` },
+          { role: 'system', content: `Existing HTML code:\n${code}\n\nRevise according to feedback. Follow the same quality guidelines. Return only code in \`\`\`html.${langInstruction}` },
           { role: 'user', content: feedback },
         ],
       }),
@@ -191,7 +196,7 @@ export class DeepSeekProvider implements AiProvider {
     return { code: this.extractCode(text), raw: text, usage };
   }
 
-  async fixError(code: string, error: string): Promise<GenerateResult> {
+  async fixError(code: string, error: string, language?: string): Promise<GenerateResult> {
     const response = await this.fetchWithTimeout(`${this.baseUrl}/chat/completions`, {
       method: 'POST',
       headers: {
@@ -217,7 +222,7 @@ ${code}
 Error:
 ${error}
 
-Return the COMPLETE corrected HTML in a single \`\`\`html block.`,
+Return the COMPLETE corrected HTML in a single \`\`\`html block.${language ? getLanguageInstruction(language as SupportedLocale) : ''}`,
           },
         ],
       }),
@@ -240,7 +245,8 @@ Return the COMPLETE corrected HTML in a single \`\`\`html block.`,
     return { valid: true };
   }
 
-  async generateText(prompt: string): Promise<string> {
+  async generateText(prompt: string, language?: string): Promise<string> {
+    const langInstruction = language ? getLanguageInstruction(language as SupportedLocale) : '';
     const response = await this.fetchWithTimeout(`${this.baseUrl}/chat/completions`, {
       method: 'POST',
       headers: {
@@ -251,7 +257,7 @@ Return the COMPLETE corrected HTML in a single \`\`\`html block.`,
         model: this.model,
         temperature: 0.5,
         messages: [
-          { role: 'system', content: 'You are an educational content writer for K-12 math and physics. Generate clear, concise, and accurate explanations.' },
+          { role: 'system', content: `You are an educational content writer for K-12 math and physics. Generate clear, concise, and accurate explanations.${langInstruction}` },
           { role: 'user', content: prompt },
         ],
       }),
@@ -264,6 +270,72 @@ Return the COMPLETE corrected HTML in a single \`\`\`html block.`,
 
     const data = await response.json();
     return data?.choices?.[0]?.message?.content || '';
+  }
+
+  async *generateTextStream(
+    prompt: string,
+    signal?: AbortSignal,
+    language?: string,
+  ): AsyncGenerator<StreamChunk, void, undefined> {
+    const langInstruction = language ? getLanguageInstruction(language as SupportedLocale) : '';
+    const response = await this.fetchWithTimeout(`${this.baseUrl}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.apiKey}`,
+      },
+      body: JSON.stringify({
+        model: this.model,
+        temperature: 0.5,
+        stream: true,
+        messages: [
+          { role: 'system', content: `You are an educational content writer for K-12 math and physics. Generate clear, concise, and accurate explanations.${langInstruction}` },
+          { role: 'user', content: prompt },
+        ],
+      }),
+      signal,
+      timeout: this.timeout,
+    });
+
+    if (!response.ok) {
+      const err = await response.text();
+      throw new Error(`DeepSeek text generation error (${response.status}): ${err}`);
+    }
+
+    const reader = response.body!.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed || !trimmed.startsWith('data: ')) continue;
+
+          const payload = trimmed.slice(6).trim();
+          if (payload === '[DONE]') return;
+
+          try {
+            const parsed = JSON.parse(payload);
+            const content = parsed?.choices?.[0]?.delta?.content;
+            if (content) {
+              yield { type: 'text', text: content };
+            }
+          } catch {
+            // skip malformed JSON lines
+          }
+        }
+      }
+    } finally {
+      reader.releaseLock();
+    }
   }
 
   private extractCode(text: string): string {

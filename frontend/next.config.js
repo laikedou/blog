@@ -40,6 +40,19 @@ const nextConfig = {
           { key: 'X-Robots-Tag', value: 'all' },
         ],
       },
+      // Classroom routes: allow camera/mic for WebRTC
+      {
+        source: '/classroom/:path*',
+        headers: [
+          { key: 'Permissions-Policy', value: 'camera=(self), microphone=(self)' },
+        ],
+      },
+      {
+        source: '/visualizations/:path*',
+        headers: [
+          { key: 'Permissions-Policy', value: 'camera=(self), microphone=(self)' },
+        ],
+      },
       // XML sitemap content type
       {
         source: '/sitemap.xml',

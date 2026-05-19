@@ -1,6 +1,7 @@
 import { AiProvider, GenerateResult, StreamChunk } from '../interfaces/ai-provider.interface';
 import { createXai } from '@ai-sdk/xai';
 import { streamText } from 'ai';
+import { getLanguageInstruction, SupportedLocale } from '../../common/language.helper';
 
 export class GrokProvider implements AiProvider {
   readonly name = 'grok';
@@ -45,38 +46,41 @@ export class GrokProvider implements AiProvider {
     }
   }
 
-  private systemPrompt(subject: string, existingCode?: string): string {
+  private systemPrompt(subject: string, existingCode?: string, language?: string): string {
+    const langInstruction = language ? getLanguageInstruction(language as SupportedLocale) : '';
     if (existingCode) {
       return `You are a visualization expert for K-12 math and physics education.
 
 Existing HTML code:
 ${existingCode}
 
-Revise the visualization according to the user's feedback. Follow all the same quality guidelines as the original generation. Return ONLY the complete HTML in a \`\`\`html code block.`;
+Revise the visualization according to the user's feedback. Follow all the same quality guidelines as the original generation. Return ONLY the complete HTML in a \`\`\`html code block.${langInstruction}`;
     }
 
         return `You are a visualization expert creating interactive HTML/CSS/JS content for K-12 math and physics education.
 
 ## OUTPUT RULES
 - Return ONLY the HTML code inside a single \`\`\`html code block. No explanations.
-- Root element: <div class="viz-root">.  viz-root's max-width is always 100%. All content inside it.
+- Root element: <div class="viz-root">.  viz-root's width is always 100%. All content inside it.
 - Use <style> for ALL styling — scoped class selectors prefixed with "viz-".
 - Use <script> for ALL interactivity — vanilla JavaScript only. NO imports.
 - NOT a full HTML document — just the fragment.
+- All style will fit to background(rgb(23 31 51 / 0.6))
 
 ## VISUALIZATION QUALITY
 1. SVG for math diagrams (coordinates, shapes, graphs, angles). <canvas> for physics (particles, motion, waves).
-2. Every visualization MUST have interactivity: sliders, buttons, click-to-toggle, or draggable elements.
-3. CSS animations (@keyframes, transitions) and requestAnimationFrame for smooth motion.
+2. Every visualization MUST have interactivity: sliders, buttons, click-to-toggle, or draggable elements. For EVERY interactive element, emit a postMessage event in its event handler: window.parent.postMessage({ type: 'viz:interact', payload: { parameter: '<name>', value: <currentValue>, action: '<drag|click|change>', timestamp: Date.now() } }, '*');
+3. ALSO add a window.addEventListener('message', (e) => { if (e.data?.type === 'viz:sync' && e.data?.payload) { const p = e.data.payload; /* update the interactive element matching p.parameter to p.value */ } }) to receive real-time sync events from a teacher in classroom mode.
+4. CSS animations (@keyframes, transitions) and requestAnimationFrame for smooth motion.
 4. Clean design: rounded corners, subtle shadows, readable fonts, accent colors, good spacing.
 5. Use Flexbox/Grid for responsive layout within the container.
 6. Label axes, annotate key points, show formulas, include brief instructions.
 7. Color-code related elements for clarity — avoid raw hex colors, use semantic palette.
 8. Wrap main logic in try-catch. On error call: window.__vizError(error.message)
-Prompt: ${subject}`;
+Prompt: ${subject}${langInstruction}`;
   }
 
-  async generateVisualization(prompt: string, subject: string): Promise<GenerateResult> {
+  async generateVisualization(prompt: string, subject: string, language?: string): Promise<GenerateResult> {
     const response = await this.fetchWithTimeout(`${this.baseUrl}/chat/completions`, {
       method: 'POST',
       headers: {
@@ -88,7 +92,7 @@ Prompt: ${subject}`;
         max_tokens: this.maxTokens,
         temperature: 0.7,
         messages: [
-          { role: 'system', content: this.systemPrompt(subject) },
+          { role: 'system', content: this.systemPrompt(subject, undefined, language) },
           { role: 'user', content: prompt },
         ],
       }),
@@ -116,11 +120,12 @@ Prompt: ${subject}`;
     prompt: string,
     subject: string,
     signal?: AbortSignal,
+    language?: string,
   ): AsyncGenerator<StreamChunk, void, undefined> {
     try {
       const result = streamText({
         model: this.xai.responses(this.model),
-        system: this.systemPrompt(subject),
+        system: this.systemPrompt(subject, undefined, language),
         prompt,
         maxOutputTokens: this.maxTokens,
         temperature: 0.7,
@@ -136,7 +141,7 @@ Prompt: ${subject}`;
     }
   }
 
-  async refineVisualization(code: string, feedback: string): Promise<GenerateResult> {
+  async refineVisualization(code: string, feedback: string, language?: string): Promise<GenerateResult> {
     const response = await this.fetchWithTimeout(`${this.baseUrl}/chat/completions`, {
       method: 'POST',
       headers: {
@@ -148,7 +153,7 @@ Prompt: ${subject}`;
         max_tokens: this.maxTokens,
         temperature: 0.5,
         messages: [
-          { role: 'system', content: this.systemPrompt('', code) },
+          { role: 'system', content: this.systemPrompt('', code, language) },
           { role: 'user', content: feedback },
         ],
       }),
@@ -170,7 +175,7 @@ Prompt: ${subject}`;
     return { code: this.extractCode(text), raw: text, usage };
   }
 
-  async fixError(code: string, error: string): Promise<GenerateResult> {
+  async fixError(code: string, error: string, language?: string): Promise<GenerateResult> {
     const response = await this.fetchWithTimeout(`${this.baseUrl}/chat/completions`, {
       method: 'POST',
       headers: {
@@ -197,7 +202,7 @@ ${code}
 Error:
 ${error}
 
-Return the COMPLETE corrected HTML in a single \`\`\`html block.`,
+Return the COMPLETE corrected HTML in a single \`\`\`html block.${language ? getLanguageInstruction(language as SupportedLocale) : ''}`,
           },
         ],
       }),
@@ -224,7 +229,8 @@ Return the COMPLETE corrected HTML in a single \`\`\`html block.`,
     return { valid: true };
   }
 
-  async generateText(prompt: string): Promise<string> {
+  async generateText(prompt: string, language?: string): Promise<string> {
+    const langInstruction = language ? getLanguageInstruction(language as SupportedLocale) : '';
     const response = await this.fetchWithTimeout(`${this.baseUrl}/chat/completions`, {
       method: 'POST',
       headers: {
@@ -236,7 +242,7 @@ Return the COMPLETE corrected HTML in a single \`\`\`html block.`,
         max_tokens: 4096,
         temperature: 0.5,
         messages: [
-          { role: 'system', content: 'You are an educational content writer for K-12 math and physics. Generate clear, concise, and accurate explanations.' },
+          { role: 'system', content: `You are an educational content writer for K-12 math and physics. Generate clear, concise, and accurate explanations.${langInstruction}` },
           { role: 'user', content: prompt },
         ],
       }),
@@ -249,6 +255,30 @@ Return the COMPLETE corrected HTML in a single \`\`\`html block.`,
 
     const data = await response.json();
     return data?.choices?.[0]?.message?.content || '';
+  }
+
+  async *generateTextStream(
+    prompt: string,
+    signal?: AbortSignal,
+    language?: string,
+  ): AsyncGenerator<StreamChunk, void, undefined> {
+    try {
+      const langInstruction = language ? getLanguageInstruction(language as SupportedLocale) : '';
+      const result = streamText({
+        model: this.xai.responses(this.model),
+        system: `You are an educational content writer for K-12 math and physics. Generate clear, concise, and accurate explanations.${langInstruction}`,
+        prompt,
+        maxOutputTokens: 4096,
+        temperature: 0.5,
+        abortSignal: signal,
+        timeout: this.timeout,
+      });
+      for await (const chunk of result.textStream) {
+        yield { type: 'text', text: chunk };
+      }
+    } catch (error: any) {
+      throw new Error(`Grok text generation error: ${error.message}`);
+    }
   }
 
   private extractCode(text: string): string {

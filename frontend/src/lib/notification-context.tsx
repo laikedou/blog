@@ -5,7 +5,7 @@ import { io, Socket } from 'socket.io-client';
 
 export interface CrawlNotification {
   id: string;
-  type: 'crawl:started' | 'crawl:article' | 'crawl:complete';
+  type: 'crawl:started' | 'crawl:article' | 'crawl:complete' | 'comment:reply';
   title: string;
   message: string;
   timestamp: string;
@@ -145,6 +145,19 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         title: '✅ Crawl Complete',
         message: `"${data.sourceName}" — ${n} new, ${s} updated, ${e} errors`,
         timestamp: data.completedAt,
+        data,
+        read: false,
+      };
+      addNotification(note, true);
+    });
+
+    socket.on('comment:reply', (data: { commentId: number; postId?: number; visualizationId?: number; replyAuthor: string; snippet: string }) => {
+      const note: CrawlNotification = {
+        id: `comment-reply-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        type: 'comment:reply',
+        title: '💬 New Reply',
+        message: `${data.replyAuthor} replied: "${data.snippet}"`,
+        timestamp: new Date().toISOString(),
         data,
         read: false,
       };

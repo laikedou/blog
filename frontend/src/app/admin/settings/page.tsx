@@ -3,18 +3,16 @@
 import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { siteConfig as siteConfigApi, media as mediaApi, ai as aiApi } from '@/lib/api';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Save, Globe, Paintbrush, FileText, Search, Layout, Code, Image, Upload, Loader2, X, Sparkles, Shield } from 'lucide-react';
 import { toast } from 'sonner';
 import MediaPickerDialog from '@/components/MediaPickerDialog';
 import ReactMarkdown from 'react-markdown';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 
 const defaultSocialLinks = JSON.stringify({ twitter: '', github: '', linkedin: '' }, null, 2);
 
@@ -37,6 +35,7 @@ export default function AdminSettingsPage() {
   const [termsView, setTermsView] = useState<'edit' | 'preview'>('preview');
   const logoFileRef = useRef<HTMLInputElement>(null);
   const faviconFileRef = useRef<HTMLInputElement>(null);
+  const [activeTab, setActiveTab] = useState('general');
 
   useEffect(() => {
     siteConfigApi.get()
@@ -181,15 +180,21 @@ export default function AdminSettingsPage() {
     }
   };
 
+  // ---------- LOADING STATE ----------
   if (loading) {
     return (
-      <div>
-        <h1 className="font-display text-display-md text-ink mb-8">{t('admin.settings')}</h1>
+      <div className="max-w-4xl">
+        <h1 className="font-headline-lg text-headline-lg text-on-surface mb-8">{t('admin.settings')}</h1>
         <div className="space-y-6">
           {[...Array(4)].map((_, i) => (
-            <Card key={i}>
-              <CardHeader><Skeleton className="h-6 w-40" /></CardHeader>
-              <CardContent><div className="space-y-3"><Skeleton className="h-10 w-full" /><Skeleton className="h-10 w-full" /></div></CardContent>
+            <Card key={i} className="relative overflow-hidden">
+              <CardContent className="p-6 space-y-4">
+                <div className="h-6 w-40 bg-surface-container-high/50 animate-pulse rounded" />
+                <div className="space-y-3">
+                  <div className="h-10 w-full bg-surface-container-high/50 animate-pulse rounded" />
+                  <div className="h-10 w-full bg-surface-container-high/50 animate-pulse rounded" />
+                </div>
+              </CardContent>
             </Card>
           ))}
         </div>
@@ -197,78 +202,104 @@ export default function AdminSettingsPage() {
     );
   }
 
+  // ---------- MAIN CONTENT ----------
   return (
     <div className="max-w-4xl">
+      {/* ---- Header ---- */}
       <div className="flex items-center justify-between mb-8">
-        <h1 className="font-display text-display-md text-ink">{t('admin.settings')}</h1>
-        <Button onClick={handleSave} disabled={saving}>
-          <Save className="h-4 w-4 mr-2" />
+        <h1 className="font-headline-lg text-headline-lg text-on-surface">{t('admin.settings')}</h1>
+        <Button onClick={handleSave} disabled={saving} size="lg">
+          <span className="material-symbols-outlined text-[20px]" aria-hidden="true">save</span>
           {saving ? t('admin.saving') : t('admin.saveSettings')}
         </Button>
       </div>
 
-      <Tabs defaultValue="general" className="space-y-6">
+      {/* ---- Tab Navigation ---- */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
         <TabsList>
-          <TabsTrigger value="general"><Globe className="h-4 w-4 mr-2" />{t('admin.general')}</TabsTrigger>
-          <TabsTrigger value="branding"><Paintbrush className="h-4 w-4 mr-2" />{t('admin.branding')}</TabsTrigger>
-          <TabsTrigger value="content"><FileText className="h-4 w-4 mr-2" />{t('admin.contentSettings')}</TabsTrigger>
-          <TabsTrigger value="seo"><Search className="h-4 w-4 mr-2" />{t('admin.seo')}</TabsTrigger>
-          <TabsTrigger value="footer"><Layout className="h-4 w-4 mr-2" />{t('admin.footer')}</TabsTrigger>
-          <TabsTrigger value="advanced"><Code className="h-4 w-4 mr-2" />{t('admin.advanced')}</TabsTrigger>
-          <TabsTrigger value="legal"><Shield className="h-4 w-4 mr-2" />{t('admin.legal')}</TabsTrigger>
+          {(['general', 'branding', 'content', 'seo', 'footer', 'advanced', 'legal'] as const).map(tab => {
+            const iconMap: Record<string, string> = {
+              general: 'public',
+              branding: 'palette',
+              content: 'description',
+              seo: 'search',
+              footer: 'vertical_align_bottom',
+              advanced: 'code',
+              legal: 'gavel',
+            };
+            const labelMap: Record<string, string> = {
+              general: t('admin.general'),
+              branding: t('admin.branding'),
+              content: t('admin.contentSettings'),
+              seo: t('admin.seo'),
+              footer: t('admin.footer'),
+              advanced: t('admin.advanced'),
+              legal: t('admin.legal'),
+            };
+            return (
+              <TabsTrigger key={tab} value={tab}>
+                <span className="material-symbols-outlined text-[18px] mr-1" aria-hidden="true">{iconMap[tab]}</span>
+                {labelMap[tab]}
+              </TabsTrigger>
+            );
+          })}
         </TabsList>
 
-        {/* General */}
-        <TabsContent value="general" className="space-y-6">
+        {/* General Tab */}
+        <TabsContent value="general">
           <Card>
             <CardHeader>
               <CardTitle>{t('admin.siteIdentity')}</CardTitle>
               <CardDescription>{t('admin.siteIdentityDesc')}</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-5">
               <div>
-                <label className="block text-body-sm font-medium text-ink mb-1.5">{t('admin.siteTitle')}</label>
+                <Label>{t('admin.siteTitle')}</Label>
                 <Input
                   value={config.siteTitle || ''}
                   onChange={e => updateField('siteTitle', e.target.value)}
                   placeholder={t('admin.siteTitlePlaceholder')}
+                  className="mt-1.5"
                 />
-                <p className="text-caption-sm text-ink-muted mt-1">{t('admin.siteTitleHint')}</p>
+                <p className="text-label-sm text-on-surface-variant/70 mt-1">{t('admin.siteTitleHint')}</p>
               </div>
               <div>
-                <label className="block text-body-sm font-medium text-ink mb-1.5">{t('admin.tagline')}</label>
+                <Label>{t('admin.tagline')}</Label>
                 <Input
                   value={config.siteTagline || ''}
                   onChange={e => updateField('siteTagline', e.target.value)}
                   placeholder={t('admin.taglinePlaceholder')}
+                  className="mt-1.5"
                 />
-                <p className="text-caption-sm text-ink-muted mt-1">{t('admin.taglineHint')}</p>
+                <p className="text-label-sm text-on-surface-variant/70 mt-1">{t('admin.taglineHint')}</p>
               </div>
               <div>
-                <label className="block text-body-sm font-medium text-ink mb-1.5">{t('admin.siteDescription')}</label>
+                <Label>{t('admin.siteDescription')}</Label>
                 <Textarea
                   value={config.siteDescription || ''}
                   onChange={e => updateField('siteDescription', e.target.value)}
                   placeholder={t('admin.siteDescriptionPlaceholder')}
                   rows={3}
+                  className="mt-1.5"
                 />
-                <p className="text-caption-sm text-ink-muted mt-1">{t('admin.siteDescriptionHint')}</p>
+                <p className="text-label-sm text-on-surface-variant/70 mt-1">{t('admin.siteDescriptionHint')}</p>
               </div>
               <div>
-                <label className="block text-body-sm font-medium text-ink mb-1.5">{t('admin.adminTitle')}</label>
+                <Label>{t('admin.adminTitle')}</Label>
                 <Input
                   value={config.adminTitle || ''}
                   onChange={e => updateField('adminTitle', e.target.value)}
                   placeholder={t('admin.adminTitlePlaceholder')}
+                  className="mt-1.5"
                 />
-                <p className="text-caption-sm text-ink-muted mt-1">{t('admin.adminTitleHint')}</p>
+                <p className="text-label-sm text-on-surface-variant/70 mt-1">{t('admin.adminTitleHint')}</p>
               </div>
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* Branding */}
-        <TabsContent value="branding" className="space-y-6">
+        {/* Branding Tab */}
+        <TabsContent value="branding">
           <Card>
             <CardHeader>
               <CardTitle>{t('admin.logosIcons')}</CardTitle>
@@ -277,69 +308,78 @@ export default function AdminSettingsPage() {
             <CardContent className="space-y-6">
               {/* Logo */}
               <div>
-                <label className="block text-body-sm font-medium text-ink mb-1.5">{t('admin.logoUrl')}</label>
-                <div className="flex gap-2">
+                <Label>{t('admin.logoUrl')}</Label>
+                <div className="flex gap-2 mt-1.5">
                   <Input
                     value={config.logoUrl || ''}
                     onChange={e => updateField('logoUrl', e.target.value)}
                     placeholder={t('admin.logoUrlPlaceholder')}
                     className="flex-1"
                   />
-                  <Button type="button" variant="outline" onClick={() => setLogoPickerOpen(true)} title={t('admin.browseMedia')}>
-                    <Image className="h-4 w-4" />
+                  <Button variant="outline" size="icon" onClick={() => setLogoPickerOpen(true)} title={t('admin.browseMedia')}>
+                    <span className="material-symbols-outlined text-[20px]" aria-hidden="true">image</span>
                   </Button>
                   <label className="cursor-pointer">
-                    <Button type="button" variant="outline" disabled={logoUploading} title={t('admin.uploadImage')}>
-                      {logoUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                    <Button variant="outline" size="icon" disabled={logoUploading} title={t('admin.uploadImage')} asChild>
+                      <span>
+                        <span className={`material-symbols-outlined text-[20px] ${logoUploading ? 'animate-spin' : ''}`} aria-hidden="true">{logoUploading ? 'progress_activity' : 'upload'}</span>
+                      </span>
                     </Button>
                     <input ref={logoFileRef} type="file" className="hidden" accept="image/*" onChange={e => { handleMediaUpload('logoUrl', e.target.files?.[0]); if (logoFileRef.current) logoFileRef.current.value = ''; }} />
                   </label>
-                  <Button type="button" variant="outline" onClick={handleGenerateLogo} disabled={logoGenerating} title={t('admin.generateLogoAI')}>
-                    {logoGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4 text-clay" />}
+                  <Button variant="outline" size="icon" onClick={handleGenerateLogo} disabled={logoGenerating} title={t('admin.generateLogoAI')}>
+                    <span className={`material-symbols-outlined text-[20px] text-primary ${logoGenerating ? 'animate-spin' : ''}`} aria-hidden="true">{logoGenerating ? 'progress_activity' : 'auto_awesome'}</span>
                   </Button>
                   {config.logoUrl && (
-                    <Button type="button" variant="outline" onClick={() => updateField('logoUrl', '')} title={t('admin.remove')}>
-                      <X className="h-4 w-4" />
+                    <Button variant="outline" size="icon" onClick={() => updateField('logoUrl', '')} title={t('admin.remove')}>
+                      <span className="material-symbols-outlined text-[20px]" aria-hidden="true">close</span>
                     </Button>
                   )}
                 </div>
-                <p className="text-caption-sm text-ink-muted mt-1">{t('admin.logoHint')}</p>
+                <p className="text-label-sm text-on-surface-variant/70 mt-1">{t('admin.logoHint')}</p>
                 {config.logoUrl && (
-                  <div className="mt-3 p-3 bg-cream-300 rounded-editorial-xs inline-flex items-center gap-3">
+                  <div className="mt-3 bg-black/20 border border-border rounded-lg p-3 inline-flex items-center gap-3">
                     <img src={config.logoUrl} alt={t('admin.logoPreview')} className="h-10 object-contain rounded" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                    <span className="text-caption-sm text-ink-muted max-w-[200px] truncate">{config.logoUrl}</span>
+                    <span className="text-label-sm text-on-surface-variant max-w-[200px] truncate">{config.logoUrl}</span>
                   </div>
                 )}
               </div>
 
               {/* Favicon */}
               <div>
-                <label className="block text-body-sm font-medium text-ink mb-1.5">{t('admin.faviconUrl')}</label>
-                <div className="flex gap-2">
+                <Label>{t('admin.faviconUrl')}</Label>
+                <div className="flex gap-2 mt-1.5">
                   <Input
                     value={config.faviconUrl || ''}
                     onChange={e => updateField('faviconUrl', e.target.value)}
                     placeholder={t('admin.faviconUrlPlaceholder')}
                     className="flex-1"
                   />
-                  <Button type="button" variant="outline" onClick={() => setFaviconPickerOpen(true)} title={t('admin.browseMedia')}>
-                    <Image className="h-4 w-4" />
+                  <Button variant="outline" size="icon" onClick={() => setFaviconPickerOpen(true)} title={t('admin.browseMedia')}>
+                    <span className="material-symbols-outlined text-[20px]" aria-hidden="true">image</span>
                   </Button>
                   <label className="cursor-pointer">
-                    <Button type="button" variant="outline" disabled={faviconUploading} title={t('admin.uploadImage')}>
-                      {faviconUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                    <Button variant="outline" size="icon" disabled={faviconUploading} title={t('admin.uploadImage')} asChild>
+                      <span>
+                        <span className={`material-symbols-outlined text-[20px] ${faviconUploading ? 'animate-spin' : ''}`} aria-hidden="true">{faviconUploading ? 'progress_activity' : 'upload'}</span>
+                      </span>
                     </Button>
                     <input ref={faviconFileRef} type="file" className="hidden" accept="image/*" onChange={e => { handleMediaUpload('faviconUrl', e.target.files?.[0]); if (faviconFileRef.current) faviconFileRef.current.value = ''; }} />
                   </label>
-                  <Button type="button" variant="outline"  onClick={handleGenerateFavicon} disabled={faviconGenerating} title={t('admin.generateFaviconAI')}>
-                    {faviconGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4 text-clay" />}
+                  <Button variant="outline" size="icon" onClick={handleGenerateFavicon} disabled={faviconGenerating} title={t('admin.generateFaviconAI')}>
+                    <span className={`material-symbols-outlined text-[20px] text-primary ${faviconGenerating ? 'animate-spin' : ''}`} aria-hidden="true">{faviconGenerating ? 'progress_activity' : 'auto_awesome'}</span>
                   </Button>
+                  {config.faviconUrl && (
+                    <Button variant="outline" size="icon" onClick={() => updateField('faviconUrl', '')} title={t('admin.remove')}>
+                      <span className="material-symbols-outlined text-[20px]" aria-hidden="true">close</span>
+                    </Button>
+                  )}
                 </div>
-                <p className="text-caption-sm text-ink-muted mt-1">{t('admin.faviconHint')}</p>
+                <p className="text-label-sm text-on-surface-variant/70 mt-1">{t('admin.faviconHint')}</p>
                 {config.faviconUrl && (
                   <div className="mt-3 flex items-center gap-3">
                     <img src={config.faviconUrl} alt={t('admin.faviconPreview')} className="w-8 h-8 object-contain rounded border border-border" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                    <span className="text-caption-sm text-ink-muted max-w-[200px] truncate">{config.faviconUrl}</span>
+                    <span className="text-label-sm text-on-surface-variant max-w-[200px] truncate">{config.faviconUrl}</span>
                   </div>
                 )}
               </div>
@@ -350,79 +390,82 @@ export default function AdminSettingsPage() {
           <MediaPickerDialog open={faviconPickerOpen} onOpenChange={setFaviconPickerOpen} onSelect={url => updateField('faviconUrl', url)} />
         </TabsContent>
 
-        {/* Content */}
-        <TabsContent value="content" className="space-y-6">
+        {/* Content Tab */}
+        <TabsContent value="content">
           <Card>
             <CardHeader>
               <CardTitle>{t('admin.readingDiscussion')}</CardTitle>
               <CardDescription>{t('admin.readingDiscussionDesc')}</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-5">
               <div>
-                <label className="block text-body-sm font-medium text-ink mb-1.5">{t('admin.postsPerPage')}</label>
-                <Select
-                  value={String(config.postsPerPage || 10)}
-                  onValueChange={v => updateField('postsPerPage', Number(v))}
-                >
-                  <SelectTrigger className="w-32">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
+                <Label>{t('admin.postsPerPage')}</Label>
+                <div className="relative w-32 mt-1.5">
+                  <select
+                    value={String(config.postsPerPage || 10)}
+                    onChange={e => updateField('postsPerPage', Number(e.target.value))}
+                    className="w-full appearance-none bg-surface-container border border-border rounded-lg px-3 py-2.5 text-body-sm text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all cursor-pointer pr-8"
+                  >
                     {[5, 10, 15, 20, 25, 30, 50].map(n => (
-                      <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                      <option key={n} value={String(n)} className="bg-surface-container text-on-surface">{n}</option>
                     ))}
-                  </SelectContent>
-                </Select>
-                <p className="text-caption-sm text-ink-muted mt-1">{t('admin.postsPerPageHint')}</p>
+                  </select>
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5">
+                    <span className="material-symbols-outlined text-[16px] text-on-surface-variant" aria-hidden="true">expand_more</span>
+                  </div>
+                </div>
+                <p className="text-label-sm text-on-surface-variant/70 mt-1">{t('admin.postsPerPageHint')}</p>
               </div>
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between pt-2">
                 <div>
-                  <label className="block text-body-sm font-medium text-ink mb-1">{t('admin.enableComments')}</label>
-                  <p className="text-caption-sm text-ink-muted">{t('admin.enableCommentsHint')}</p>
+                  <Label>{t('admin.enableComments')}</Label>
+                  <p className="text-label-sm text-on-surface-variant/70">{t('admin.enableCommentsHint')}</p>
                 </div>
                 <Switch
                   checked={config.enableComments !== false}
-                  onCheckedChange={v => updateField('enableComments', v)}
+                  onCheckedChange={(checked) => updateField('enableComments', checked)}
                 />
               </div>
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* SEO */}
-        <TabsContent value="seo" className="space-y-6">
+        {/* SEO Tab */}
+        <TabsContent value="seo">
           <Card>
             <CardHeader>
               <CardTitle>{t('admin.homepageSEO')}</CardTitle>
               <CardDescription>{t('admin.homepageSEODesc')}</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-5">
               <div>
-                <label className="block text-body-sm font-medium text-ink mb-1.5">{t('admin.seoTitle')}</label>
+                <Label>{t('admin.seoTitle')}</Label>
                 <Input
                   value={config.seoHomeTitle || ''}
                   onChange={e => updateField('seoHomeTitle', e.target.value)}
                   placeholder={t('admin.seoTitlePlaceholder')}
+                  className="mt-1.5"
                 />
-                <p className="text-caption-sm text-ink-muted mt-1">
+                <p className="text-label-sm text-on-surface-variant/70 mt-1">
                   {t('admin.seoTitleHint')}
-                  <span className="block mt-1 text-clay font-medium">
+                  <span className="block mt-1 text-primary font-medium">
                     {t('admin.preview')}: {config.seoHomeTitle || config.siteTitle || 'AI Blog'}
                   </span>
                 </p>
               </div>
               <div>
-                <label className="block text-body-sm font-medium text-ink mb-1.5">{t('admin.seoDescription')}</label>
+                <Label>{t('admin.seoDescription')}</Label>
                 <Textarea
                   value={config.seoHomeDescription || ''}
                   onChange={e => updateField('seoHomeDescription', e.target.value)}
                   placeholder={t('admin.seoDescriptionPlaceholder')}
                   rows={3}
+                  className="mt-1.5"
                 />
-                <p className="text-caption-sm text-ink-muted mt-1">
+                <p className="text-label-sm text-on-surface-variant/70 mt-1">
                   {t('admin.seoDescriptionHint')}
-                  <span className="block mt-1 text-caption-sm">
-                    {t('admin.current')}: <span className={((config.seoHomeDescription || '').length > 160) ? 'text-red-500' : 'text-ink-muted'}>{config.seoHomeDescription?.length || 0} {t('admin.characters')}</span>
+                  <span className="block mt-1">
+                    {t('admin.current')}: <span className={((config.seoHomeDescription || '').length > 160) ? 'text-error' : 'text-on-surface-variant'}>{config.seoHomeDescription?.length || 0} {t('admin.characters')}</span>
                   </span>
                 </p>
               </div>
@@ -430,79 +473,82 @@ export default function AdminSettingsPage() {
           </Card>
         </TabsContent>
 
-        {/* Footer */}
-        <TabsContent value="footer" className="space-y-6">
+        {/* Footer Tab */}
+        <TabsContent value="footer">
           <Card>
             <CardHeader>
               <CardTitle>{t('admin.footerContact')}</CardTitle>
               <CardDescription>{t('admin.footerContactDesc')}</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-5">
               <div>
-                <label className="block text-body-sm font-medium text-ink mb-1.5">{t('admin.footerText')}</label>
+                <Label>{t('admin.footerText')}</Label>
                 <Input
                   value={config.footerText || ''}
                   onChange={e => updateField('footerText', e.target.value)}
                   placeholder={t('admin.footerTextPlaceholder')}
+                  className="mt-1.5"
                 />
-                <p className="text-caption-sm text-ink-muted mt-1">{t('admin.footerTextHint')}</p>
+                <p className="text-label-sm text-on-surface-variant/70 mt-1">{t('admin.footerTextHint')}</p>
               </div>
               <div>
-                <label className="block text-body-sm font-medium text-ink mb-1.5">{t('admin.copyrightText')}</label>
+                <Label>{t('admin.copyrightText')}</Label>
                 <Input
                   value={config.copyrightText || ''}
                   onChange={e => updateField('copyrightText', e.target.value)}
                   placeholder={`© ${new Date().getFullYear()} ${t('admin.copyrightPlaceholder')}`}
+                  className="mt-1.5"
                 />
-                <p className="text-caption-sm text-ink-muted mt-1">{t('admin.copyrightTextHint')}</p>
+                <p className="text-label-sm text-on-surface-variant/70 mt-1">{t('admin.copyrightTextHint')}</p>
               </div>
               <div>
-                <label className="block text-body-sm font-medium text-ink mb-1.5">{t('admin.contactEmail')}</label>
+                <Label>{t('admin.contactEmail')}</Label>
                 <Input
                   type="email"
                   value={config.contactEmail || ''}
                   onChange={e => updateField('contactEmail', e.target.value)}
                   placeholder={t('admin.contactEmailPlaceholder')}
+                  className="mt-1.5"
                 />
-                <p className="text-caption-sm text-ink-muted mt-1">{t('admin.contactEmailHint')}</p>
+                <p className="text-label-sm text-on-surface-variant/70 mt-1">{t('admin.contactEmailHint')}</p>
               </div>
               <div>
-                <label className="block text-body-sm font-medium text-ink mb-1.5">{t('admin.socialLinks')}</label>
+                <Label>{t('admin.socialLinks')}</Label>
                 <Textarea
                   value={socialLinksText}
                   onChange={e => handleSocialLinksChange(e.target.value)}
                   rows={4}
-                  className="font-mono text-body-sm"
+                  className="mt-1.5 font-mono text-sm"
                 />
                 {socialJsonError && (
-                  <p className="text-caption-sm text-red-500 mt-1">{socialJsonError}</p>
+                  <p className="text-label-sm text-error mt-1">{socialJsonError}</p>
                 )}
-                <p className="text-caption-sm text-ink-muted mt-1">
-                  {t('admin.socialLinksHint')} <code className="text-clay">{'{ "twitter": "https://twitter.com/...", "github": "https://github.com/...", "linkedin": "https://linkedin.com/in/..." }'}</code>
+                <p className="text-label-sm text-on-surface-variant/70 mt-1">
+                  {t('admin.socialLinksHint')} <code className="text-tertiary">{'{ "twitter": "https://twitter.com/...", "github": "https://github.com/...", "linkedin": "https://linkedin.com/in/..." }'}</code>
                 </p>
               </div>
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* Advanced */}
-        <TabsContent value="advanced" className="space-y-6">
+        {/* Advanced Tab */}
+        <TabsContent value="advanced">
           <Card>
             <CardHeader>
               <CardTitle>{t('admin.customCode')}</CardTitle>
               <CardDescription>{t('admin.customCodeDesc')}</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent>
               <div>
-                <label className="block text-body-sm font-medium text-ink mb-1.5">{t('admin.customHeadHtml')}</label>
+                <Label>{t('admin.customHeadHtml')}</Label>
                 <Textarea
                   value={config.customHeadHtml || ''}
                   onChange={e => updateField('customHeadHtml', e.target.value)}
                   placeholder={t('admin.customHeadHtmlPlaceholder')}
                   rows={6}
-                  className="font-mono text-body-sm"
+                  className="mt-1.5 font-mono text-sm"
                 />
-                <p className="text-caption-sm text-ink-muted mt-1">
+                <p className="text-label-sm text-on-surface-variant/70 mt-1">
                   {t('admin.customHeadHtmlHint')}
                 </p>
               </div>
@@ -510,121 +556,127 @@ export default function AdminSettingsPage() {
           </Card>
         </TabsContent>
 
-        {/* Legal */}
-        <TabsContent value="legal" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle>{t('admin.privacyPolicy')}</CardTitle>
-                  <CardDescription>{t('admin.privacyPolicyDesc')}</CardDescription>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="flex rounded-editorial-xs border border-border overflow-hidden text-body-sm">
-                    <button
-                      type="button"
-                      onClick={() => setPrivacyView('edit')}
-                      className={`px-3 py-1.5 transition-colors ${privacyView === 'edit' ? 'bg-clay text-white' : 'bg-cream-100 text-ink-muted hover:text-ink'}`}
-                    >{t('common.edit')}</button>
-                    <button
-                      type="button"
-                      onClick={() => setPrivacyView('preview')}
-                      className={`px-3 py-1.5 transition-colors ${privacyView === 'preview' ? 'bg-clay text-white' : 'bg-cream-100 text-ink-muted hover:text-ink'}`}
-                    >{t('common.preview')}</button>
+        {/* Legal Tab */}
+        <TabsContent value="legal">
+          <div className="space-y-6">
+            {/* Privacy Policy */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>{t('admin.privacyPolicy')}</CardTitle>
+                    <CardDescription>{t('admin.privacyPolicyDesc')}</CardDescription>
                   </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleGeneratePolicy('privacy')}
-                    disabled={privacyGenerating}
-                  >
-                    {privacyGenerating ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Sparkles className="h-4 w-4 mr-1 text-clay" />}
-                    {privacyGenerating ? t('admin.generating') : t('admin.generateWithAI')}
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <div className="flex rounded border border-border overflow-hidden text-sm">
+                      <Button
+                        variant={privacyView === 'edit' ? 'default' : 'ghost'}
+                        size="sm"
+                        onClick={() => setPrivacyView('edit')}
+                        className="rounded-none px-3"
+                      >{t('common.edit')}</Button>
+                      <Button
+                        variant={privacyView === 'preview' ? 'default' : 'ghost'}
+                        size="sm"
+                        onClick={() => setPrivacyView('preview')}
+                        className="rounded-none px-3"
+                      >{t('common.preview')}</Button>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleGeneratePolicy('privacy')}
+                      disabled={privacyGenerating}
+                    >
+                      <span className={`material-symbols-outlined text-[16px] text-primary ${privacyGenerating ? 'animate-spin' : ''}`} aria-hidden="true">{privacyGenerating ? 'progress_activity' : 'auto_awesome'}</span>
+                      {privacyGenerating ? t('admin.generating') : t('admin.generateWithAI')}
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {privacyView === 'edit' ? (
-                <Textarea
-                  value={config.privacyPolicyContent || ''}
-                  onChange={e => updateField('privacyPolicyContent', e.target.value)}
-                  placeholder={t('admin.privacyPolicyPlaceholder')}
-                  rows={20}
-                  className="font-mono text-body-sm"
-                />
-              ) : (
-                <div className="prose-custom max-w-none p-4 bg-cream-100 rounded-editorial-xs border border-border min-h-[200px]">
-                  {config.privacyPolicyContent ? (
-                    <ReactMarkdown>{config.privacyPolicyContent}</ReactMarkdown>
-                  ) : (
-                    <p className="text-ink-muted italic">{t('admin.noContentYet')}</p>
-                  )}
-                </div>
-              )}
-              <p className="text-caption-sm text-ink-muted mt-2">
-                {t('admin.privacyPolicyHint')}
-              </p>
-            </CardContent>
-          </Card>
+              </CardHeader>
+              <CardContent>
+                {privacyView === 'edit' ? (
+                  <Textarea
+                    value={config.privacyPolicyContent || ''}
+                    onChange={e => updateField('privacyPolicyContent', e.target.value)}
+                    placeholder={t('admin.privacyPolicyPlaceholder')}
+                    rows={20}
+                    className="font-mono text-sm"
+                  />
+                ) : (
+                  <div className="max-w-none p-4 bg-surface-container/40 border border-border rounded-lg min-h-[200px] text-body-sm text-on-surface leading-relaxed">
+                    {config.privacyPolicyContent ? (
+                      <ReactMarkdown>{config.privacyPolicyContent}</ReactMarkdown>
+                    ) : (
+                      <p className="text-on-surface-variant italic">{t('admin.noContentYet')}</p>
+                    )}
+                  </div>
+                )}
+                <p className="text-label-sm text-on-surface-variant/70 mt-2">
+                  {t('admin.privacyPolicyHint')}
+                </p>
+              </CardContent>
+            </Card>
 
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle>{t('admin.termsOfUse')}</CardTitle>
-                  <CardDescription>{t('admin.termsOfUseDesc')}</CardDescription>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="flex rounded-editorial-xs border border-border overflow-hidden text-body-sm">
-                    <button
-                      type="button"
-                      onClick={() => setTermsView('edit')}
-                      className={`px-3 py-1.5 transition-colors ${termsView === 'edit' ? 'bg-clay text-white' : 'bg-cream-100 text-ink-muted hover:text-ink'}`}
-                    >{t('common.edit')}</button>
-                    <button
-                      type="button"
-                      onClick={() => setTermsView('preview')}
-                      className={`px-3 py-1.5 transition-colors ${termsView === 'preview' ? 'bg-clay text-white' : 'bg-cream-100 text-ink-muted hover:text-ink'}`}
-                    >{t('common.preview')}</button>
+            {/* Terms of Use */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>{t('admin.termsOfUse')}</CardTitle>
+                    <CardDescription>{t('admin.termsOfUseDesc')}</CardDescription>
                   </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleGeneratePolicy('terms')}
-                    disabled={termsGenerating}
-                  >
-                    {termsGenerating ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Sparkles className="h-4 w-4 mr-1 text-clay" />}
-                    {termsGenerating ? t('admin.generating') : t('admin.generateWithAI')}
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <div className="flex rounded border border-border overflow-hidden text-sm">
+                      <Button
+                        variant={termsView === 'edit' ? 'default' : 'ghost'}
+                        size="sm"
+                        onClick={() => setTermsView('edit')}
+                        className="rounded-none px-3"
+                      >{t('common.edit')}</Button>
+                      <Button
+                        variant={termsView === 'preview' ? 'default' : 'ghost'}
+                        size="sm"
+                        onClick={() => setTermsView('preview')}
+                        className="rounded-none px-3"
+                      >{t('common.preview')}</Button>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleGeneratePolicy('terms')}
+                      disabled={termsGenerating}
+                    >
+                      <span className={`material-symbols-outlined text-[16px] text-primary ${termsGenerating ? 'animate-spin' : ''}`} aria-hidden="true">{termsGenerating ? 'progress_activity' : 'auto_awesome'}</span>
+                      {termsGenerating ? t('admin.generating') : t('admin.generateWithAI')}
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {termsView === 'edit' ? (
-                <Textarea
-                  value={config.termsOfUseContent || ''}
-                  onChange={e => updateField('termsOfUseContent', e.target.value)}
-                  placeholder={t('admin.termsOfUsePlaceholder')}
-                  rows={20}
-                  className="font-mono text-body-sm"
-                />
-              ) : (
-                <div className="prose-custom max-w-none p-4 bg-cream-100 rounded-editorial-xs border border-border min-h-[200px]">
-                  {config.termsOfUseContent ? (
-                    <ReactMarkdown>{config.termsOfUseContent}</ReactMarkdown>
-                  ) : (
-                    <p className="text-ink-muted italic">{t('admin.noContentYet')}</p>
-                  )}
-                </div>
-              )}
-              <p className="text-caption-sm text-ink-muted mt-2">
-                {t('admin.termsOfUseHint')}
-              </p>
-            </CardContent>
-          </Card>
+              </CardHeader>
+              <CardContent>
+                {termsView === 'edit' ? (
+                  <Textarea
+                    value={config.termsOfUseContent || ''}
+                    onChange={e => updateField('termsOfUseContent', e.target.value)}
+                    placeholder={t('admin.termsOfUsePlaceholder')}
+                    rows={20}
+                    className="font-mono text-sm"
+                  />
+                ) : (
+                  <div className="max-w-none p-4 bg-surface-container/40 border border-border rounded-lg min-h-[200px] text-body-sm text-on-surface leading-relaxed">
+                    {config.termsOfUseContent ? (
+                      <ReactMarkdown>{config.termsOfUseContent}</ReactMarkdown>
+                    ) : (
+                      <p className="text-on-surface-variant italic">{t('admin.noContentYet')}</p>
+                    )}
+                  </div>
+                )}
+                <p className="text-label-sm text-on-surface-variant/70 mt-2">
+                  {t('admin.termsOfUseHint')}
+                </p>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
       </Tabs>
     </div>

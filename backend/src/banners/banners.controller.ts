@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { BannersService } from './banners.service';
 import { CreateBannerDto, UpdateBannerDto } from './dto/banners.dto';
@@ -15,8 +15,8 @@ export class BannersController {
   }
 
   @Get('active')
-  findActive() {
-    return this.bannersService.findActive();
+  findActive(@Query('zone') zone?: string) {
+    return this.bannersService.findActive(zone);
   }
 
   @Get(':id')
@@ -43,5 +43,10 @@ export class BannersController {
   @UseGuards(JwtAuthGuard)
   remove(@Param('id') id: string) {
     return this.bannersService.remove(+id);
+  }
+
+  @Post(':id/click')
+  trackClick(@Param('id') id: string) {
+    return this.bannersService.incrementClick(+id);
   }
 }

@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { DM_Serif_Display, Sora } from 'next/font/google';
+import { Inter, JetBrains_Mono } from 'next/font/google';
 import { AuthProvider } from '@/lib/auth';
 import { LanguageProvider } from '@/lib/i18n/LanguageProvider';
 import ChatBot from '@/components/ChatBot';
@@ -7,17 +7,17 @@ import { CustomHeadInjector } from '@/components/CustomHeadInjector';
 import { SITE_CONFIG, websiteJsonLd, organizationJsonLd } from '@/lib/seo';
 import './globals.css';
 
-const dmSerifDisplay = DM_Serif_Display({
+const inter = Inter({
   subsets: ['latin'],
-  weight: ['400'],
-  variable: '--font-display',
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-inter',
   display: 'swap',
 });
 
-const sora = Sora({
+const jetbrainsMono = JetBrains_Mono({
   subsets: ['latin'],
-  weight: ['300', '400', '500', '600'],
-  variable: '--font-body',
+  weight: ['400', '500'],
+  variable: '--font-jetbrains-mono',
   display: 'swap',
 });
 
@@ -82,7 +82,6 @@ export const metadata: Metadata = {
   verification: {
     google: SITE_CONFIG.verification.google,
     yandex: SITE_CONFIG.verification.bing,
-    // Baidu uses a different meta tag — injected via custom <head> in the component below
   },
   appleWebApp: {
     capable: true,
@@ -101,8 +100,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const jsonLdOrg = organizationJsonLd();
 
   return (
-    <html lang="en" className={`${dmSerifDisplay.variable} ${sora.variable}`}>
+    <html lang="en" className={`dark ${inter.variable} ${jetbrainsMono.variable}`}>
       <head>
+        {/* Material Symbols Outlined */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+
         {/* Baidu verification */}
         {SITE_CONFIG.verification.baidu && (
           <meta name="baidu-site-verification" content={SITE_CONFIG.verification.baidu} />
@@ -128,7 +132,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* RSS feed */}
         <link rel="alternate" type="application/rss+xml" title={`${SITE_CONFIG.name} RSS Feed`} href="/rss.xml" />
       </head>
-      <body className="font-body">
+      <body className="font-body antialiased" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
         <AuthProvider>
           <LanguageProvider>
             <div className="min-h-screen flex flex-col">

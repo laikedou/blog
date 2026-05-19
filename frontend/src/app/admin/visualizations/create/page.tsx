@@ -3,11 +3,8 @@
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { VisualizationAICreator, AICreationResult } from '@/components/Visualizations/VisualizationAICreator';
-import { ArrowLeft, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
 
 export default function CreateVisualizationPage() {
   const { t } = useTranslation();
@@ -25,28 +22,38 @@ export default function CreateVisualizationPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="sticky top-0 z-30 bg-surface border-b border-border">
-        <div className="max-w-grid mx-auto px-6 py-3 flex items-center justify-between">
+      <div
+        className="sticky top-0 z-30 border-b border-white/5"
+        style={{
+          background: 'rgba(11, 19, 38, 0.8)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+        }}
+      >
+        <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link
               href="/admin/visualizations"
-              className="inline-flex items-center justify-center w-8 h-8 rounded-editorial-xs text-ink-muted hover:text-ink hover:bg-surface-hover transition-colors"
+              className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-white/5 transition-colors"
             >
-              <ArrowLeft className="h-4 w-4" />
+              <span className="material-symbols-outlined text-[18px]">arrow_back</span>
             </Link>
             <div>
-              <h1 className="font-display text-display-sm text-ink leading-none">{t('admin.createVisualization')}</h1>
-              <p className="text-caption-sm text-ink-muted mt-0.5">{t('admin.createVizSubtitle')}</p>
+              <h1 className="font-headline-md text-headline-md text-on-surface leading-none">{t('admin.createVisualization')}</h1>
+              <p className="font-label-sm text-label-sm text-on-surface-variant mt-0.5">{t('admin.createVizSubtitle')}</p>
             </div>
           </div>
-          <Link href="/admin/visualizations">
-            <Button variant="outline" size="sm">{t('common.cancel')}</Button>
+          <Link
+            href="/admin/visualizations"
+            className="bg-transparent border border-white/20 text-on-surface hover:bg-white/5 rounded-lg px-4 py-2 text-label-sm font-label-sm transition-all"
+          >
+            {t('common.cancel')}
           </Link>
         </div>
       </div>
 
       {/* Content */}
-      <div className="max-w-grid mx-auto px-6 py-6">
+      <div className="max-w-7xl mx-auto px-6 py-6">
         <VisualizationAICreator onDone={handleDone} />
       </div>
     </div>

@@ -83,7 +83,7 @@ export function useVisualizationStream() {
     return 'idle';
   };
 
-  const start = useCallback(async (data: { prompt: string; subject: string; title?: string }) => {
+  const start = useCallback(async (data: { prompt: string; subject: string; title?: string; language?: string }) => {
     hasStartedRef.current = true;
     setAbortedByUser(false);
     setFullResponse(null);
@@ -91,7 +91,7 @@ export function useVisualizationStream() {
     vizTitleRef.current = '';
 
     await complete(data.prompt, {
-      body: { subject: data.subject, title: data.title || '' },
+      body: { subject: data.subject, title: data.title || '', language: data.language },
     });
   }, [complete]);
 

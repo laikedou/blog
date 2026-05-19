@@ -6,13 +6,12 @@ import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { posts as postsApi, categories as categoriesApi, tags as tagsApi, ai as aiApi } from '@/lib/api';
 import AITools from '@/components/AITools';
-import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const RichEditor = dynamic(() => import('@/components/RichEditor'), { ssr: false });
 
@@ -63,12 +62,12 @@ export default function NewPostPage() {
   };
 
   const handleGenerateCover = async () => {
-    if (!form.title.trim()) { toast.error('Please enter a title first'); return; }
+    if (!form.title.trim()) { toast.error(t('admin.enterTitleFirst')); return; }
     setGeneratingCover(true);
     try {
       const { url } = await aiApi.generateCover({ title: form.title, excerpt: form.excerpt });
       handleChange('featuredImage', url);
-    } catch (err: any) { toast.error(err.message || 'Failed to generate cover'); }
+    } catch (err: any) { toast.error(err.message || t('admin.failedGenerateCover')); }
     setGeneratingCover(false);
   };
 
@@ -93,64 +92,189 @@ export default function NewPostPage() {
   };
 
   return (
-    <div>
+    <div className="animate-fade-in">
+      {/* Page Header */}
       <div className="flex items-center justify-between mb-8">
-        <h1 className="font-display text-display-md text-ink">{t('admin.newPost')}</h1>
+        <div>
+          <h1 className="font-headline-lg text-headline-lg text-on-surface tracking-tight">
+            {t('admin.newPost')}
+          </h1>
+          <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">
+            {t('admin.createNewDesc')}
+          </p>
+        </div>
         <AITools onGenerate={handleAIGenerate} currentContent={form.content} currentTitle={form.title} />
       </div>
 
       <form onSubmit={handleSubmit}>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Main Content Area */}
           <div className="lg:col-span-2 space-y-6">
-            <Card className="p-6">
-              <Input value={form.title} onChange={e => handleChange('title', e.target.value)} placeholder={t('admin.postTitle')} className="font-display text-display-md border-0 border-b-2 border-border rounded-none px-0 pb-3 mb-6 shadow-none focus-visible:ring-0" required />
-              <RichEditor value={form.content} onChange={val => handleChange('content', val)} placeholder="Write your post content here..." />
+            <Card>
+              <CardContent className="p-6">
+                <input
+                  type="text"
+                  value={form.title}
+                  onChange={e => handleChange('title', e.target.value)}
+                  placeholder={t('admin.postTitle')}
+                  className="w-full bg-transparent text-headline-md font-headline-md text-on-surface placeholder:text-on-surface-variant/50 border-0 border-b border-border pb-3 mb-6 focus:outline-none focus:border-primary transition-colors"
+                  required
+                />
+                <RichEditor value={form.content} onChange={val => handleChange('content', val)} placeholder={t('admin.writeContent')} />
+              </CardContent>
             </Card>
           </div>
 
+          {/* Sidebar */}
           <div className="space-y-4">
-            <Card><CardHeader><CardTitle>Publish</CardTitle></CardHeader><CardContent className="space-y-3">
-              <Select value={form.status} onValueChange={val => handleChange('status', val)}>
-                <SelectTrigger><SelectValue placeholder="Select status" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="draft">Draft</SelectItem>
-                  <SelectItem value="published">Published</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button type="submit" disabled={saving} className="w-full">{saving ? 'Saving...' : form.status === 'published' ? 'Publish' : 'Save Draft'}</Button>
-            </CardContent></Card>
+            {/* Publish Card */}
+            <Card>
+              <CardContent className="p-5 space-y-4">
+                <h3 className="font-headline-md text-headline-md text-on-surface">{t('admin.publish')}</h3>
+                <div>
+                  <label className="block font-label-sm text-label-sm text-on-surface-variant mb-1.5">{t('admin.selectStatus')}</label>
+                  <select
+                    value={form.status}
+                    onChange={e => handleChange('status', e.target.value)}
+                    className="w-full bg-black/20 border border-border rounded-lg px-4 py-2.5 text-body-md text-on-surface appearance-none focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
+                  >
+                    <option value="draft">{t('admin.draft')}</option>
+                    <option value="published">{t('admin.published')}</option>
+                  </select>
+                </div>
+                <Button
+                  type="submit"
+                  disabled={saving}
+                  className="w-full"
+                >
+                  {saving ? (
+                    <>
+                      <span className="material-symbols-outlined text-[18px] animate-spin">progress_activity</span>
+                      {t('admin.saving')}
+                    </>
+                  ) : (
+                    <>
+                      <span className="material-symbols-outlined text-[18px]">save</span>
+                      {form.status === 'published' ? t('admin.publish') : t('admin.saveDraft')}
+                    </>
+                  )}
+                </Button>
+              </CardContent>
+            </Card>
 
-            <Card><CardHeader><CardTitle>Category</CardTitle></CardHeader><CardContent>
-              <Select value={form.categoryId} onValueChange={val => handleChange('categoryId', val)}>
-                <SelectTrigger><SelectValue placeholder="Uncategorized" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Uncategorized</SelectItem>
-                  {categories.map(cat => <SelectItem key={cat.id} value={String(cat.id)}>{cat.name}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </CardContent></Card>
+            {/* Category Card */}
+            <Card>
+              <CardContent className="p-5 space-y-3">
+                <h3 className="font-headline-md text-headline-md text-on-surface">{t('admin.category')}</h3>
+                <select
+                  value={form.categoryId}
+                  onChange={e => handleChange('categoryId', e.target.value)}
+                  className="w-full bg-black/20 border border-border rounded-lg px-4 py-2.5 text-body-md text-on-surface appearance-none focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
+                >
+                  <option value="none">{t('admin.uncategorized')}</option>
+                  {categories.map(cat => <option key={cat.id} value={String(cat.id)}>{cat.name}</option>)}
+                </select>
+              </CardContent>
+            </Card>
 
-            <Card><CardHeader><CardTitle>{t('admin.tags')}</CardTitle></CardHeader><CardContent>
-              <div className="flex flex-wrap gap-1.5">
-                {allTags.map(tag => (
-                  <Badge key={tag.id} variant={form.tagIds.includes(tag.id) ? 'default' : 'outline'} className="cursor-pointer" onClick={() => toggleTag(tag.id)}>{tag.name}</Badge>
-                ))}
-              </div>
-            </CardContent></Card>
+            {/* Tags Card */}
+            <Card>
+              <CardContent className="p-5 space-y-3">
+                <h3 className="font-headline-md text-headline-md text-on-surface">{t('admin.tags')}</h3>
+                <div className="flex flex-wrap gap-1.5">
+                  {allTags.map(tag => (
+                    <Badge
+                      key={tag.id}
+                      variant={form.tagIds.includes(tag.id) ? 'default' : 'outline'}
+                      className="cursor-pointer"
+                      onClick={() => toggleTag(tag.id)}
+                    >
+                      {tag.name}
+                    </Badge>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
 
-            <Card><CardHeader><CardTitle>{t('admin.seo')}</CardTitle></CardHeader><CardContent className="space-y-3">
-              <Input value={form.seoTitle} onChange={e => handleChange('seoTitle', e.target.value)} placeholder="SEO Title" />
-              <Textarea value={form.seoDescription} onChange={e => handleChange('seoDescription', e.target.value)} placeholder="SEO Description" rows={2} />
-              <Input value={form.slug} onChange={e => handleChange('slug', e.target.value)} placeholder={t('admin.slug')} />
-            </CardContent></Card>
+            {/* SEO Card */}
+            <Card>
+              <CardContent className="p-5 space-y-3">
+                <h3 className="font-headline-md text-headline-md text-on-surface">{t('admin.seo')}</h3>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block font-label-sm text-label-sm text-on-surface-variant mb-1">{t('admin.seoTitle')}</label>
+                    <Input
+                      type="text"
+                      value={form.seoTitle}
+                      onChange={e => handleChange('seoTitle', e.target.value)}
+                      placeholder={t('admin.seoTitle')}
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-label-sm text-label-sm text-on-surface-variant mb-1">{t('admin.seoDescription')}</label>
+                    <Textarea
+                      value={form.seoDescription}
+                      onChange={e => handleChange('seoDescription', e.target.value)}
+                      placeholder={t('admin.seoDescription')}
+                      rows={2}
+                      className="resize-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-label-sm text-label-sm text-on-surface-variant mb-1">{t('admin.slug')}</label>
+                    <Input
+                      type="text"
+                      value={form.slug}
+                      onChange={e => handleChange('slug', e.target.value)}
+                      placeholder={t('admin.slug')}
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
-            <Card><CardHeader><CardTitle>Featured Image</CardTitle></CardHeader><CardContent className="space-y-3">
-              <Input value={form.featuredImage} onChange={e => handleChange('featuredImage', e.target.value)} placeholder="https://..." />
-              <Button type="button" variant="outline" onClick={handleGenerateCover} disabled={generatingCover} className="w-full">
-                {generatingCover ? 'Generating...' : 'Generate Cover with AI'}
-              </Button>
-              {form.featuredImage && <img src={form.featuredImage} alt="" className="mt-3 rounded-editorial w-full h-32 object-cover" loading="lazy" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />}
-            </CardContent></Card>
+            {/* Featured Image Card */}
+            <Card>
+              <CardContent className="p-5 space-y-3">
+                <h3 className="font-headline-md text-headline-md text-on-surface">{t('admin.featuredImage')}</h3>
+                <div className="space-y-3">
+                  <Input
+                    type="text"
+                    value={form.featuredImage}
+                    onChange={e => handleChange('featuredImage', e.target.value)}
+                    placeholder={t('admin.featuredImageUrl')}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleGenerateCover}
+                    disabled={generatingCover}
+                    className="w-full"
+                  >
+                    {generatingCover ? (
+                      <>
+                        <span className="material-symbols-outlined text-[18px] animate-spin">progress_activity</span>
+                        {t('admin.generating')}
+                      </>
+                    ) : (
+                      <>
+                        <span className="material-symbols-outlined text-[18px]">auto_awesome</span>
+                        {t('admin.generateCover')}
+                      </>
+                    )}
+                  </Button>
+                  {form.featuredImage && (
+                    <img
+                      src={form.featuredImage}
+                      alt=""
+                      className="mt-3 rounded-xl w-full h-32 object-cover border border-border"
+                      loading="lazy"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                    />
+                  )}
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </form>

@@ -59,6 +59,17 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
     this.server.emit('crawl:started', data);
   }
 
+  notifyCommentReply(data: {
+    commentId: number;
+    postId?: number;
+    visualizationId?: number;
+    replyAuthor: string;
+    parentAuthorId: number;
+    snippet: string;
+  }) {
+    this.server.emit('comment:reply', data);
+  }
+
   get connectedCount() {
     return this.connectedClients.size;
   }

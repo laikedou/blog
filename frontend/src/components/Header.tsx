@@ -39,6 +39,7 @@ export default function Header() {
     { href: '/category/web3', label: t('nav.web3') },
     { href: '/category/blockchain', label: t('nav.blockchain') },
     { href: '/category/programming', label: t('nav.dev') },
+    { href: '/experiments', label: t('nav.experiments') },
   ];
 
   return (

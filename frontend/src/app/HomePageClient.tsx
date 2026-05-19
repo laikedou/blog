@@ -71,7 +71,7 @@ export default function HomePageClient() {
     <>
       <Header />
 
-      <BannerCarousel />
+      <BannerCarousel zone="hero" />
 
       {/* Hero section */}
       <section className="bg-cream-100 relative overflow-hidden border-b border-border" aria-labelledby="hero-heading">
@@ -141,6 +141,9 @@ export default function HomePageClient() {
         );
       })}
 
+      {/* Inline banners between topics and posts */}
+      <BannerCarousel zone="inline" />
+
       {/* Latest posts grid */}
       <section id="posts" className="bg-cream-200" aria-labelledby="latest-heading">
         <div className="section-container py-section-sm">
@@ -187,6 +190,9 @@ export default function HomePageClient() {
         </div>
       </section>
 
+      {/* Sidebar zone banner */}
+      <BannerCarousel zone="sidebar" />
+
       {/* About the author */}
       <section className="bg-cream-100 border-t border-border" aria-labelledby="about-heading">
         <div className="section-container py-section-sm">
@@ -207,6 +213,9 @@ export default function HomePageClient() {
           </div>
         </div>
       </section>
+
+      {/* Footer zone banner */}
+      <BannerCarousel zone="footer" />
 
       <Footer />
     </>

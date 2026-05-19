@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsInt, MinLength } from 'class-validator';
+import { IsString, IsOptional, IsInt, MinLength, IsArray, IsIn } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 
@@ -30,4 +30,15 @@ export class UpdateCommentDto {
   @IsOptional()
   @IsString()
   status?: string;
+}
+
+export class BatchUpdateStatusDto {
+  @ApiProperty({ description: 'Array of comment IDs' })
+  @IsArray()
+  @IsInt({ each: true })
+  ids: number[];
+
+  @ApiProperty({ enum: ['approved', 'pending', 'spam'] })
+  @IsIn(['approved', 'pending', 'spam'])
+  status: string;
 }

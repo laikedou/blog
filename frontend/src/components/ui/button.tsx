@@ -4,16 +4,16 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center gap-2 whitespace-nowrap text-body-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clay focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:scale-[0.97]',
+  'inline-flex items-center justify-center gap-2 whitespace-nowrap text-body-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:scale-[0.97]',
   {
     variants: {
       variant: {
-        default: 'bg-clay text-white rounded-editorial-sm px-5 py-2.5 hover:bg-clay-dark',
-        destructive: 'bg-destructive text-white rounded-editorial-sm px-5 py-2.5 hover:bg-clay-dark',
-        outline: 'border border-border bg-transparent text-ink rounded-editorial-sm px-5 py-2.5 hover:bg-cream-200',
-        secondary: 'bg-teal text-white rounded-editorial-sm px-5 py-2.5 hover:bg-teal-light',
-        ghost: 'text-ink rounded-editorial-sm px-4 py-2 hover:bg-cream-200',
-        link: 'text-clay underline-offset-4 hover:underline underline-decoration-clay',
+        default: 'bg-primary-container text-on-primary-container rounded-lg px-5 py-2.5 hover:bg-primary/20',
+        destructive: 'bg-destructive text-destructive-foreground rounded-lg px-5 py-2.5 hover:bg-destructive/90',
+        outline: 'border border-outline bg-transparent text-on-surface rounded-lg px-5 py-2.5 hover:bg-surface-container-high',
+        secondary: 'bg-tertiary text-on-tertiary rounded-lg px-5 py-2.5 hover:bg-tertiary/90',
+        ghost: 'text-on-surface rounded-lg px-4 py-2 hover:bg-surface-container-high',
+        link: 'text-primary underline-offset-4 hover:underline',
       },
       size: {
         default: 'h-auto',

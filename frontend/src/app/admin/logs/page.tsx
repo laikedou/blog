@@ -3,39 +3,47 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { logs as logsApi } from '@/lib/api';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, LineChart, Line, Legend,
 } from 'recharts';
-import {
-  Bug, AlertTriangle, RefreshCw, Trash2, Search, ChevronLeft, ChevronRight,
-  Eye, BarChart3, TrendingUp, X,
-} from 'lucide-react';
 import { toast } from 'sonner';
 import { useConfirm } from '@/lib/confirm-dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 
 const PIE_COLORS = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6'];
 
 function StatusBadge({ code }: { code: number }) {
-  const color = code >= 500 ? 'bg-red-100 text-red-700 border-red-300'
-    : code >= 400 ? 'bg-yellow-100 text-yellow-700 border-yellow-300'
-    : 'bg-green-100 text-green-700 border-green-300';
-  return <Badge className={color}>{code}</Badge>;
+  const color = code >= 500
+    ? 'bg-error/10 text-error border-error/30'
+    : code >= 400
+      ? 'bg-warning/10 text-warning border-warning/30'
+      : 'bg-tertiary/10 text-tertiary border-tertiary/30';
+  return (
+    <Badge variant="outline" className={color}>
+      {code}
+    </Badge>
+  );
 }
 
 function MethodBadge({ method }: { method: string }) {
-  const color = method === 'GET' ? 'bg-blue-100 text-blue-700 border-blue-300'
-    : method === 'POST' ? 'bg-green-100 text-green-700 border-green-300'
-    : method === 'PUT' || method === 'PATCH' ? 'bg-orange-100 text-orange-700 border-orange-300'
-    : 'bg-red-100 text-red-700 border-red-300';
-  return <Badge className={color}>{method}</Badge>;
+  const color = method === 'GET'
+    ? 'bg-primary/10 text-primary border-primary/30'
+    : method === 'POST'
+      ? 'bg-tertiary/10 text-tertiary border-tertiary/30'
+      : method === 'PUT' || method === 'PATCH'
+        ? 'bg-warning/10 text-warning border-warning/30'
+        : 'bg-error/10 text-error border-error/30';
+  return (
+    <Badge variant="outline" className={color}>
+      {method}
+    </Badge>
+  );
 }
 
 interface LogDetail {
@@ -146,11 +154,13 @@ export default function AdminLogsPage() {
   if (loading && logs.length === 0) {
     return (
       <div className="space-y-6">
-        <Skeleton className="h-8 w-48" />
+        <div className="animate-pulse bg-surface-container-high h-8 w-48 rounded-lg" />
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {[1,2,3,4].map(i => <Skeleton key={i} className="h-24 rounded-editorial" />)}
+          {[1, 2, 3, 4].map(i => (
+            <div key={i} className="animate-pulse bg-surface-container-high h-24 rounded-xl" />
+          ))}
         </div>
-        <Skeleton className="h-64 rounded-editorial" />
+        <div className="animate-pulse bg-surface-container-high h-64 rounded-xl" />
       </div>
     );
   }
@@ -158,144 +168,189 @@ export default function AdminLogsPage() {
   const overview = stats?.overview || {};
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-8">
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="font-display text-display-md text-ink">{t('admin.logsTitle')}</h1>
-          <p className="text-body-sm text-ink-muted mt-1">{t('admin.logsDesc')}</p>
+          <h1 className="font-headline-lg text-headline-lg text-on-surface">{t('admin.logsTitle')}</h1>
+          <p className="font-body-sm text-on-surface-variant mt-1">{t('admin.logsDesc')}</p>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={() => fetchData(page)}>
-            <RefreshCw className="h-4 w-4 mr-2" /> {t('common.refresh')}
+        <div className="flex items-center gap-3">
+          <Button variant="outline" size="sm" onClick={() => fetchData(page)}>
+            <span className="material-symbols-outlined text-[18px]">refresh</span>
+            {t('common.refresh')}
           </Button>
-          <Button variant="destructive" onClick={handleClearLogs} disabled={total === 0}>
-            <Trash2 className="h-4 w-4 mr-2" /> {t('admin.logsClearAll')}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleClearLogs}
+            disabled={total === 0}
+            className="bg-error/10 text-error hover:bg-error/20"
+          >
+            <span className="material-symbols-outlined text-[18px]">delete_sweep</span>
+            {t('admin.logsClearAll')}
           </Button>
         </div>
       </div>
 
       {/* Overview Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <Card className="border-border">
-          <CardHeader className="pb-2 flex flex-row items-center justify-between">
-            <CardTitle className="text-body-sm text-ink-muted font-normal">{t('admin.logsTotalErrors')}</CardTitle>
-            <Bug className="h-5 w-5 text-red-500 opacity-60" />
-          </CardHeader>
-          <CardContent>
-            <p className="font-display text-display-lg text-ink">{overview.total ?? 0}</p>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Total Errors */}
+        <Card className="relative overflow-hidden group">
+          <CardContent className="p-5">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-error/5 rounded-full blur-[30px] -mr-10 -mt-10 pointer-events-none" />
+            <div className="flex justify-between items-start mb-4">
+              <p className="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">{t('admin.logsTotalErrors')}</p>
+              <div className="p-2 bg-error/10 text-error rounded-lg border border-error/20">
+                <span className="material-symbols-outlined text-[22px]">bug_report</span>
+              </div>
+            </div>
+            <p className="font-display-lg text-display-lg text-on-surface">{overview.total ?? 0}</p>
           </CardContent>
         </Card>
-        <Card className="border-border">
-          <CardHeader className="pb-2 flex flex-row items-center justify-between">
-            <CardTitle className="text-body-sm text-ink-muted font-normal">{t('admin.logsToday')}</CardTitle>
-            <AlertTriangle className="h-5 w-5 text-orange-500 opacity-60" />
-          </CardHeader>
-          <CardContent>
-            <p className="font-display text-display-lg text-orange-600">{overview.today ?? 0}</p>
+        {/* Today */}
+        <Card className="relative overflow-hidden group">
+          <CardContent className="p-5">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-warning/5 rounded-full blur-[30px] -mr-10 -mt-10 pointer-events-none" />
+            <div className="flex justify-between items-start mb-4">
+              <p className="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">{t('admin.logsToday')}</p>
+              <div className="p-2 bg-warning/10 text-warning rounded-lg border border-warning/20">
+                <span className="material-symbols-outlined text-[22px]">warning</span>
+              </div>
+            </div>
+            <p className="font-display-lg text-display-lg text-warning">{overview.today ?? 0}</p>
           </CardContent>
         </Card>
-        <Card className="border-border">
-          <CardHeader className="pb-2 flex flex-row items-center justify-between">
-            <CardTitle className="text-body-sm text-ink-muted font-normal">{t('admin.logsLast7Days')}</CardTitle>
-            <TrendingUp className="h-5 w-5 text-clay opacity-60" />
-          </CardHeader>
-          <CardContent>
-            <p className="font-display text-display-lg text-ink">{overview.last7Days ?? 0}</p>
+        {/* Last 7 Days */}
+        <Card className="relative overflow-hidden group">
+          <CardContent className="p-5">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-[30px] -mr-10 -mt-10 pointer-events-none" />
+            <div className="flex justify-between items-start mb-4">
+              <p className="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">{t('admin.logsLast7Days')}</p>
+              <div className="p-2 bg-primary/10 text-primary rounded-lg border border-primary/20">
+                <span className="material-symbols-outlined text-[22px]">trending_up</span>
+              </div>
+            </div>
+            <p className="font-display-lg text-display-lg text-on-surface">{overview.last7Days ?? 0}</p>
           </CardContent>
         </Card>
-        <Card className="border-border">
-          <CardHeader className="pb-2 flex flex-row items-center justify-between">
-            <CardTitle className="text-body-sm text-ink-muted font-normal">{t('admin.logsServerErrors')}</CardTitle>
-            <BarChart3 className="h-5 w-5 text-red-600 opacity-60" />
-          </CardHeader>
-          <CardContent>
-            <p className="font-display text-display-lg text-red-600">{overview.serverErrors ?? 0}</p>
-            <p className="text-caption-sm text-ink-muted">
+        {/* Server Errors */}
+        <Card className="relative overflow-hidden border-error/20 bg-error/5 group">
+          <CardContent className="p-5">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-error/10 rounded-full blur-[40px] -mr-10 -mt-10 pointer-events-none" />
+            <div className="flex justify-between items-start mb-4">
+              <p className="font-label-md text-label-md text-error/80 uppercase tracking-wider">{t('admin.logsServerErrors')}</p>
+              <div className="p-2 bg-error/20 text-error rounded-lg border border-error/40">
+                <span className="material-symbols-outlined text-[22px]">bar_chart</span>
+              </div>
+            </div>
+            <p className="font-display-lg text-display-lg text-error">{overview.serverErrors ?? 0}</p>
+            <p className="font-label-sm text-label-sm text-error/60 mt-1">
               {t('admin.logsClientErrors', { count: overview.clientErrors ?? 0 })}
             </p>
           </CardContent>
         </Card>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+      {/* Tabs */}
+      <Tabs value={activeTab} onValueChange={v => setActiveTab(v)}>
         <TabsList>
-          <TabsTrigger value="logs"><Bug className="h-4 w-4 mr-2" />{t('admin.logsTabLogs')}</TabsTrigger>
-          <TabsTrigger value="charts"><BarChart3 className="h-4 w-4 mr-2" />{t('admin.logsTabCharts')}</TabsTrigger>
+          <TabsTrigger value="logs">
+            <span className="material-symbols-outlined text-[18px]">bug_report</span>
+            {t('admin.logsTabLogs')}
+          </TabsTrigger>
+          <TabsTrigger value="charts">
+            <span className="material-symbols-outlined text-[18px]">bar_chart</span>
+            {t('admin.logsTabCharts')}
+          </TabsTrigger>
         </TabsList>
 
-        {/* Logs Tab */}
         <TabsContent value="logs">
-          <Card>
-            <CardHeader className="pb-4">
-              <div className="flex flex-col gap-4">
-                <div className="flex items-center gap-3 flex-wrap">
+          <Card className="overflow-hidden">
+            {/* Filters */}
+            <div className="p-5 border-b border-border bg-surface-container/20">
+              <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+                <div className="flex-1 flex items-center gap-3 w-full flex-wrap">
                   {/* Search */}
-                  <div className="flex-1 min-w-[200px] max-w-sm">
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-ink-muted" />
-                      <Input
-                        value={searchInput}
-                        onChange={e => setSearchInput(e.target.value)}
-                        onKeyDown={e => e.key === 'Enter' && handleSearch()}
-                        placeholder={t('admin.logsSearchPlaceholder')}
-                        className="pl-9"
-                      />
-                    </div>
+                  <div className="relative flex-1 min-w-[200px] max-w-sm">
+                    <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px]">search</span>
+                    <Input
+                      value={searchInput}
+                      onChange={e => setSearchInput(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && handleSearch()}
+                      placeholder={t('admin.logsSearchPlaceholder')}
+                      className="pl-10"
+                    />
                   </div>
                   {/* Method filter */}
                   <select
                     value={methodFilter}
                     onChange={e => { setMethodFilter(e.target.value); handleFilterChange(); }}
-                    className="h-9 rounded-editorial-sm border border-border bg-surface px-3 text-body-sm text-ink focus:outline-none focus:ring-2 focus:ring-clay"
+                    className="bg-black/20 border border-border text-on-surface rounded-lg px-3 py-2 font-body-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all appearance-none cursor-pointer"
                   >
-                    <option value="">{t('admin.logsAllMethods')}</option>
-                    <option value="GET">GET</option>
-                    <option value="POST">POST</option>
-                    <option value="PUT">PUT</option>
-                    <option value="DELETE">DELETE</option>
-                    <option value="PATCH">PATCH</option>
+                    <option className="bg-surface-container text-on-surface" value="">{t('admin.logsAllMethods')}</option>
+                    <option className="bg-surface-container text-on-surface" value="GET">GET</option>
+                    <option className="bg-surface-container text-on-surface" value="POST">POST</option>
+                    <option className="bg-surface-container text-on-surface" value="PUT">PUT</option>
+                    <option className="bg-surface-container text-on-surface" value="DELETE">DELETE</option>
+                    <option className="bg-surface-container text-on-surface" value="PATCH">PATCH</option>
                   </select>
                   {/* Status filter */}
                   <select
                     value={statusFilter}
                     onChange={e => { setStatusFilter(e.target.value); handleFilterChange(); }}
-                    className="h-9 rounded-editorial-sm border border-border bg-surface px-3 text-body-sm text-ink focus:outline-none focus:ring-2 focus:ring-clay"
+                    className="bg-black/20 border border-border text-on-surface rounded-lg px-3 py-2 font-body-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all appearance-none cursor-pointer"
                   >
-                    <option value="">{t('admin.logsAllStatus')}</option>
-                    <option value="400">400 Bad Request</option>
-                    <option value="401">401 Unauthorized</option>
-                    <option value="403">403 Forbidden</option>
-                    <option value="404">404 Not Found</option>
-                    <option value="409">409 Conflict</option>
-                    <option value="422">422 Validation</option>
-                    <option value="429">429 Rate Limit</option>
-                    <option value="500">500 Server Error</option>
+                    <option className="bg-surface-container text-on-surface" value="">{t('admin.logsAllStatus')}</option>
+                    <option className="bg-surface-container text-on-surface" value="400">400 Bad Request</option>
+                    <option className="bg-surface-container text-on-surface" value="401">401 Unauthorized</option>
+                    <option className="bg-surface-container text-on-surface" value="403">403 Forbidden</option>
+                    <option className="bg-surface-container text-on-surface" value="404">404 Not Found</option>
+                    <option className="bg-surface-container text-on-surface" value="409">409 Conflict</option>
+                    <option className="bg-surface-container text-on-surface" value="422">422 Validation</option>
+                    <option className="bg-surface-container text-on-surface" value="429">429 Rate Limit</option>
+                    <option className="bg-surface-container text-on-surface" value="500">500 Server Error</option>
                   </select>
-                  <Button variant="outline" size="sm" onClick={() => { setSearchInput(''); setSearchQuery(''); setMethodFilter(''); setStatusFilter(''); setPage(1); fetchData(1); }}>
-                    <X className="h-3 w-3 mr-1" /> {t('common.clear')}
+                  {/* Clear filters */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => { setSearchInput(''); setSearchQuery(''); setMethodFilter(''); setStatusFilter(''); setPage(1); fetchData(1); }}
+                  >
+                    <span className="material-symbols-outlined text-[16px]">close</span>
+                    {t('common.clear')}
                   </Button>
                 </div>
-                <div className="text-body-sm text-ink-muted">
-                  {t('admin.logsErrorsFound', { count: total })}
-                </div>
               </div>
-            </CardHeader>
-            <CardContent>
+              <div className="mt-3 font-body-sm text-on-surface-variant">
+                {t('admin.logsErrorsFound', { count: total })}
+              </div>
+            </div>
+
+            {/* Content */}
+            <div>
               {error ? (
-                <div className="text-center py-12">
-                  <AlertTriangle className="h-8 w-8 text-red-400 mx-auto mb-3" />
-                  <p className="text-body-sm text-ink-muted">{t('admin.logsFailedLoad', { error })}</p>
-                  <Button variant="outline" onClick={() => fetchData(page)} className="mt-4">
-                    <RefreshCw className="h-4 w-4 mr-2" /> {t('common.retry')}
+                <div className="text-center py-16">
+                  <span className="material-symbols-outlined text-4xl text-error/60 mx-auto block mb-4">warning</span>
+                  <p className="font-body-sm text-on-surface-variant">{t('admin.logsFailedLoad', { error })}</p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => fetchData(page)}
+                    className="mt-4"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">refresh</span>
+                    {t('common.retry')}
                   </Button>
                 </div>
               ) : logs.length === 0 ? (
-                <div className="text-center py-12">
-                  <Bug className="h-8 w-8 text-ink-muted mx-auto mb-3" />
-                  <p className="text-body-sm text-ink-muted">{t('admin.logsNoErrors', { hasFilters: searchQuery || methodFilter || statusFilter ? 1 : 0 })}</p>
+                <div className="text-center py-16">
+                  <span className="material-symbols-outlined text-4xl text-on-surface-variant/40 mx-auto block mb-4">bug_report</span>
+                  <p className="font-body-sm text-on-surface-variant">{t('admin.logsNoErrors', { hasFilters: searchQuery || methodFilter || statusFilter ? 1 : 0 })}</p>
                 </div>
               ) : (
                 <>
+                  {/* Table */}
                   <div className="overflow-x-auto">
                     <Table>
                       <TableHeader>
@@ -306,27 +361,32 @@ export default function AdminLogsPage() {
                           <TableHead>{t('admin.logsUrl')}</TableHead>
                           <TableHead>{t('admin.logsMessage')}</TableHead>
                           <TableHead className="w-40">{t('admin.logsTime')}</TableHead>
-                          <TableHead className="w-16">{t('admin.logsActions')}</TableHead>
+                          <TableHead className="w-16 text-right">{t('admin.logsActions')}</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {logs.map(log => (
-                          <TableRow key={log.id}>
-                            <TableCell className="text-caption-sm text-ink-muted font-mono">{log.id}</TableCell>
+                          <TableRow key={log.id} className="group">
+                            <TableCell className="font-mono">{log.id}</TableCell>
                             <TableCell><MethodBadge method={log.method} /></TableCell>
                             <TableCell><StatusBadge code={log.statusCode} /></TableCell>
                             <TableCell className="max-w-[200px]">
-                              <p className="truncate font-mono text-body-sm" title={log.url}>{log.url}</p>
+                              <p className="truncate font-mono text-on-surface/80" title={log.url}>{log.url}</p>
                             </TableCell>
                             <TableCell className="max-w-[250px]">
-                              <p className="truncate text-body-sm" title={log.message}>{log.message}</p>
+                              <p className="truncate text-on-surface" title={log.message}>{log.message}</p>
                             </TableCell>
-                            <TableCell className="text-caption-sm text-ink-muted whitespace-nowrap">
+                            <TableCell className="whitespace-nowrap">
                               {formatDate(log.createdAt)}
                             </TableCell>
-                            <TableCell>
-                              <Button variant="ghost" size="sm" onClick={() => handleViewDetail(log.id)}>
-                                <Eye className="h-4 w-4" />
+                            <TableCell className="text-right">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleViewDetail(log.id)}
+                                className="opacity-0 group-hover:opacity-100"
+                              >
+                                <span className="material-symbols-outlined text-[20px]">visibility</span>
                               </Button>
                             </TableCell>
                           </TableRow>
@@ -337,18 +397,19 @@ export default function AdminLogsPage() {
 
                   {/* Pagination */}
                   {totalPages > 1 && (
-                    <div className="flex items-center justify-between pt-4 border-t border-border mt-4">
-                      <p className="text-caption-sm text-ink-muted">
+                    <div className="flex items-center justify-between px-6 py-4 border-t border-border bg-surface-container/10">
+                      <p className="font-body-sm text-on-surface-variant">
                         {t('admin.logsPageOfTotal', { page, totalPages, total })}
                       </p>
-                      <div className="flex gap-1">
+                      <div className="flex gap-2">
                         <Button
                           variant="outline"
                           size="sm"
                           disabled={page <= 1}
                           onClick={() => fetchData(page - 1)}
                         >
-                          <ChevronLeft className="h-4 w-4 mr-1" /> {t('common.prev')}
+                          <span className="material-symbols-outlined text-[16px]">chevron_left</span>
+                          {t('common.prev')}
                         </Button>
                         <Button
                           variant="outline"
@@ -356,153 +417,173 @@ export default function AdminLogsPage() {
                           disabled={page >= totalPages}
                           onClick={() => fetchData(page + 1)}
                         >
-                          {t('common.next')} <ChevronRight className="h-4 w-4 ml-1" />
+                          {t('common.next')}
+                          <span className="material-symbols-outlined text-[16px]">chevron_right</span>
                         </Button>
                       </div>
                     </div>
                   )}
                 </>
               )}
-            </CardContent>
+            </div>
           </Card>
         </TabsContent>
 
-        {/* Charts Tab */}
         <TabsContent value="charts">
-          {!stats ? (
-            <div className="text-center py-12">
-              <Skeleton className="h-64 w-full rounded-editorial" />
-            </div>
-          ) : (
-            <div className="space-y-6">
-              {/* Error Timeline */}
-              {stats.timeline?.length > 0 && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-body-sm font-medium">Error Timeline (30 days)</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ResponsiveContainer width="100%" height={280}>
-                      <LineChart data={stats.timeline}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#e8e2d8" />
-                        <XAxis dataKey="date" tick={{ fontSize: 11 }} stroke="#8a8478" />
-                        <YAxis tick={{ fontSize: 11 }} stroke="#8a8478" allowDecimals={false} />
-                        <Tooltip />
-                        <Legend />
-                        <Line type="monotone" dataKey="errors" stroke="#ef4444" strokeWidth={2} name="Total Errors" dot={false} />
-                        <Line type="monotone" dataKey="serverErrors" stroke="#f97316" strokeWidth={2} name="5xx" dot={false} />
-                        <Line type="monotone" dataKey="clientErrors" stroke="#eab308" strokeWidth={2} name="4xx" dot={false} />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </CardContent>
-                </Card>
-              )}
-
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Status Code Distribution */}
-                {stats.statusCodeDistribution?.length > 0 && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-body-sm font-medium">By Status Code</CardTitle>
-                    </CardHeader>
-                    <CardContent>
+          <div>
+            {!stats ? (
+              <div className="animate-pulse bg-surface-container-high h-64 rounded-xl" />
+            ) : (
+              <div className="space-y-6">
+                {/* Error Timeline */}
+                {stats.timeline?.length > 0 && (
+                  <Card className="overflow-hidden">
+                    <div className="px-6 py-4 border-b border-border">
+                      <h3 className="font-label-md text-label-md text-on-surface uppercase tracking-wider">Error Timeline (30 days)</h3>
+                    </div>
+                    <div className="p-6">
                       <ResponsiveContainer width="100%" height={280}>
-                        <PieChart>
-                          <Pie
-                            data={stats.statusCodeDistribution}
-                            dataKey="count"
-                            nameKey="statusCode"
-                            cx="50%"
-                            cy="50%"
-                            outerRadius={90}
-                            innerRadius={50}
-                            label={(entry: any) => `${entry.statusCode ?? ''} (${entry.count ?? 0})`}
+                        <LineChart data={stats.timeline}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                          <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#c2c6d7' }} stroke="rgba(255,255,255,0.1)" />
+                          <YAxis tick={{ fontSize: 11, fill: '#c2c6d7' }} stroke="rgba(255,255,255,0.1)" allowDecimals={false} />
+                          <Tooltip
+                            contentStyle={{ backgroundColor: '#171f33', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#dae2fd' }}
+                          />
+                          <Legend wrapperStyle={{ color: '#dae2fd' }} />
+                          <Line type="monotone" dataKey="errors" stroke="#ef4444" strokeWidth={2} name="Total Errors" dot={false} />
+                          <Line type="monotone" dataKey="serverErrors" stroke="#f97316" strokeWidth={2} name="5xx" dot={false} />
+                          <Line type="monotone" dataKey="clientErrors" stroke="#eab308" strokeWidth={2} name="4xx" dot={false} />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </Card>
+                )}
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Status Code Distribution */}
+                  {stats.statusCodeDistribution?.length > 0 && (
+                    <Card className="overflow-hidden">
+                      <div className="px-6 py-4 border-b border-border">
+                        <h3 className="font-label-md text-label-md text-on-surface uppercase tracking-wider">By Status Code</h3>
+                      </div>
+                      <div className="p-6">
+                        <ResponsiveContainer width="100%" height={280}>
+                          <PieChart>
+                            <Pie
+                              data={stats.statusCodeDistribution}
+                              dataKey="count"
+                              nameKey="statusCode"
+                              cx="50%"
+                              cy="50%"
+                              outerRadius={90}
+                              innerRadius={50}
+                              label={(entry: any) => `${entry.statusCode ?? ''} (${entry.count ?? 0})`}
+                            >
+                              {stats.statusCodeDistribution.map((_: any, i: number) => (
+                                <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                              ))}
+                            </Pie>
+                            <Tooltip
+                              contentStyle={{ backgroundColor: '#171f33', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#dae2fd' }}
+                            />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </Card>
+                  )}
+
+                  {/* Top Error Endpoints */}
+                  {stats.topEndpoints?.length > 0 && (
+                    <Card className="overflow-hidden">
+                      <div className="px-6 py-4 border-b border-border">
+                        <h3 className="font-label-md text-label-md text-on-surface uppercase tracking-wider">Top Error Endpoints</h3>
+                      </div>
+                      <div className="p-6">
+                        <ResponsiveContainer width="100%" height={280}>
+                          <BarChart
+                            data={stats.topEndpoints.map((e: any) => ({
+                              ...e,
+                              label: `${e.method} ${e.url.length > 30 ? e.url.substring(0, 30) + '...' : e.url}`,
+                            }))}
+                            layout="vertical"
                           >
-                            {stats.statusCodeDistribution.map((_: any, i: number) => (
-                              <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
-                            ))}
-                          </Pie>
-                          <Tooltip />
-                        </PieChart>
-                      </ResponsiveContainer>
-                    </CardContent>
-                  </Card>
-                )}
-
-                {/* Top Error Endpoints */}
-                {stats.topEndpoints?.length > 0 && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-body-sm font-medium">Top Error Endpoints</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <ResponsiveContainer width="100%" height={280}>
-                        <BarChart
-                          data={stats.topEndpoints.map((e: any) => ({
-                            ...e,
-                            label: `${e.method} ${e.url.length > 30 ? e.url.substring(0, 30) + '...' : e.url}`,
-                          }))}
-                          layout="vertical"
-                        >
-                          <CartesianGrid strokeDasharray="3 3" stroke="#e8e2d8" />
-                          <XAxis type="number" tick={{ fontSize: 11 }} stroke="#8a8478" />
-                          <YAxis type="category" dataKey="label" tick={{ fontSize: 10 }} stroke="#8a8478" width={200} />
-                          <Tooltip />
-                          <Bar dataKey="count" fill="#ef4444" radius={[0, 4, 4, 0]} />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </CardContent>
-                  </Card>
-                )}
+                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                            <XAxis type="number" tick={{ fontSize: 11, fill: '#c2c6d7' }} stroke="rgba(255,255,255,0.1)" />
+                            <YAxis type="category" dataKey="label" tick={{ fontSize: 10, fill: '#c2c6d7' }} stroke="rgba(255,255,255,0.1)" width={200} />
+                            <Tooltip
+                              contentStyle={{ backgroundColor: '#171f33', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#dae2fd' }}
+                            />
+                            <Bar dataKey="count" fill="#ef4444" radius={[0, 4, 4, 0]} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </Card>
+                  )}
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </TabsContent>
       </Tabs>
 
       {/* Error Detail Modal */}
       {selectedLog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setSelectedLog(null)}>
-          <div className="bg-surface rounded-editorial border border-border shadow-card-lg w-full max-w-2xl max-h-[80vh] overflow-y-auto mx-4" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between p-5 border-b border-border">
-              <h2 className="font-display text-display-sm text-ink">{t('admin.logsErrorDetail', { id: selectedLog.id })}</h2>
-              <Button variant="ghost" size="sm" onClick={() => setSelectedLog(null)}>
-                <X className="h-4 w-4" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setSelectedLog(null)}>
+          <div
+            className="bg-surface/60 backdrop-blur-xl rounded-xl border border-border shadow-2xl w-full max-w-2xl max-h-[80vh] overflow-y-auto mx-4"
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-6 py-5 border-b border-border">
+              <h2 className="font-headline-md text-headline-md text-on-surface">
+                {t('admin.logsErrorDetail', { id: selectedLog.id })}
+              </h2>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setSelectedLog(null)}
+              >
+                <span className="material-symbols-outlined text-[20px]">close</span>
               </Button>
             </div>
-            <div className="p-5 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+
+            {/* Modal Body */}
+            <div className="p-6 space-y-5">
+              <div className="grid grid-cols-2 gap-5">
                 <div>
-                  <span className="text-caption-sm text-ink-muted block">{t('admin.logsMethod')}</span>
+                  <span className="font-label-sm text-label-sm text-on-surface-variant block mb-1">{t('admin.logsMethod')}</span>
                   <MethodBadge method={selectedLog.method} />
                 </div>
                 <div>
-                  <span className="text-caption-sm text-ink-muted block">{t('admin.logsStatus')}</span>
+                  <span className="font-label-sm text-label-sm text-on-surface-variant block mb-1">{t('admin.logsStatus')}</span>
                   <StatusBadge code={selectedLog.statusCode} />
                 </div>
                 <div className="col-span-2">
-                  <span className="text-caption-sm text-ink-muted block">{t('admin.logsUrl')}</span>
-                  <p className="text-body-sm font-mono text-ink break-all">{selectedLog.url}</p>
+                  <span className="font-label-sm text-label-sm text-on-surface-variant block mb-1">{t('admin.logsUrl')}</span>
+                  <p className="font-body-sm font-mono text-on-surface break-all bg-surface-container/40 rounded-lg px-3 py-2 border border-border">{selectedLog.url}</p>
                 </div>
                 <div className="col-span-2">
-                  <span className="text-caption-sm text-ink-muted block">{t('admin.logsMessage')}</span>
-                  <p className="text-body-sm text-ink break-all">{selectedLog.message}</p>
+                  <span className="font-label-sm text-label-sm text-on-surface-variant block mb-1">{t('admin.logsMessage')}</span>
+                  <p className="font-body-sm text-on-surface break-all bg-surface-container/40 rounded-lg px-3 py-2 border border-border">{selectedLog.message}</p>
                 </div>
                 <div className="col-span-2">
-                  <span className="text-caption-sm text-ink-muted block">{t('admin.logsTime')}</span>
-                  <p className="text-body-sm text-ink">{formatDate(selectedLog.createdAt)}</p>
+                  <span className="font-label-sm text-label-sm text-on-surface-variant block mb-1">{t('admin.logsTime')}</span>
+                  <p className="font-body-sm text-on-surface">{formatDate(selectedLog.createdAt)}</p>
                 </div>
                 {selectedLog.userId && (
                   <div className="col-span-2">
-                    <span className="text-caption-sm text-ink-muted block">{t('admin.logsUserId')}</span>
-                    <p className="text-body-sm text-ink">{selectedLog.userId}</p>
+                    <span className="font-label-sm text-label-sm text-on-surface-variant block mb-1">{t('admin.logsUserId')}</span>
+                    <p className="font-body-sm text-on-surface">{selectedLog.userId}</p>
                   </div>
                 )}
               </div>
+
+              {/* Request Body */}
               {selectedLog.body && selectedLog.body !== '{}' && (
                 <div>
-                  <span className="text-caption-sm text-ink-muted block mb-1">{t('admin.logsRequestBody')}</span>
-                  <pre className="bg-cream-200 rounded-editorial-sm p-3 text-caption-sm font-mono text-ink overflow-x-auto max-h-40">
+                  <span className="font-label-sm text-label-sm text-on-surface-variant block mb-2">{t('admin.logsRequestBody')}</span>
+                  <pre className="bg-surface-container/60 rounded-lg p-4 font-label-sm text-label-sm text-on-surface font-mono overflow-x-auto max-h-40 border border-border">
                     {(() => {
                       try { return JSON.stringify(JSON.parse(selectedLog.body), null, 2); }
                       catch { return selectedLog.body; }
@@ -510,10 +591,12 @@ export default function AdminLogsPage() {
                   </pre>
                 </div>
               )}
+
+              {/* Stack Trace */}
               {selectedLog.stack && (
                 <div>
-                  <span className="text-caption-sm text-ink-muted block mb-1">{t('admin.logsStackTrace')}</span>
-                  <pre className="bg-cream-200 rounded-editorial-sm p-3 text-caption-sm font-mono text-ink overflow-x-auto max-h-60 whitespace-pre-wrap">
+                  <span className="font-label-sm text-label-sm text-on-surface-variant block mb-2">{t('admin.logsStackTrace')}</span>
+                  <pre className="bg-surface-container/60 rounded-lg p-4 font-label-sm text-label-sm text-on-surface font-mono overflow-x-auto max-h-60 whitespace-pre-wrap border border-border">
                     {selectedLog.stack}
                   </pre>
                 </div>

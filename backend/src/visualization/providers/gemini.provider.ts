@@ -1,6 +1,7 @@
 import { AiProvider, GenerateResult, StreamChunk } from '../interfaces/ai-provider.interface';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { streamText } from 'ai';
+import { getLanguageInstruction, SupportedLocale } from '../../common/language.helper';
 
 export class GeminiProvider implements AiProvider {
   readonly name = 'gemini';
@@ -43,7 +44,8 @@ export class GeminiProvider implements AiProvider {
     }
   }
 
-  private buildPrompt(prompt: string, subject: string, existingCode?: string): string {
+  private buildPrompt(prompt: string, subject: string, existingCode?: string, language?: string): string {
+    const langInstruction = language ? getLanguageInstruction(language as SupportedLocale) : '';
     if (existingCode) {
       return `You are a visualization expert for K-12 math and physics education.
 
@@ -53,7 +55,7 @@ ${existingCode}
 USER FEEDBACK:
 ${prompt}
 
-Revise the visualization according to the feedback above. Return ONLY the complete HTML wrapped in a \`\`\`html code block.`;
+Revise the visualization according to the feedback above. Return ONLY the complete HTML wrapped in a \`\`\`html code block.${langInstruction}`;
     }
 
     return `You are a visualization expert for K-12 math and physics education.
@@ -64,12 +66,14 @@ Generate an interactive HTML visualization for this ${subject} topic:
 
 ## CRITICAL RULES:
 1. Return ONLY the HTML code inside a single \`\`\`html code block — no explanations.
-2. Root element: <div class="viz-root">. viz-root's max-width is always 100%.All content inside it.
+2. Root element: <div class="viz-root">. viz-root's width is always 100%.All content inside it.
 3. Use <style> tags for ALL styling — scoped class selectors prefixed with "viz-".
 4. Use <script> for ALL interactivity — vanilla JavaScript only. NO imports or external libraries.
 5. Use SVG for math diagrams (coordinates, shapes, graphs). Use <canvas> for physics simulations.
-6. Make it interactive: include buttons, sliders, click-to-toggle interactions.
-7. Use CSS animations (@keyframes, transitions) and requestAnimationFrame for smooth motion.
+6. Make it interactive: include buttons, sliders, click-to-toggle interactions. For EVERY interactive element, emit a postMessage event in its event handler:
+   window.parent.postMessage({ type: 'viz:interact', payload: { parameter: '<name>', value: <currentValue>, action: '<drag|click|change>', timestamp: Date.now() } }, '*');
+7. ALSO add a window.addEventListener('message', (e) => { if (e.data?.type === 'viz:sync' && e.data?.payload) { const p = e.data.payload; /* update the interactive element matching p.parameter to p.value */ } }) to receive real-time sync events from a teacher in classroom mode.
+8. Use CSS animations (@keyframes, transitions) and requestAnimationFrame for smooth motion.
 8. The .viz-root container MUST have: max-width: 100%; width: 100%; DO NOT add box-shadow, border, or outline to .viz-root (inner elements can have shadows/borders).
 9. Clean polished inner design: rounded corners, subtle shadows on inner elements, readable typography, accent colors.
 10. Add labels, annotations, formulas, step-by-step explanations to teach the concept.
@@ -94,13 +98,13 @@ Example structure:
 </div>
 \`\`\`
 
-Generate an educational, visually appealing, interactive HTML visualization.`;
+Generate an educational, visually appealing, interactive HTML visualization.${langInstruction}`;
   }
 
-  async generateVisualization(prompt: string, subject: string): Promise<GenerateResult> {
+  async generateVisualization(prompt: string, subject: string, language?: string): Promise<GenerateResult> {
     const body = {
       contents: [{
-        parts: [{ text: this.buildPrompt(prompt, subject) }],
+        parts: [{ text: this.buildPrompt(prompt, subject, undefined, language) }],
       }],
       generationConfig: {
         temperature: 0.7,
@@ -139,11 +143,12 @@ Generate an educational, visually appealing, interactive HTML visualization.`;
     prompt: string,
     subject: string,
     signal?: AbortSignal,
+    language?: string,
   ): AsyncGenerator<StreamChunk, void, undefined> {
     try {
       const result = streamText({
         model: this.google(this.model),
-        prompt: this.buildPrompt(prompt, subject),
+        prompt: this.buildPrompt(prompt, subject, undefined, language),
         maxOutputTokens: this.maxTokens,
         temperature: 0.7,
         abortSignal: signal,
@@ -158,11 +163,12 @@ Generate an educational, visually appealing, interactive HTML visualization.`;
     }
   }
 
-  async refineVisualization(code: string, feedback: string): Promise<GenerateResult> {
-    return this.generateVisualization(feedback, '');
+  async refineVisualization(code: string, feedback: string, language?: string): Promise<GenerateResult> {
+    return this.generateVisualization(feedback, '', language);
   }
 
-  async fixError(code: string, error: string): Promise<GenerateResult> {
+  async fixError(code: string, error: string, language?: string): Promise<GenerateResult> {
+    const langInstruction = language ? getLanguageInstruction(language as SupportedLocale) : '';
     const body = {
       contents: [{
         parts: [{
@@ -175,7 +181,7 @@ ${code}
 Error:
 ${error}
 
-Return the COMPLETE corrected HTML in a single \`\`\`html block.`,
+Return the COMPLETE corrected HTML in a single \`\`\`html block.${langInstruction}`,
         }],
       }],
       generationConfig: {
@@ -214,10 +220,12 @@ Return the COMPLETE corrected HTML in a single \`\`\`html block.`,
     return { valid: true };
   }
 
-  async generateText(prompt: string): Promise<string> {
+  async generateText(prompt: string, language?: string): Promise<string> {
+    const langInstruction = language ? getLanguageInstruction(language as SupportedLocale) : '';
+    const text = langInstruction ? `${prompt}\n\n${langInstruction}` : prompt;
     const body = {
       contents: [{
-        parts: [{ text: prompt }],
+        parts: [{ text }],
       }],
       generationConfig: { temperature: 0.5, maxOutputTokens: 4096 },
     };
@@ -238,6 +246,29 @@ Return the COMPLETE corrected HTML in a single \`\`\`html block.`,
 
     const data = await response.json();
     return data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+  }
+
+  async *generateTextStream(
+    prompt: string,
+    signal?: AbortSignal,
+    language?: string,
+  ): AsyncGenerator<StreamChunk, void, undefined> {
+    try {
+      const langInstruction = language ? getLanguageInstruction(language as SupportedLocale) : '';
+      const result = streamText({
+        model: this.google(this.model),
+        prompt: langInstruction ? `${prompt}\n\n${langInstruction}` : prompt,
+        maxOutputTokens: 4096,
+        temperature: 0.5,
+        abortSignal: signal,
+        timeout: this.timeout,
+      });
+      for await (const chunk of result.textStream) {
+        yield { type: 'text', text: chunk };
+      }
+    } catch (error: any) {
+      throw new Error(`Gemini text generation error: ${error.message}`);
+    }
   }
 
   private extractCode(text: string): string {

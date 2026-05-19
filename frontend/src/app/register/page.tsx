@@ -4,13 +4,10 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
 import { useAuth } from '@/lib/auth';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent } from '@/components/ui/card';
 
 export default function RegisterPage() {
   const [form, setForm] = useState({ email: '', username: '', password: '', displayName: '' });
@@ -29,49 +26,143 @@ export default function RegisterPage() {
   };
 
   return (
-    <>
-      <Header />
-      <main className="flex-1 bg-cream-200 flex items-center justify-center py-20 px-4">
-        <div className="w-full max-w-md">
-          <Card className="shadow-elevated">
-            <CardHeader className="text-center">
-              <CardTitle className="font-display text-display-md">{t('auth.register')}</CardTitle>
-              <CardDescription>{t('auth.register')}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {error && <div className="bg-clay-subtle text-clay text-body-sm rounded-editorial-sm p-3 mb-4 border border-clay/20">{error}</div>}
-              <form onSubmit={handleSubmit} className="space-y-5">
-                <div className="space-y-2">
-                  <Label htmlFor="displayName" className="text-body-sm text-ink-soft">{t('auth.displayName')}</Label>
-                  <Input id="displayName" value={form.displayName} onChange={e => setForm({...form, displayName: e.target.value})} placeholder={t('auth.displayName')} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="text-body-sm text-ink-soft">{t('auth.email')}</Label>
-                  <Input id="email" type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} placeholder="you@example.com" required />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="username" className="text-body-sm text-ink-soft">{t('auth.username')}</Label>
-                  <Input id="username" value={form.username} onChange={e => setForm({...form, username: e.target.value})} placeholder={t('auth.username')} required />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="password" className="text-body-sm text-ink-soft">{t('auth.password')}</Label>
-                  <Input id="password" type="password" value={form.password} onChange={e => setForm({...form, password: e.target.value})} placeholder={t('auth.passwordLength')} required minLength={6} />
-                </div>
-                <Button type="submit" disabled={loading} className="w-full">
-                  {loading ? t('auth.registering') : t('auth.register')}
-                </Button>
-              </form>
-            </CardContent>
-            <CardFooter className="justify-center">
-              <p className="text-body-sm text-ink-muted">
-                {t('auth.hasAccount')}{' '}
-                <Link href="/login" className="text-clay hover:text-clay-dark font-medium">{t('auth.login')}</Link>
+    <main className="min-h-screen bg-background flex items-center justify-center p-margin-md relative overflow-hidden">
+      {/* Ambient background glow */}
+      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary-container/20 rounded-full blur-[100px] pointer-events-none" />
+      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-secondary-container/20 rounded-full blur-[100px] pointer-events-none" />
+
+      {/* Glassmorphic register card */}
+      <div className="relative z-10 w-full max-w-md animate-fade-up">
+        <Card>
+          <CardContent className="p-container-padding flex flex-col gap-margin-sm">
+            {/* Header */}
+            <div className="text-center mb-margin-sm">
+              <h1 className="font-headline-lg text-headline-lg text-on-surface mb-unit tracking-tighter">
+                {t('auth.register')}
+              </h1>
+              <p className="font-body-sm text-body-sm text-on-surface-variant">
+                {t('auth.register')}
               </p>
-            </CardFooter>
-          </Card>
-        </div>
-      </main>
-      <Footer />
-    </>
+            </div>
+
+            {/* Error message */}
+            {error && (
+              <div className="bg-error-container/20 text-error text-body-sm rounded-lg p-3 border border-error/20 animate-slide-down">
+                {error}
+              </div>
+            )}
+
+            {/* Form */}
+            <form onSubmit={handleSubmit} className="flex flex-col gap-gutter">
+              {/* Display name */}
+              <div className="flex flex-col gap-unit">
+                <label htmlFor="displayName" className="font-label-sm text-label-sm text-on-surface">
+                  {t('auth.displayName')}
+                </label>
+                <div className="relative">
+                  <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">badge</span>
+                  <Input
+                    id="displayName"
+                    value={form.displayName}
+                    onChange={e => setForm({...form, displayName: e.target.value})}
+                    placeholder={t('auth.displayName')}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+
+              {/* Email */}
+              <div className="flex flex-col gap-unit">
+                <label htmlFor="email" className="font-label-sm text-label-sm text-on-surface">
+                  {t('auth.email')}
+                </label>
+                <div className="relative">
+                  <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">email</span>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={form.email}
+                    onChange={e => setForm({...form, email: e.target.value})}
+                    placeholder="you@example.com"
+                    required
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+
+              {/* Username */}
+              <div className="flex flex-col gap-unit">
+                <label htmlFor="username" className="font-label-sm text-label-sm text-on-surface">
+                  {t('auth.username')}
+                </label>
+                <div className="relative">
+                  <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">person</span>
+                  <Input
+                    id="username"
+                    value={form.username}
+                    onChange={e => setForm({...form, username: e.target.value})}
+                    placeholder={t('auth.username')}
+                    required
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+
+              {/* Password */}
+              <div className="flex flex-col gap-unit">
+                <label htmlFor="password" className="font-label-sm text-label-sm text-on-surface">
+                  {t('auth.password')}
+                </label>
+                <div className="relative">
+                  <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">lock</span>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={form.password}
+                    onChange={e => setForm({...form, password: e.target.value})}
+                    placeholder={t('auth.passwordLength')}
+                    required
+                    minLength={6}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+
+              {/* Submit button */}
+              <Button
+                type="submit"
+                disabled={loading}
+                className="mt-unit w-full"
+              >
+                {loading ? (
+                  <>
+                    <span className="material-symbols-outlined text-[18px] animate-spin">progress_activity</span>
+                    {t('auth.registering')}
+                  </>
+                ) : (
+                  <>
+                    {t('auth.register')}
+                    <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
+                  </>
+                )}
+              </Button>
+            </form>
+
+            {/* Login link */}
+            <div className="text-center mt-unit">
+              <span className="font-body-sm text-body-sm text-on-surface-variant">
+                {t('auth.hasAccount')}{' '}
+              </span>
+              <Link
+                href="/login"
+                className="font-label-sm text-label-sm text-primary hover:text-primary-fixed transition-colors"
+              >
+                {t('auth.login')}
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </main>
   );
 }

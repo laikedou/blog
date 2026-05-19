@@ -3,9 +3,13 @@
 import { useRef, useEffect, useState, useCallback, useMemo, memo, useLayoutEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { visualizations } from '@/lib/api';
-import { Card } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
-import { AlertTriangle } from 'lucide-react';
+
+export interface VizInteractionPayload {
+  parameter: string;
+  value: any;
+  action: 'drag' | 'click' | 'change';
+  timestamp: number;
+}
 
 interface Props {
   htmlContent: string;
@@ -15,31 +19,30 @@ interface Props {
   onError?: (error: string) => void;
   /** Called when a stat event should be recorded */
   onStat?: (action: string) => void;
+  /** Called when the rendered viz emits an interaction event via postMessage */
+  onInteraction?: (payload: VizInteractionPayload) => void;
+  /** External events to forward into the rendered visualization (for classroom sync) */
+  externalEvent?: VizInteractionPayload | null;
 }
 
-/**
- * Renders AI-generated HTML content with script execution support.
- * 
- * This version uses a "Manual Control" approach:
- * 1. React renders an empty div wrapper.
- * 2. useLayoutEffect manually sets the innerHTML and injects scripts.
- * 3. React never touches the inner content again during re-renders.
- */
-function HtmlVisualizationRendererComponent({ htmlContent, visualizationId, className, onError, onStat }: Props) {
+function HtmlVisualizationRendererComponent({ htmlContent, visualizationId, className, onError, onStat, onInteraction, externalEvent }: Props) {
   const { t } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
   const [renderError, setRenderError] = useState<string | null>(null);
   const [isVisible, setIsVisible] = useState(false);
   const onErrorRef = useRef(onError);
+  const onInteractionRef = useRef(onInteraction);
   const scriptsRef = useRef<HTMLScriptElement[]>([]);
   const isInitializedRef = useRef<string | null>(null);
 
-  // Update callbacks ref
   useEffect(() => {
     onErrorRef.current = onError;
   }, [onError]);
 
-  // Record view stat
+  useEffect(() => {
+    onInteractionRef.current = onInteraction;
+  }, [onInteraction]);
+
   useEffect(() => {
     if (visualizationId) {
       visualizations.recordStat(visualizationId, 'view').catch(() => { });
@@ -47,7 +50,32 @@ function HtmlVisualizationRendererComponent({ htmlContent, visualizationId, clas
     }
   }, [visualizationId, onStat]);
 
-  // Extract scripts and clean HTML
+  // Listen for postMessage events from the rendered visualization HTML
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'viz:interact' && event.data?.payload) {
+        const payload: VizInteractionPayload = {
+          parameter: event.data.payload.parameter || '',
+          value: event.data.payload.value,
+          action: event.data.payload.action || 'change',
+          timestamp: event.data.payload.timestamp || Date.now(),
+        };
+        onInteractionRef.current?.(payload);
+      }
+    };
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
+
+  // Forward external events (e.g. teacher sync) into the rendered visualization
+  useEffect(() => {
+    if (!externalEvent) return;
+    window.postMessage({
+      type: 'viz:sync',
+      payload: externalEvent,
+    }, '*');
+  }, [externalEvent]);
+
   const { strippedHtml, scriptData } = useMemo(() => {
     if (!htmlContent) return { strippedHtml: '', scriptData: [] };
 
@@ -60,39 +88,28 @@ function HtmlVisualizationRendererComponent({ htmlContent, visualizationId, clas
     return { strippedHtml: stripped, scriptData: data };
   }, [htmlContent]);
 
-  // Manual DOM Management
   useLayoutEffect(() => {
     const container = containerRef.current;
     if (!container || !htmlContent) return;
 
-    // Prevent double-initialization for the same content in Strict Mode
-    // BUT we must allow re-initialization if the content is different
-    // However, the disappearing issue suggests that we need to be very careful.
-
-    // 1. Cleanup previous run
     setRenderError(null);
     scriptsRef.current.forEach(s => s.parentNode?.removeChild(s));
     scriptsRef.current = [];
     container.innerHTML = '';
 
-    // 2. Set new content manually
     container.innerHTML = strippedHtml;
 
-    // 3. Define error handler for AI scripts
     (window as any).__vizError = (msg: string) => {
       setRenderError(msg);
       onErrorRef.current?.(msg);
     };
 
-    // 4. Inject scripts one by one. Keep the container hidden until script
-    // insertion is complete to avoid a visible flash of un-initialized content.
     const tempDiv = document.createElement('div');
 
     scriptData.forEach(({ attrs, body }) => {
       try {
         const script = document.createElement('script');
 
-        // Parse and apply attributes
         tempDiv.innerHTML = `<script ${attrs}></script>`;
         const dummy = tempDiv.firstChild as HTMLScriptElement;
         if (dummy) {
@@ -120,8 +137,6 @@ function HtmlVisualizationRendererComponent({ htmlContent, visualizationId, clas
       delete (window as any).__vizError;
       scriptsRef.current.forEach(s => s.parentNode?.removeChild(s));
       scriptsRef.current = [];
-      // Note: We don't clear container.innerHTML here to prevent flash on unmount
-      // if it's just a quick re-render.
     };
   }, [htmlContent, strippedHtml, scriptData]);
 
@@ -132,8 +147,8 @@ function HtmlVisualizationRendererComponent({ htmlContent, visualizationId, clas
   if (!htmlContent) {
     return (
       <div className="space-y-3">
-        <Skeleton className="h-8 w-3/4" />
-        <Skeleton className="h-64 w-full rounded-editorial" />
+        <div className="h-8 w-3/4 bg-surface-container-highest/30 animate-pulse rounded" />
+        <div className="h-64 w-full bg-surface-container-highest/30 animate-pulse rounded-xl" />
       </div>
     );
   }
@@ -141,30 +156,31 @@ function HtmlVisualizationRendererComponent({ htmlContent, visualizationId, clas
   return (
     <div className={className}>
       {renderError && (
-        <Card className="mb-3 p-4 border-clay/20 bg-clay-pale">
+        <div
+          className="mb-3 p-4 rounded-xl border border-error/20"
+          style={{
+            background: 'rgba(255, 180, 171, 0.05)',
+            backdropFilter: 'blur(8px)',
+          }}
+        >
           <div className="flex items-start gap-3">
-            <AlertTriangle className="h-5 w-5 text-clay shrink-0 mt-0.5" />
+            <span className="material-symbols-outlined text-error shrink-0 mt-0.5">warning</span>
             <div className="flex-1 min-w-0">
-              <p className="text-body-sm font-medium text-clay mb-1">{t('viz.renderError')}</p>
-              <pre className="text-caption-sm text-ink-muted whitespace-pre-wrap font-mono bg-white/60 p-3 rounded-editorial-xs">
+              <p className="font-body-sm text-body-sm font-medium text-error mb-1">{t('viz.renderError')}</p>
+              <pre className="font-label-sm text-label-sm text-on-surface-variant whitespace-pre-wrap font-mono bg-black/20 p-3 rounded-lg">
                 {renderError}
               </pre>
               <button
                 onClick={handleDismissError}
-                className="mt-2 text-caption-sm text-clay hover:text-clay-dark underline"
+                className="mt-2 font-label-sm text-label-sm text-error hover:text-error/80 underline"
               >
                 {t('viz.dismiss')}
               </button>
             </div>
           </div>
-        </Card>
+        </div>
       )}
 
-      {/* 
-          IMPORTANT: We return a div with NO children and NO dangerouslySetInnerHTML.
-          The content is injected manually via the useLayoutEffect above.
-          This prevents React from ever touching the internal DOM of this div.
-      */}
       <div
         ref={containerRef}
         className="viz-container"
@@ -180,7 +196,8 @@ export const HtmlVisualizationRenderer = memo(
     return (
       prev.htmlContent === next.htmlContent &&
       prev.visualizationId === next.visualizationId &&
-      prev.className === next.className
+      prev.className === next.className &&
+      prev.externalEvent === next.externalEvent
     );
   }
 );
