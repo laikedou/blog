@@ -1,6 +1,9 @@
-import { Inter, JetBrains_Mono } from 'next/font/google';
+import { Inter, JetBrains_Mono, Geist } from 'next/font/google';
 import { SITE_CONFIG, websiteJsonLd, organizationJsonLd } from '@/lib/seo';
 import type { Metadata } from 'next';
+import { cn } from "@/lib/utils";
+
+const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 const inter = Inter({
   subsets: ['latin'],
@@ -95,7 +98,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const jsonLdOrg = organizationJsonLd();
 
   return (
-    <html lang="zh-CN" className={`dark ${inter.variable} ${jetbrainsMono.variable}`}>
+    <html lang="zh-CN" className={cn("dark", inter.variable, jetbrainsMono.variable, "font-sans", geist.variable)}>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
