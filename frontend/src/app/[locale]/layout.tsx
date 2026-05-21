@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import { AuthProvider } from '@/lib/auth';
 import ChatBot from '@/components/ChatBot';
 import { CustomHeadInjector } from '@/components/CustomHeadInjector';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import { routing } from '@/i18n/routing';
 import './globals.css';
 
@@ -25,11 +26,13 @@ export default async function LocaleLayout({
   return (
     <NextIntlClientProvider messages={messages}>
       <AuthProvider>
-        <div className="min-h-screen flex flex-col">
-          {children}
-        </div>
-        <ChatBot />
-        <CustomHeadInjector />
+        <TooltipProvider>
+          <div className="min-h-screen flex flex-col">
+            {children}
+          </div>
+          <ChatBot />
+          <CustomHeadInjector />
+        </TooltipProvider>
       </AuthProvider>
     </NextIntlClientProvider>
   );
