@@ -1,6 +1,6 @@
 'use client';
 
-import { useTranslation } from 'react-i18next';
+import { useTranslations } from 'next-intl';
 import { BookOpen, GraduationCap, Microscope } from 'lucide-react';
 
 interface DifficultyLevel {
@@ -23,7 +23,7 @@ const LEVEL_CONFIG: Record<string, { icon: typeof BookOpen; label: string; descr
 };
 
 export default function DifficultySwitcher({ variants, active, onChange }: Props) {
-  const { t } = useTranslation();
+  const t = useTranslations();
 
   if (!variants || Object.keys(variants).length === 0) return null;
 

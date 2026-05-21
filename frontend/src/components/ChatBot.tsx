@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useTranslations } from 'next-intl';
 import { chat as chatApi } from '@/lib/api';
 import { MessageSquare, X, Send, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -30,7 +30,7 @@ function loadSessionId() {
 }
 
 export default function ChatBot() {
-  const { t } = useTranslation();
+  const t = useTranslations();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');

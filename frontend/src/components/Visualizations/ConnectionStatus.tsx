@@ -1,6 +1,6 @@
 'use client';
 
-import { useTranslation } from 'react-i18next';
+import { useTranslations } from 'next-intl';
 
 type Status = 'connecting' | 'connected' | 'disconnected';
 
@@ -9,7 +9,7 @@ interface Props {
 }
 
 export default function ConnectionStatus({ status }: Props) {
-  const { t } = useTranslation();
+  const t = useTranslations();
 
   const config: Record<Status, { color: string; label: string }> = {
     connecting: { color: 'bg-yellow-400', label: t('viz.classroom.connecting') },

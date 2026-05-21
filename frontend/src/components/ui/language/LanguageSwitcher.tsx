@@ -1,8 +1,8 @@
 'use client';
 
-import { useTranslation } from 'react-i18next';
-import { useLanguage } from '@/lib/i18n/LanguageProvider';
-import { SUPPORTED_LOCALES, LOCALE_LABELS, LOCALE_FLAGS, type SupportedLocale } from '@/lib/i18n/i18n';
+import { useTranslations, useLocale } from 'next-intl';
+import { useRouter, usePathname } from '@/i18n/navigation';
+import { SUPPORTED_LOCALES, LOCALE_LABELS, LOCALE_FLAGS, type SupportedLocale } from '@/i18n/routing';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,8 +16,14 @@ interface LanguageSwitcherProps {
 }
 
 export default function LanguageSwitcher({ variant = 'icon' }: LanguageSwitcherProps) {
-  const { t } = useTranslation();
-  const { locale, setLocale } = useLanguage();
+  const t = useTranslations();
+  const locale = useLocale() as SupportedLocale;
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const setLocale = (newLocale: SupportedLocale) => {
+    router.replace(pathname, { locale: newLocale });
+  };
 
   if (variant === 'minimal') {
     return (

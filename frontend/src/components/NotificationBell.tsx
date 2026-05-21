@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { useNotifications, CrawlNotification } from '@/lib/notification-context';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -48,7 +48,7 @@ function getBg(type: CrawlNotification['type'], read: boolean) {
 }
 
 export default function NotificationBell() {
-  const { t } = useTranslation();
+  const t = useTranslations();
   const { notifications, unreadCount, soundEnabled, toggleSound, markAllRead, clearAll } = useNotifications();
   const [open, setOpen] = useState(false);
   const router = useRouter();

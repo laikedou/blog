@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useTranslations } from 'next-intl';
 import { ai } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -30,7 +30,7 @@ const Spinner = () => (
 );
 
 export default function FloatingAIMenu({ onGenerate, currentContent, currentTitle, onOpenFullTools, style }: FloatingAIMenuProps) {
-  const { t } = useTranslation();
+  const t = useTranslations();
   const { isAuthenticated } = useAuth();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState<string | null>(null);

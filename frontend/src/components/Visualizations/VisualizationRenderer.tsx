@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useEffect, useState, useCallback, useMemo, memo, useLayoutEffect } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useTranslations } from 'next-intl';
 import { visualizations } from '@/lib/api';
 
 export interface VizInteractionPayload {
@@ -26,7 +26,7 @@ interface Props {
 }
 
 function HtmlVisualizationRendererComponent({ htmlContent, visualizationId, className, onError, onStat, onInteraction, externalEvent }: Props) {
-  const { t } = useTranslation();
+  const t = useTranslations();
   const containerRef = useRef<HTMLDivElement>(null);
   const [renderError, setRenderError] = useState<string | null>(null);
   const [isVisible, setIsVisible] = useState(false);

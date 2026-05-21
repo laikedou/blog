@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useLocale } from 'next-intl';
 
 interface NarrationSegment {
   startTime: number;
@@ -17,7 +17,7 @@ interface NarrationData {
 }
 
 export function useNarrationPlayer(narration: NarrationData | null) {
-  const { i18n } = useTranslation();
+  const currentLocale = useLocale();
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentSegment, setCurrentSegment] = useState(-1);
   const [speed, setSpeed] = useState(1);
@@ -109,7 +109,7 @@ export function useNarrationPlayer(narration: NarrationData | null) {
     setCurrentSegment(index);
 
     const utterance = new SpeechSynthesisUtterance(segment.text);
-    const locale = narration?.locale || i18n.language || 'en';
+    const locale = narration?.locale || currentLocale || 'en';
     utterance.lang = locale;
     utterance.rate = speedRef.current;
 
@@ -134,7 +134,7 @@ export function useNarrationPlayer(narration: NarrationData | null) {
     // Cancel any lingering speech before starting new one (prevents overlap)
     speechSynthesis.cancel();
     speechSynthesis.speak(utterance);
-  }, [narration?.locale, i18n.language, getVoice]);
+  }, [narration?.locale, currentLocale, getVoice]);
 
   // Unlock speech — Chrome sometimes needs a "warmup" utterance from a user gesture
   const unlockSpeech = useCallback(() => {

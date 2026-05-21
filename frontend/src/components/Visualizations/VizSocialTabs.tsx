@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useTranslations } from 'next-intl';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
 import VisualizationComments from './VisualizationComments';
@@ -13,7 +13,7 @@ interface Props {
 }
 
 export default function VizSocialTabs({ visualizationId, currentSubject }: Props) {
-  const { t } = useTranslation();
+  const t = useTranslations();
   const [activeTab, setActiveTab] = useState('comments');
 
   return (

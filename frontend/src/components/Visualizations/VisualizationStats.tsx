@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useTranslations } from 'next-intl';
 import { visualizations } from '@/lib/api';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -14,7 +14,7 @@ import {
 const COLORS = ['#c84b31', '#2d5a5a', '#8a8478', '#e8c4b5', '#3d7a7a'];
 
 export function VisualizationStatsOverview() {
-  const { t } = useTranslation();
+  const t = useTranslations();
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 

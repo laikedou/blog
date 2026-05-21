@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { banners as bannersApi } from '@/lib/api';
 import { animate } from 'animejs';
@@ -17,7 +17,7 @@ interface Banner {
 }
 
 export default function BannerCarousel({ zone = 'hero' }: { zone?: string }) {
-  const { t } = useTranslation();
+  const t = useTranslations();
   const [banners, setBanners] = useState<Banner[]>([]);
   const [current, setCurrent] = useState(0);
   const [loading, setLoading] = useState(true);

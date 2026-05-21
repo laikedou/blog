@@ -1,6 +1,6 @@
 'use client';
 
-import { useTranslation } from 'react-i18next';
+import { useTranslations } from 'next-intl';
 import ConnectionStatus from './ConnectionStatus';
 import type { ConnectionStatus as ConnStatus } from '@/hooks/useClassroomSocket';
 import { Volume2 } from 'lucide-react';
@@ -13,7 +13,7 @@ interface Props {
 }
 
 export default function ClassroomStudentView({ status, teacherName, studentsCount, livekitEnabled }: Props) {
-  const { t } = useTranslation();
+  const t = useTranslations();
 
   return (
     <div className="fixed bottom-4 left-4 z-40">

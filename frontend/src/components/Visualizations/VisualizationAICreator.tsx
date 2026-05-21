@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useTranslations, useLocale } from 'next-intl';
 import { visualizations } from '@/lib/api';
 import { HtmlVisualizationRenderer } from './VisualizationRenderer';
 import VersionDiff from './VersionDiff';
@@ -64,7 +64,7 @@ interface TopicStepProps {
 }
 
 function TopicStep({ onComplete }: TopicStepProps) {
-  const { t } = useTranslation();
+  const t = useTranslations();
   const [title, setTitle] = useState('');
   const [subject, setSubject] = useState<'math' | 'physics'>('math');
   const [prompt, setPrompt] = useState('');
@@ -235,7 +235,8 @@ interface GenerateStepProps {
 }
 
 function GenerateStep({ title, subject, prompt, onGenerated, onBack }: GenerateStepProps) {
-  const { t, i18n } = useTranslation();
+  const t = useTranslations();
+  const locale = useLocale();
   const { state, start, abort } = useVisualizationStream();
   const generatedRef = useRef(false);
   const codeContainerRef = useRef<HTMLPreElement>(null);
@@ -253,7 +254,7 @@ function GenerateStep({ title, subject, prompt, onGenerated, onBack }: GenerateS
   useEffect(() => {
     if (generatedRef.current) return;
     generatedRef.current = true;
-    start({ prompt, subject, title, language: i18n.language });
+    start({ prompt, subject, title, language: locale });
   }, []);
 
   useEffect(() => {
@@ -413,7 +414,7 @@ function VersionPanel({
   currentCode: string;
   onRestore: (htmlContent: string, version: VersionInfo) => void;
 }) {
-  const { t } = useTranslation();
+  const t = useTranslations();
   const [versions, setVersions] = useState<VersionInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedVersion, setSelectedVersion] = useState<VersionInfo | null>(null);
@@ -642,7 +643,8 @@ function ReviewStep({ visualizationId, initialCode, onSave, onBack }: ReviewStep
   const [publishing, setPublishing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [renderError, setRenderError] = useState<string | null>(null);
-  const { t, i18n } = useTranslation();
+  const t = useTranslations();
+  const locale = useLocale();
   const [activeTab, setActiveTab] = useState<'preview' | 'code'>('preview');
 
   useEffect(() => {
@@ -660,7 +662,7 @@ function ReviewStep({ visualizationId, initialCode, onSave, onBack }: ReviewStep
     setRefining(true);
     setError(null);
     try {
-      const result = await visualizations.refine({ visualizationId, feedback: feedback.trim(), language: i18n.language });
+      const result = await visualizations.refine({ visualizationId, feedback: feedback.trim(), language: locale });
       setCode(result.htmlContent);
       setRenderError(null);
       setFeedback('');
@@ -677,7 +679,7 @@ function ReviewStep({ visualizationId, initialCode, onSave, onBack }: ReviewStep
     setFixing(true);
     setError(null);
     try {
-      const result = await visualizations.fixError({ visualizationId, error: renderError, language: i18n.language });
+      const result = await visualizations.fixError({ visualizationId, error: renderError, language: locale });
       setCode(result.htmlContent);
       setRenderError(null);
       toast.success(t('admin.vizErrorFixed'));
@@ -702,7 +704,7 @@ function ReviewStep({ visualizationId, initialCode, onSave, onBack }: ReviewStep
     const abortController = new AbortController();
 
     try {
-      await visualizations.generateMetadataStream(visualizationId, i18n.language, {
+      await visualizations.generateMetadataStream(visualizationId, locale, {
         onFieldChunk: (field, text) => {
           switch (field) {
             case 'introduction':
@@ -1044,7 +1046,7 @@ function VersionPanelCompact({
   currentCode: string;
   onRestore: (htmlContent: string, version: VersionInfo) => void;
 }) {
-  const { t } = useTranslation();
+  const t = useTranslations();
   const [versions, setVersions] = useState<VersionInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [restoring, setRestoring] = useState<number | null>(null);
@@ -1160,7 +1162,7 @@ interface VisualizationAICreatorProps {
 }
 
 export function VisualizationAICreator({ onDone }: VisualizationAICreatorProps) {
-  const { t } = useTranslation();
+  const t = useTranslations();
   const [step, setStep] = useState<'topic' | 'generating' | 'review'>('topic');
   const [config, setConfig] = useState({ title: '', subject: 'math' as 'math' | 'physics', prompt: '' });
   const [vizData, setVizData] = useState<{ id: number; htmlContent: string } | null>(null);

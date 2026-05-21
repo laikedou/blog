@@ -5,7 +5,7 @@ import { useAuth } from '@/lib/auth';
 import { useSiteConfig } from '@/lib/use-site-config';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useTranslation } from 'react-i18next';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import LanguageSwitcher from '@/components/ui/language/LanguageSwitcher';
@@ -21,7 +21,7 @@ import { Menu, X, LayoutDashboard, FileText, Home, LogOut } from 'lucide-react';
 export default function Header() {
   const { user, isAuthenticated, logout } = useAuth();
   const { config } = useSiteConfig();
-  const { t } = useTranslation();
+  const t = useTranslations();
   const [mobileOpen, setMobileOpen] = useState(false);
   const router = useRouter();
 

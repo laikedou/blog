@@ -1,6 +1,6 @@
 'use client';
 
-import { useTranslation } from 'react-i18next';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { Layers, BookOpen, Atom } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -28,7 +28,7 @@ interface Props {
 }
 
 export default function PerspectiveCard({ experiment }: Props) {
-  const { t } = useTranslation();
+  const t = useTranslations();
 
   return (
     <Card className="border-border shadow-card hover:shadow-card-hover transition-shadow">

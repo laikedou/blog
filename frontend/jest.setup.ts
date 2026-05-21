@@ -1,10 +1,9 @@
 import '@testing-library/jest-dom';
 
-// Mock react-i18next for all tests
-jest.mock('react-i18next', () => ({
-  useTranslation: () => ({
-    t: (key: string) => {
-      // Map common keys to expected display values
+// Mock next-intl useTranslations for all tests
+jest.mock('next-intl', () => ({
+  useTranslations: () => {
+    const t = (key: string) => {
       const keyMap: Record<string, string> = {
         'nav.home': 'Home',
         'nav.learn': 'Learn',
@@ -49,23 +48,37 @@ jest.mock('react-i18next', () => ({
       if (keyMap[key]) return keyMap[key];
       const parts = key.split('.');
       return parts[parts.length - 1];
-    },
-    i18n: {
-      changeLanguage: jest.fn(),
-      language: 'en',
-      languages: ['en', 'zh-CN', 'zh-TW', 'ja'],
-    },
-  }),
-  initReactI18next: {
-    type: '3rdParty',
-    init: jest.fn(),
+    };
+    // Also attach .rich() for Trans replacements
+    (t as any).rich = (key: string, _components: any) => key;
+    return t;
   },
+  useLocale: () => 'en',
+  hasLocale: () => true,
+  NextIntlClientProvider: ({ children }: { children: React.ReactNode }) => children,
 }));
 
-// Mock i18next
-jest.mock('@/lib/i18n/i18n', () => ({
+// Mock next-intl/navigation
+jest.mock('next-intl/navigation', () => ({
+  createNavigation: () => ({
+    Link: ({ children }: { children: React.ReactNode }) => children,
+    redirect: jest.fn(),
+    usePathname: () => '/en',
+    useRouter: () => ({ replace: jest.fn(), push: jest.fn(), back: jest.fn() }),
+  }),
+}));
+
+// Mock @/i18n/navigation
+jest.mock('@/i18n/navigation', () => ({
+  useRouter: () => ({ replace: jest.fn(), push: jest.fn(), back: jest.fn() }),
+  usePathname: () => '/en',
+  Link: ({ children }: { children: React.ReactNode }) => children,
+  redirect: jest.fn(),
+}));
+
+// Mock @/i18n/routing
+jest.mock('@/i18n/routing', () => ({
   SUPPORTED_LOCALES: ['zh-CN', 'zh-TW', 'en', 'ja'] as const,
-  SupportedLocale: {},
   LOCALE_LABELS: {
     'zh-CN': '简体中文',
     'zh-TW': '繁體中文',
@@ -78,20 +91,8 @@ jest.mock('@/lib/i18n/i18n', () => ({
     'en': '🇺🇸',
     'ja': '🇯🇵',
   },
+  routing: {
+    locales: ['zh-CN', 'zh-TW', 'en', 'ja'],
+    defaultLocale: 'zh-CN',
+  },
 }));
-
-// Mock LanguageProvider - using createElement to avoid JSX in setup
-jest.mock('@/lib/i18n/LanguageProvider', () => {
-  const React = require('react');
-  return {
-    LanguageProvider: ({ children }: { children: React.ReactNode }) =>
-      React.createElement(React.Fragment, null, children),
-    useLanguage: () => ({
-      locale: 'en' as const,
-      setLocale: jest.fn(),
-      isLoading: false,
-      supportedLocales: ['zh-CN', 'zh-TW', 'en', 'ja'] as const,
-    }),
-    SUPPORTED_LOCALES: ['zh-CN', 'zh-TW', 'en', 'ja'] as const,
-  };
-});

@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { useTranslation } from 'react-i18next';
+import { useTranslations } from 'next-intl';
 import { Share2, Copy, Check, MessageSquare, Link2, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -15,7 +15,7 @@ interface PostSidebarProps {
 }
 
 export default function PostSidebar({ post, contentSelector = '.prose-editorial' }: PostSidebarProps) {
-  const { t } = useTranslation();
+  const t = useTranslations();
   const [toc, setToc] = useState<TocItem[]>([]);
   const [activeId, setActiveId] = useState<string>('');
   const [shared, setShared] = useState(false);

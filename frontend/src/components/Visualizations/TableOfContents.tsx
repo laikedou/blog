@@ -1,6 +1,6 @@
 'use client';
 
-import { useTranslation } from 'react-i18next';
+import { useTranslations } from 'next-intl';
 import { BookOpen, ChevronRight } from 'lucide-react';
 
 interface Section {
@@ -15,7 +15,7 @@ interface Props {
 }
 
 export default function TableOfContents({ sections, activeSection, onSelect }: Props) {
-  const { t } = useTranslation();
+  const t = useTranslations();
 
   if (sections.length === 0) return null;
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useTranslation } from 'react-i18next';
+import { useTranslations } from 'next-intl';
 import { Play, Pause, Square, SkipBack, SkipForward, Volume2, VolumeX } from 'lucide-react';
 
 interface Props {
@@ -48,7 +48,7 @@ export default function NarrationPlayer({
   duration,
   currentTime,
 }: Props) {
-  const { t } = useTranslation();
+  const t = useTranslations();
 
   if (totalSegments === 0) return null;
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useTranslations } from 'next-intl';
 import { media as mediaApi } from '@/lib/api';
 import {
   Dialog,
@@ -18,7 +18,7 @@ interface MediaPickerDialogProps {
 }
 
 export default function MediaPickerDialog({ open, onOpenChange, onSelect }: MediaPickerDialogProps) {
-  const { t } = useTranslation();
+  const t = useTranslations();
   const [media, setMedia] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);

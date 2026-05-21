@@ -1,11 +1,6 @@
-import type { Metadata } from 'next';
 import { Inter, JetBrains_Mono } from 'next/font/google';
-import { AuthProvider } from '@/lib/auth';
-import { LanguageProvider } from '@/lib/i18n/LanguageProvider';
-import ChatBot from '@/components/ChatBot';
-import { CustomHeadInjector } from '@/components/CustomHeadInjector';
 import { SITE_CONFIG, websiteJsonLd, organizationJsonLd } from '@/lib/seo';
-import './globals.css';
+import type { Metadata } from 'next';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -100,19 +95,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const jsonLdOrg = organizationJsonLd();
 
   return (
-    <html lang="en" className={`dark ${inter.variable} ${jetbrainsMono.variable}`}>
+    <html lang="zh-CN" className={`dark ${inter.variable} ${jetbrainsMono.variable}`}>
       <head>
-        {/* Material Symbols Outlined */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
 
-        {/* Baidu verification */}
         {SITE_CONFIG.verification.baidu && (
           <meta name="baidu-site-verification" content={SITE_CONFIG.verification.baidu} />
         )}
 
-        {/* JSON-LD Structured Data */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -120,28 +112,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           }}
         />
 
-        {/* DNS prefetch for common origins */}
         <link rel="dns-prefetch" href={SITE_CONFIG.url} />
         {process.env.NEXT_PUBLIC_API_URL && (
           <link rel="dns-prefetch" href={new URL(SITE_CONFIG.url).origin} />
         )}
 
-        {/* Preconnect to key origins */}
         <link rel="preconnect" href={SITE_CONFIG.url} />
-
-        {/* RSS feed */}
         <link rel="alternate" type="application/rss+xml" title={`${SITE_CONFIG.name} RSS Feed`} href="/rss.xml" />
       </head>
       <body className="font-body antialiased" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
-        <AuthProvider>
-          <LanguageProvider>
-            <div className="min-h-screen flex flex-col">
-              {children}
-            </div>
-            <ChatBot />
-            <CustomHeadInjector />
-          </LanguageProvider>
-        </AuthProvider>
+        {children}
       </body>
     </html>
   );
