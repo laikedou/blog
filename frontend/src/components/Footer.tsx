@@ -2,12 +2,12 @@
 
 import Link from 'next/link';
 import { useSiteConfig } from '@/lib/use-site-config';
-import { useTranslation } from 'react-i18next';
+import { useTranslations } from 'next-intl';
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
   const { config } = useSiteConfig();
-  const { t } = useTranslation();
+  const t = useTranslations();
 
   const siteTitle = config.siteTitle || 'AI Blog';
   const description = config.siteDescription || t('footer.description');

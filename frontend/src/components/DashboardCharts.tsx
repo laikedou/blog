@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useTranslations } from 'next-intl';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, LineChart, Line, Legend,
@@ -34,7 +34,7 @@ interface DashboardChartsProps {
 }
 
 export function PostsTimelineChart({ data }: { data: TimelineItem[] }) {
-  const { t } = useTranslation();
+  const t = useTranslations();
   if (!data || data.length === 0) return null;
   return (
     <div className="bg-surface rounded-editorial border border-border shadow-card p-6">
@@ -55,7 +55,7 @@ export function PostsTimelineChart({ data }: { data: TimelineItem[] }) {
 }
 
 export function CategoryPieChart({ data }: { data: CategoryItem[] }) {
-  const { t } = useTranslation();
+  const t = useTranslations();
   if (!data || data.length === 0) return null;
   return (
     <div className="bg-surface rounded-editorial border border-border shadow-card p-6">
@@ -84,7 +84,7 @@ export function CategoryPieChart({ data }: { data: CategoryItem[] }) {
 }
 
 export function TopPostsChart({ data }: { data: TopPost[] }) {
-  const { t } = useTranslation();
+  const t = useTranslations();
   if (!data || data.length === 0) return null;
   return (
     <div className="bg-surface rounded-editorial border border-border shadow-card p-6">

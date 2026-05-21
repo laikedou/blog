@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useTranslations } from 'next-intl';
 import { Sparkles, X, Send, Trash2, MessageCircle } from 'lucide-react';
 import TutorChatBubble from './TutorChatBubble';
 
@@ -23,7 +23,7 @@ interface Props {
 }
 
 export default function AITutorSidebar({ open, onClose, messages, loading, onAskQuestion, onClearHistory, variant = 'overlay' }: Props) {
-  const { t } = useTranslation();
+  const t = useTranslations();
   const [input, setInput] = useState('');
   const listRef = useRef<HTMLDivElement>(null);
 

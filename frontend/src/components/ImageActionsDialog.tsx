@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useTranslations } from 'next-intl';
 import { ai as aiApi } from '@/lib/api';
 import { toast } from 'sonner';
 import {
@@ -23,7 +23,7 @@ interface ImageActionsDialogProps {
 }
 
 export default function ImageActionsDialog({ open, onOpenChange, imageUrl, onReplace }: ImageActionsDialogProps) {
-  const { t } = useTranslation();
+  const t = useTranslations();
   const [showMediaPicker, setShowMediaPicker] = useState(false);
   const [aiPrompt, setAiPrompt] = useState('');
   const [generating, setGenerating] = useState(false);

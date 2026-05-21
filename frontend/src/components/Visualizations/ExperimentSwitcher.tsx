@@ -1,6 +1,6 @@
 'use client';
 
-import { useTranslation } from 'react-i18next';
+import { useTranslations } from 'next-intl';
 import { Layers, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface Perspective {
@@ -22,7 +22,7 @@ interface Props {
 }
 
 export default function ExperimentSwitcher({ perspectives, activeIndex, onChange }: Props) {
-  const { t } = useTranslation();
+  const t = useTranslations();
 
   if (perspectives.length === 0) return null;
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { animate } from 'animejs';
 import { Badge } from '@/components/ui/badge';
@@ -23,7 +23,7 @@ interface PostCardProps {
 }
 
 export default function PostCard({ post }: PostCardProps) {
-  const { t } = useTranslation();
+  const t = useTranslations();
   const cardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {

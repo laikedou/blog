@@ -2,7 +2,7 @@
 
 import { ChevronLeft } from 'lucide-react';
 import Link from 'next/link';
-import { useTranslation } from 'react-i18next';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -67,7 +67,7 @@ export default function VizStickyHeader({
   onEmbedOpen,
   onShare,
 }: Props) {
-  const { t } = useTranslation();
+  const t = useTranslations();
 
   const actions: ToolbarAction[] = [
     { key: 'code', icon: Code, label: t('viz.viewSource'), onClick: onToggleCode, active: showCode },

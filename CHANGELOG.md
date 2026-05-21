@@ -1,5 +1,24 @@
 # Changelog
 
+## 2026-05-21 — Next.js 16 Upgrade & i18n Migration
+
+### Breaking Changes
+- **Next.js 16 + React 19** — Upgraded from Next.js 14.2 → 16.2 and React 18 → 19.2
+- **i18n: i18next → next-intl** — Migrated translation library from `i18next`/`react-i18next` to `next-intl` (Next.js official recommendation). 77 component files updated
+- **URL Structure** — All routes now include locale prefix: `/{locale}/...` (e.g., `/en/posts/hello`, `/zh-CN/posts/hello`). Middleware (`proxy.ts`) handles locale detection and redirect
+- **Translation Files** — Moved from `public/locales/{lang}/translation.json` → `messages/{lang}.json`, restructured flat dotted keys to nested objects, migrated `{{var}}` → `{var}` (ICU format)
+- **next.config** — Migrated from `next.config.js` (CJS) to `next.config.ts` (TypeScript)
+
+### Directory Structure
+- **`[locale]` Segment** — All page routes moved from `src/app/` → `src/app/[locale]/` to follow Next.js i18n routing convention
+- **New files**: `src/i18n/routing.ts`, `src/i18n/request.ts`, `src/i18n/navigation.ts`, `src/proxy.ts`
+- **Removed**: `src/lib/i18n/` (replaced by `src/i18n/`), `public/locales/`, `next.config.js`
+
+### Infrastructure
+- **TypeScript 6.0** — Upgraded from TypeScript 5.3 → 6.0
+- **Turbopack** — Now the default bundler in Next.js 16
+- **middleware → proxy** — Renamed to `proxy.ts` per Next.js 16 convention
+
 ## 2026-05-20 — UI Enhancement
 
 ### Features

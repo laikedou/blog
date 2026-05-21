@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useTranslations, useLocale } from 'next-intl';
 import { ai } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 
@@ -14,9 +14,10 @@ interface AIToolsProps {
 }
 
 export default function AITools({ onGenerate, currentContent, currentTitle, isOpen: controlledOpen, onClose }: AIToolsProps) {
-  const { t, i18n } = useTranslation();
+  const t = useTranslations();
+  const locale = useLocale();
   const { isAuthenticated } = useAuth();
-  const currentLang = i18n.language;
+  const currentLang = locale;
   const [internalOpen, setInternalOpen] = useState(false);
   const isOpen = controlledOpen !== undefined ? controlledOpen : internalOpen;
   const setIsOpen = (v: boolean) => {

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useTranslations } from 'next-intl';
 import { useAuth } from '@/lib/auth';
 import { visualizations } from '@/lib/api';
 import { Heart } from 'lucide-react';
@@ -13,7 +13,7 @@ interface Props {
 }
 
 export default function VisualizationLikeButton({ visualizationId, initialLikes = 0 }: Props) {
-  const { t } = useTranslation();
+  const t = useTranslations();
   const { isAuthenticated } = useAuth();
   const [liked, setLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(initialLikes);

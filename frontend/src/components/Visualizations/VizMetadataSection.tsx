@@ -1,7 +1,7 @@
 'use client';
 
 import { BookOpen, Atom, Clock, User, Eye, BarChart3, Share2, Sparkles } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import VisualizationLikeButton from './VisualizationLikeButton';
 
@@ -12,7 +12,7 @@ interface Props {
 }
 
 export default function VizMetadataSection({ viz, visualizationId, onShare }: Props) {
-  const { t } = useTranslation();
+  const t = useTranslations();
 
   return (
     <div className="mb-6">

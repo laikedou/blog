@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useTranslations } from 'next-intl';
 import { visualizations } from '@/lib/api';
 import type { VizInteractionPayload } from '@/components/Visualizations/VisualizationRenderer';
 
@@ -18,7 +18,7 @@ interface UseAITutorOptions {
 }
 
 export function useAITutor({ visualizationId, language }: UseAITutorOptions) {
-  const { t } = useTranslation();
+  const t = useTranslations();
   const [messages, setMessages] = useState<TutorMessage[]>([]);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);

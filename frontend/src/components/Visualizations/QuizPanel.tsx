@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useTranslations } from 'next-intl';
 import { CheckCircle, XCircle, HelpCircle, RotateCcw } from 'lucide-react';
 
 interface QuizQuestion {
@@ -16,7 +16,7 @@ interface Props {
 }
 
 export default function QuizPanel({ questions }: Props) {
-  const { t } = useTranslation();
+  const t = useTranslations();
   const [answers, setAnswers] = useState<Record<number, number>>({});
   const [submitted, setSubmitted] = useState(false);
 

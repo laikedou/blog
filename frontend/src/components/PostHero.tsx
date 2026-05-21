@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { useTranslation } from 'react-i18next';
+import { useTranslations } from 'next-intl';
 import { Calendar, Eye, MessageSquare, Share2, Clock, Copy, Check } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -18,7 +18,7 @@ function readingTime(content: string): number {
 }
 
 export default function PostHero({ post }: PostHeroProps) {
-  const { t } = useTranslation();
+  const t = useTranslations();
   const [progress, setProgress] = useState(0);
   const [shared, setShared] = useState(false);
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useTranslations } from 'next-intl';
 import { visualizations } from '@/lib/api';
 import { HtmlVisualizationRenderer } from '@/components/Visualizations/VisualizationRenderer';
 import { diffLines, Change } from 'diff';
@@ -21,7 +21,7 @@ export default function VersionDiff({
   fromLabel,
   toLabel,
 }: VersionDiffProps) {
-  const { t } = useTranslation();
+  const t = useTranslations();
   const [tab, setTab] = useState<'code' | 'visual'>('code');
   const [loading, setLoading] = useState(true);
   const [diffResult, setDiffResult] = useState<Change[]>([]);

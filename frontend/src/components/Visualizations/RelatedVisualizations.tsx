@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { visualizations } from '@/lib/api';
 import { Layers, Eye, Heart, Loader2 } from 'lucide-react';
@@ -25,7 +25,7 @@ interface Props {
 }
 
 export default function RelatedVisualizations({ visualizationId, currentSubject }: Props) {
-  const { t } = useTranslation();
+  const t = useTranslations();
   const [items, setItems] = useState<RelatedViz[]>([]);
   const [loading, setLoading] = useState(true);
 

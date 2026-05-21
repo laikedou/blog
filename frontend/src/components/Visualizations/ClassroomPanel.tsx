@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { Users, Copy, X, ExternalLink, Mic, MicOff, Video, VideoOff } from 'lucide-react';
 import { useLivekitClassroom } from '@/hooks/useLivekitClassroom';
@@ -33,7 +33,7 @@ export default function ClassroomPanel({
   connectionStatus,
   onEnd,
 }: Props) {
-  const { t } = useTranslation();
+  const t = useTranslations();
   const router = useRouter();
   const { config, loading: livekitLoading } = useLivekitClassroom(classroomId);
   const [micMuted, setMicMuted] = useState(false);

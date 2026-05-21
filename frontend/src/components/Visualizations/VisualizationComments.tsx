@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useTranslations } from 'next-intl';
 import { useAuth } from '@/lib/auth';
 import { visualizations } from '@/lib/api';
 import { Button } from '@/components/ui/button';
@@ -21,7 +21,7 @@ interface Props {
 }
 
 export default function VisualizationComments({ visualizationId }: Props) {
-  const { t } = useTranslation();
+  const t = useTranslations();
   const { user, isAuthenticated } = useAuth();
   const [comments, setComments] = useState<VisualizationComment[]>([]);
   const [loading, setLoading] = useState(true);

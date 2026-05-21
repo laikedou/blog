@@ -1,7 +1,7 @@
 'use client';
 
 import { Maximize2, Minimize2, Download, Code } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
+import { useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 
 interface Props {
@@ -21,7 +21,7 @@ export default function VizRendererCard({
   onDownload,
   onToggleCode,
 }: Props) {
-  const { t } = useTranslation();
+  const t = useTranslations();
 
   return (
     <Card className={`border-border shadow-card overflow-hidden mb-6 group/viz ${fullscreen ? 'shadow-none border-0 rounded-none' : ''}`}>

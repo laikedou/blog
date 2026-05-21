@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useTranslations } from 'next-intl';
 import { ai } from '@/lib/api';
 
 interface SelectionAIToolbarProps {
@@ -18,7 +18,7 @@ const Spinner = () => (
 );
 
 export default function SelectionAIToolbar({ editor, editorContainer, onImageAction }: SelectionAIToolbarProps) {
-  const { t } = useTranslation();
+  const t = useTranslations();
   const [visible, setVisible] = useState(false);
   const [position, setPosition] = useState({ top: 0, left: 0 });
   const [loading, setLoading] = useState<string | null>(null);
