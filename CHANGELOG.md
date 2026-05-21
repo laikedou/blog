@@ -1,5 +1,21 @@
 # Changelog
 
+## 2026-05-21 — shadcn/ui & Tailwind CSS v4 Upgrade
+
+### Breaking Changes
+- **Tailwind CSS v4** — Upgraded from Tailwind CSS 3.4 → 4.3. Removed `tailwind.config.ts`, migrated all theme configuration to CSS-based `@theme` directives in `globals.css`. PostCSS plugin changed from `tailwindcss` → `@tailwindcss/postcss`
+- **shadcn/ui Latest** — Upgraded from `shadcn` v4.7.0 (old CLI) to latest `shadcn@latest`. Replaced 13 individual `@radix-ui/*` packages with unified `radix-ui` v1.4.3
+- **CSS Variables Theming** — shadcn components now use CSS custom properties (`--primary`, `--background`, `--foreground`, etc.) for theming instead of direct Tailwind class colors
+
+### Dependencies
+- **Added**: `radix-ui` (unified), `@tailwindcss/postcss`, `tw-animate-css`
+- **Removed**: `shadcn` (old CLI), `autoprefixer` (built into Tailwind v4), 13 individual `@radix-ui/*` packages
+- **Updated**: `tailwindcss` 3.4 → 4.3, `lucide-react` 1.14 → 1.16
+
+### Component Updates
+- **22 UI components** updated to latest shadcn patterns: `data-slot` attributes, `Slot.Root` from unified `radix-ui`, CSS variable-based color classes, new size/variant conventions
+- All custom theme colors, fonts, spacing, shadows, and animations preserved in CSS `@theme` configuration
+
 ## 2026-05-21 — Next.js 16 Upgrade & i18n Migration
 
 ### Breaking Changes
