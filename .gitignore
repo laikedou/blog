@@ -27,6 +27,7 @@ backend/uploads/*
 
 # IDE / OS files
 .claude/
+.superpowers/
 .DS_Store
 Thumbs.db
 ehthumbs.db
