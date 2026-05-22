@@ -1,5 +1,24 @@
 # Changelog
 
+## 2026-05-22 — Live2D Companion Widget (Phase 1)
+
+### Features
+- **Live2D Widget** — Integrated `l2d-widget` library as a site-wide companion character, mounted at bottom-left of every page
+- **Smart Visibility** — Automatically hidden on admin (`/admin/*`), embed (`/embed/*`) pages, and mobile devices (< 768px)
+- **Hide Control** — Users can dismiss the character via menu; preference persisted in localStorage
+- **Character State** — `Live2DContext` provides state bus for future ChatBot integration (idle/listening/thinking/speaking/sleeping)
+
+### Files
+- **Created** `frontend/src/components/Live2DWidget.tsx` — main widget component, initializes canvas/WebGL in browser-only useEffect
+- **Created** `frontend/src/components/Live2DWidgetLoader.tsx` — client-component wrapper for Next.js 16/Turbopack SSR compatibility
+- **Created** `frontend/src/lib/live2d-context.tsx` — React context for character state + hide/show persistence
+- **Created** `frontend/src/lib/live2d-config.ts` — model URL, widget options builder, page exclusion logic
+- **Modified** `frontend/src/app/[locale]/layout.tsx` — mounts `Live2DWidgetLoader` alongside ChatBot
+- **Modified** `frontend/messages/*.json` — live2d tips and menu labels for all 4 locales (en/zh-CN/zh-TW/ja)
+
+### Dependencies
+- **Added** `l2d-widget@0.0.2` — lightweight Live2D widget (~500 lines, zero runtime deps)
+
 ## 2026-05-22 — Grok TTS Migration
 
 ### Breaking Changes
