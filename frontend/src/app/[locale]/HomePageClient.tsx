@@ -243,7 +243,9 @@ export default function HomePageClient() {
         if (postsForTopic.length === 0 && !cat) return null;
 
         const isAI = topic.slug === 'ai';
+        const isWeb3 = topic.slug === 'web3';
         const isBlockchain = topic.slug === 'blockchain';
+        const bgClass = isAI ? 'topic-bg-ai' : isWeb3 ? 'topic-bg-web3' : 'topic-bg-blockchain';
 
         return (
           <SectionReveal key={topic.slug}>
@@ -251,11 +253,10 @@ export default function HomePageClient() {
               className={`relative ${ti % 2 === 0 ? 'bg-cream-100' : 'bg-cream-200'} border-b border-border overflow-hidden`}
               aria-labelledby={`topic-heading-${topic.slug}`}
             >
-              {/* Section-specific background */}
-              {isAI && <div className="absolute inset-0 bg-circuit-pattern opacity-30 pointer-events-none" aria-hidden="true" />}
-              {isBlockchain && (
-                <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-clay/20 to-transparent pointer-events-none" aria-hidden="true" />
-              )}
+              {/* Branded background pattern */}
+              <div className={`absolute inset-0 ${bgClass} opacity-50 pointer-events-none`} aria-hidden="true" />
+              {/* Corner accent glow */}
+              <div className={`absolute top-0 right-0 w-[400px] h-[400px] rounded-full bg-gradient-to-br ${topic.color} blur-[120px] opacity-15 pointer-events-none`} aria-hidden="true" />
 
               <div className="section-container py-section-sm relative z-10">
                 {/* Section Header */}
@@ -265,18 +266,15 @@ export default function HomePageClient() {
                       <Icon className="h-7 w-7 text-ink" />
                     </div>
                     <div>
-                      <h2 id={`topic-heading-${topic.slug}`} className="font-display text-display-md text-ink group">
-                        <span className="relative">
-                          {topic.label}
-                          <span className="absolute -bottom-1 left-0 h-0.5 bg-clay w-0 group-hover:w-full transition-all duration-500" />
-                        </span>
+                      <h2 id={`topic-heading-${topic.slug}`} className="font-display text-display-md text-ink heading-underline">
+                        {topic.label}
                       </h2>
                       <p className="text-body-sm text-ink-muted mt-1">{topic.desc}</p>
                     </div>
                   </div>
                   {cat && (
                     <Link href={`/category/${cat.slug}`}>
-                      <Button variant="ghost" size="sm" className="group">
+                      <Button variant="ghost" size="sm" className="group hover:text-clay">
                         {t('common.viewAll')}
                         <ChevronRight className="h-4 w-4 ml-1 group-hover:translate-x-1 transition-transform" />
                       </Button>
@@ -287,19 +285,19 @@ export default function HomePageClient() {
                 {/* Posts Grid */}
                 {postsForTopic.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    {postsForTopic.slice(0, 4).map((post: any, idx: number) => (
+                    {postsForTopic.slice(0, 4).map((post: any, idx: number) =>
                       isAI && idx === 0 ? (
                         <div key={post.id} className="md:col-span-2 gradient-border-glow rounded-editorial">
                           <PostCard post={post} featured />
                         </div>
                       ) : (
-                        <PostCard key={post.id} post={post} />
+                        <PostCard key={post.id} post={post} index={idx} />
                       )
-                    ))}
+                    )}
                   </div>
                 ) : (
-                  <div className="text-center py-16 bg-surface/30 rounded-editorial border border-border border-dashed">
-                    <Icon className="h-10 w-10 mx-auto mb-3 text-ink-faint opacity-50" />
+                  <div className="text-center py-16 rounded-editorial border border-border border-dashed bg-surface/10">
+                    <Icon className="h-10 w-10 mx-auto mb-3 text-ink-faint opacity-40 animate-breathe" />
                     <p className="text-body text-ink-muted">{t('home.noArticlesTopic')}</p>
                   </div>
                 )}
