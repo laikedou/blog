@@ -898,6 +898,7 @@ html {
   border-radius: 50%;
   background: rgba(23, 31, 51, 0.8);
   backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255,255,255,0.08);
   display: flex;
   align-items: center;
