@@ -19,6 +19,58 @@ const TOPICS = [
   { slug: 'blockchain', label: 'Blockchain', icon: Database, desc: 'Distributed ledgers, consensus mechanisms, DeFi, and crypto infrastructure', color: 'from-amber-500/20 to-orange-500/10' },
 ];
 
+function ScrollProgress() {
+  const [width, setWidth] = useState(0);
+  useEffect(() => {
+    const handler = () => {
+      const scrollTop = window.scrollY;
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      setWidth(docHeight > 0 ? (scrollTop / docHeight) * 100 : 0);
+    };
+    window.addEventListener('scroll', handler, { passive: true });
+    return () => window.removeEventListener('scroll', handler);
+  }, []);
+  return <div className="scroll-progress" style={{ width: `${width}%` }} />;
+}
+
+function BackToTop() {
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const handler = () => setVisible(window.scrollY > 500);
+    window.addEventListener('scroll', handler, { passive: true });
+    return () => window.removeEventListener('scroll', handler);
+  }, []);
+  return (
+    <button
+      className={`back-to-top ${visible ? 'visible' : ''}`}
+      onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+      aria-label="Back to top"
+    >
+      <span className="material-symbols-outlined text-[20px] text-clay">keyboard_arrow_up</span>
+    </button>
+  );
+}
+
+function SectionReveal({ children }: { children: React.ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          animate(el, { opacity: [0, 1], translateY: [24, 0], easing: 'easeOutCubic', duration: 600 });
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.15 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+  return <div ref={ref} style={{ opacity: 0 }}>{children}</div>;
+}
+
 export default function HomePageClient() {
   const t = useTranslations();
   const [posts, setPosts] = useState<any[]>([]);
@@ -71,80 +123,156 @@ export default function HomePageClient() {
     <>
       <Header />
 
+      {/* Scroll Progress Bar */}
+      <ScrollProgress />
+
       <BannerCarousel zone="hero" />
 
-      {/* Hero section */}
-      <section className="bg-cream-100 relative overflow-hidden border-b border-border" aria-labelledby="hero-heading">
-        <div className="section-container py-section-sm md:py-section text-center relative z-10">
-          <div className="max-w-content mx-auto">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-clay/10 text-clay rounded-full text-body-sm mb-6">
-              <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
-              <span>{t('home.role')}</span>
+      {/* ── Hero Section ── */}
+      <section className="relative overflow-hidden bg-cream-200 border-b border-border" aria-labelledby="hero-heading">
+        {/* Grid background */}
+        <div className="absolute inset-0 bg-grid-pattern opacity-40 pointer-events-none" aria-hidden="true" />
+        {/* Radial glow */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-clay/5 blur-[120px] pointer-events-none" aria-hidden="true" />
+
+        <div className="section-container py-section-sm md:py-section relative z-10">
+          <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
+            {/* Left: Text */}
+            <div className="flex-1 text-center lg:text-left">
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-clay/10 border border-clay/20 text-clay text-body-sm mb-8">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-clay opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-clay" />
+                </span>
+                <span>{t('home.role')}</span>
+              </div>
+
+              <h1 id="hero-heading" className="font-display text-hero text-ink mb-6 text-balance leading-[1.1]">
+                {t.rich('home.heroTitle', {
+                  clay: (chunks) => <span className="gradient-text">{chunks}</span>,
+                  br: () => <br />
+                })}
+              </h1>
+
+              <p className="text-lead text-ink-soft max-w-xl mb-10 lg:mb-12">
+                {t('home.heroDescription')}
+              </p>
+
+              <nav className="flex items-center gap-4 justify-center lg:justify-start" aria-label="Homepage actions">
+                <Link href="#posts">
+                  <Button size="lg" className="group relative overflow-hidden">
+                    <span className="relative z-10">{t('home.browseArticles')}</span>
+                    <span className="absolute inset-0 bg-gradient-to-r from-primary to-clay opacity-0 group-hover:opacity-20 transition-opacity duration-300" />
+                  </Button>
+                </Link>
+                <Link href="/category/ai">
+                  <Button variant="outline" size="lg" className="group">
+                    {t('home.exploreAI')}
+                    <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                  </Button>
+                </Link>
+              </nav>
             </div>
-            <h1 id="hero-heading" className="font-display text-hero text-ink mb-5 text-balance leading-[1.1]">
-              {t.rich('home.heroTitle', { clay: (chunks) => <span className="text-clay">{chunks}</span>, br: () => <br /> })}
-            </h1>
-            <p className="text-lead text-ink-soft max-w-2xl mx-auto mb-10">
-              {t('home.heroDescription')}
-            </p>
-            <nav className="flex items-center justify-center gap-4" aria-label="Homepage actions">
-              <Link href="#posts"><Button size="lg">{t('home.browseArticles')}</Button></Link>
-              <Link href="/category/ai"><Button variant="outline" size="lg">{t('home.exploreAI')} <ArrowRight className="h-4 w-4 ml-2" /></Button></Link>
-            </nav>
+
+            {/* Right: 3D Wireframe Sphere */}
+            <div className="hidden lg:flex items-center justify-center flex-shrink-0">
+              <div className="wireframe-sphere animate-spin-slow" aria-hidden="true" />
+            </div>
+          </div>
+
+          {/* Scroll indicator */}
+          <div className="flex justify-center mt-16 lg:mt-20">
+            <button
+              onClick={() => document.getElementById('posts')?.scrollIntoView({ behavior: 'smooth' })}
+              className="flex flex-col items-center gap-2 text-ink-muted hover:text-clay transition-colors animate-bounce"
+              aria-label="Scroll to content"
+            >
+              <span className="text-caption-sm">{t('home.scrollDown')}</span>
+              <span className="material-symbols-outlined text-[20px]">keyboard_arrow_down</span>
+            </button>
           </div>
         </div>
+
         <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-cream-200 to-transparent pointer-events-none" aria-hidden="true" />
       </section>
 
-      {/* Topic sections */}
+      {/* ── Topic Sections ── */}
       {TOPICS.map((topic, ti) => {
         const Icon = topic.icon;
         const postsForTopic = topicPosts[topic.slug] || [];
         const cat = categories.find((c: any) => c.slug === topic.slug);
         if (postsForTopic.length === 0 && !cat) return null;
 
+        const isAI = topic.slug === 'ai';
+        const isBlockchain = topic.slug === 'blockchain';
+
         return (
-          <section key={topic.slug} className={`${ti % 2 === 0 ? 'bg-cream-200' : 'bg-cream-100'} border-b border-border`} aria-labelledby={`topic-heading-${topic.slug}`}>
-            <div className="section-container py-section-sm">
-              <div className="flex items-center justify-between mb-8">
-                <div className="flex items-center gap-4">
-                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${topic.color} flex items-center justify-center`} aria-hidden="true">
-                    <Icon className="h-6 w-6 text-ink" />
+          <SectionReveal key={topic.slug}>
+            <section
+              className={`relative ${ti % 2 === 0 ? 'bg-cream-100' : 'bg-cream-200'} border-b border-border overflow-hidden`}
+              aria-labelledby={`topic-heading-${topic.slug}`}
+            >
+              {/* Section-specific background */}
+              {isAI && <div className="absolute inset-0 bg-circuit-pattern opacity-30 pointer-events-none" aria-hidden="true" />}
+              {isBlockchain && (
+                <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-clay/20 to-transparent pointer-events-none" aria-hidden="true" />
+              )}
+
+              <div className="section-container py-section-sm relative z-10">
+                {/* Section Header */}
+                <div className="flex items-center justify-between mb-10">
+                  <div className="flex items-center gap-5">
+                    <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${topic.color} flex items-center justify-center ${isAI ? 'animate-pulse-glow' : ''}`} aria-hidden="true">
+                      <Icon className="h-7 w-7 text-ink" />
+                    </div>
+                    <div>
+                      <h2 id={`topic-heading-${topic.slug}`} className="font-display text-display-md text-ink group">
+                        <span className="relative">
+                          {topic.label}
+                          <span className="absolute -bottom-1 left-0 h-0.5 bg-clay w-0 group-hover:w-full transition-all duration-500" />
+                        </span>
+                      </h2>
+                      <p className="text-body-sm text-ink-muted mt-1">{topic.desc}</p>
+                    </div>
                   </div>
-                  <div>
-                    <h2 id={`topic-heading-${topic.slug}`} className="font-display text-display-md text-ink">{topic.label}</h2>
-                    <p className="text-body-sm text-ink-muted">{topic.desc}</p>
-                  </div>
+                  {cat && (
+                    <Link href={`/category/${cat.slug}`}>
+                      <Button variant="ghost" size="sm" className="group">
+                        {t('common.viewAll')}
+                        <ChevronRight className="h-4 w-4 ml-1 group-hover:translate-x-1 transition-transform" />
+                      </Button>
+                    </Link>
+                  )}
                 </div>
-                {cat && (
-                  <Link href={`/category/${cat.slug}`}>
-                    <Button variant="ghost" size="sm">
-                      {t('common.viewAll')} <ChevronRight className="h-4 w-4 ml-1" />
-                    </Button>
-                  </Link>
+
+                {/* Posts Grid */}
+                {postsForTopic.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {postsForTopic.slice(0, 4).map((post: any, idx: number) => (
+                      isAI && idx === 0 ? (
+                        <div key={post.id} className="md:col-span-2 gradient-border-glow rounded-editorial">
+                          <PostCard post={post} featured />
+                        </div>
+                      ) : (
+                        <PostCard key={post.id} post={post} />
+                      )
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-16 bg-surface/30 rounded-editorial border border-border border-dashed">
+                    <Icon className="h-10 w-10 mx-auto mb-3 text-ink-faint opacity-50" />
+                    <p className="text-body text-ink-muted">{t('home.noArticlesTopic')}</p>
+                  </div>
                 )}
               </div>
-
-              {postsForTopic.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                  {postsForTopic.slice(0, 4).map((post: any) => (
-                    <PostCard key={post.id} post={post} />
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-12 bg-surface/50 rounded-editorial border border-border border-dashed">
-                  <p className="text-body text-ink-muted">{t('home.noArticlesTopic')}</p>
-                </div>
-              )}
-            </div>
-          </section>
+            </section>
+          </SectionReveal>
         );
       })}
 
-      {/* Inline banners between topics and posts */}
       <BannerCarousel zone="inline" />
 
-      {/* Latest posts grid */}
+      {/* ── Latest Posts ── */}
       <section id="posts" className="bg-cream-200" aria-labelledby="latest-heading">
         <div className="section-container py-section-sm">
           <div className="flex items-center justify-between mb-8">
@@ -154,14 +282,26 @@ export default function HomePageClient() {
             </div>
           </div>
 
+          {/* Quick filter chips */}
+          <div className="flex flex-wrap gap-2 mb-8">
+            {categories.filter((c: any) => ['ai','web3','blockchain'].includes(c.slug)).map((cat: any) => (
+              <button
+                key={cat.id}
+                className="px-4 py-1.5 rounded-full text-label-sm border border-border text-ink-muted hover:text-clay hover:border-clay/30 transition-colors"
+              >
+                {cat.name}
+              </button>
+            ))}
+          </div>
+
           {loading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {[1,2,3,4,5,6].map(i => (
                 <div key={i} className="space-y-4">
-                  <Skeleton className="aspect-[4/3] rounded-editorial" />
-                  <Skeleton className="h-4 w-1/3" />
-                  <Skeleton className="h-6 w-full" />
-                  <Skeleton className="h-4 w-2/3" />
+                  <Skeleton className="aspect-[4/3] rounded-editorial shimmer" />
+                  <Skeleton className="h-4 w-1/3 shimmer" />
+                  <Skeleton className="h-6 w-full shimmer" />
+                  <Skeleton className="h-4 w-2/3 shimmer" />
                 </div>
               ))}
             </div>
@@ -173,50 +313,71 @@ export default function HomePageClient() {
           ) : (
             <>
               <div ref={postsRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16">
-                {posts.map(post => <PostCard key={post.id} post={post} />)}
+                {posts.map((post, idx) => (
+                  <PostCard key={post.id} post={post} index={idx} />
+                ))}
               </div>
 
-              {totalPages > 1 && (
-                <nav className="flex justify-center items-center gap-3 mt-16" aria-label="Pagination">
-                  <Button variant="outline" onClick={() => setPage(p => Math.max(1, p-1))} disabled={page === 1}>{t('common.previous')}</Button>
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
-                    <Button key={p} variant={p === page ? 'default' : 'outline'} onClick={() => setPage(p)} className="min-w-[40px]" aria-current={p === page ? 'page' : undefined}>{p}</Button>
-                  ))}
-                  <Button variant="outline" onClick={() => setPage(p => Math.min(totalPages, p+1))} disabled={page === totalPages}>{t('common.next')}</Button>
-                </nav>
+              {totalPages > page && (
+                <div className="flex justify-center mt-12">
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    onClick={() => setPage(p => p + 1)}
+                    className="group"
+                  >
+                    {t('common.loadMore')}
+                    <span className="material-symbols-outlined text-[18px] ml-2 group-hover:translate-y-0.5 transition-transform">expand_more</span>
+                  </Button>
+                </div>
               )}
             </>
           )}
         </div>
       </section>
 
-      {/* Sidebar zone banner */}
       <BannerCarousel zone="sidebar" />
 
-      {/* About the author */}
+      {/* ── About Author ── */}
       <section className="bg-cream-100 border-t border-border" aria-labelledby="about-heading">
         <div className="section-container py-section-sm">
-          <div className="max-w-content mx-auto text-center">
-            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-clay to-teal flex items-center justify-center mx-auto mb-6" aria-hidden="true">
+          <div className="max-w-content mx-auto text-center mb-12">
+            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-clay to-primary flex items-center justify-center mx-auto mb-6 shadow-lg shadow-clay/20" aria-hidden="true">
               <span className="font-display text-display-md text-white">F</span>
             </div>
             <h2 id="about-heading" className="font-display text-display-md text-ink mb-3">{t('home.aboutAuthor')}</h2>
             <p className="text-body text-ink-soft max-w-2xl mx-auto leading-relaxed">
               {t('home.aboutDesc')}
             </p>
-            <div className="flex items-center justify-center gap-6 mt-8 text-body-sm text-ink-muted">
-              <span className="flex items-center gap-1.5"><Cpu className="h-4 w-4" aria-hidden="true" /> {t('home.topicFrontend')}</span>
-              <span className="flex items-center gap-1.5"><Sparkles className="h-4 w-4" aria-hidden="true" /> {t('home.topicAI')}</span>
-              <span className="flex items-center gap-1.5"><Globe className="h-4 w-4" aria-hidden="true" /> {t('home.topicWeb3')}</span>
-              <span className="flex items-center gap-1.5"><Database className="h-4 w-4" aria-hidden="true" /> {t('home.topicBlockchain')}</span>
-            </div>
+          </div>
+
+          {/* Skill timeline */}
+          <div className="flex flex-wrap items-center justify-center gap-3 md:gap-6 text-body-sm text-ink-muted mb-10">
+            {[
+              { label: t('home.topicFrontend'), icon: Cpu, color: 'text-clay' },
+              { label: t('home.topicAI'), icon: Sparkles, color: 'text-primary' },
+              { label: t('home.topicWeb3'), icon: Globe, color: 'text-secondary' },
+              { label: t('home.topicBlockchain'), icon: Database, color: 'text-tertiary' },
+            ].map((skill, i) => (
+              <div key={i} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-surface/50 border border-border hover:border-clay/30 transition-colors">
+                <skill.icon className={`h-4 w-4 ${skill.color}`} aria-hidden="true" />
+                <span>{skill.label}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Quote card */}
+          <div className="max-w-xl mx-auto text-center p-6 rounded-editorial bg-surface/30 border border-border">
+            <p className="text-body text-ink-soft italic">
+              &ldquo;{t('home.aboutQuote')}&rdquo;
+            </p>
           </div>
         </div>
       </section>
 
-      {/* Footer zone banner */}
       <BannerCarousel zone="footer" />
 
+      <BackToTop />
       <Footer />
     </>
   );
