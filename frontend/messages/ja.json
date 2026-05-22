@@ -27,6 +27,9 @@
     "less": "折りたたむ",
     "viewAll": "すべて表示",
     "showMore": "さらに表示",
+    "loadMore": "もっと読み込む",
+    "view": "表示",
+    "clearFilter": "フィルターをクリア",
     "noData": "データがありません",
     "noResults": "結果が見つかりません",
     "pageNotFound": "ページが見つかりません",
@@ -196,7 +199,15 @@
     "topicFrontend": "フロントエンド",
     "topicAI": "AI",
     "topicWeb3": "Web3",
-    "topicBlockchain": "ブロックチェーン"
+    "topicBlockchain": "ブロックチェーン",
+    "aboutQuote": "未来を予測する最良の方法は、それを発明することだ。",
+    "scrollDown": "スクロールして探索",
+    "sectionAiLabel": "人工知能",
+    "sectionAiDesc": "LLM、AIエージェント、プロンプトエンジニアリング、そして知能の未来",
+    "sectionWeb3Label": "Web3",
+    "sectionWeb3Desc": "分散型ウェブ、dApp、スマートコントラクト、そして進化するインターネット",
+    "sectionBlockchainLabel": "ブロックチェーン",
+    "sectionBlockchainDesc": "分散台帳、コンセンサスメカニズム、DeFi、そして暗号インフラ"
   },
   "posts": {
     "title": "記事",
@@ -944,6 +955,7 @@
     "generationPrompt": "生成プロンプト",
     "mathematics": "数学",
     "physicsLabel": "物理",
+    "biology": "生物",
     "versionLabel": "バージョン {version}",
     "updated": "更新日",
     "downloaded": "HTMLとしてダウンロードしました",
@@ -1032,7 +1044,8 @@
       "switchPerspective": "視点を切り替え",
       "empty": "まだ実験はありません。管理パネルから作成してください。",
       "notFound": "実験が見つかりません",
-      "noViz": "可視化がありません"
+      "noViz": "可視化がありません",
+      "morePerspectives": "その他の視点"
     },
     "fullscreen": "全画面",
     "interactive": "インタラクティブ可視化",
@@ -1058,6 +1071,11 @@
       "changeAction": "\"{param}\" を変更しました"
     },
     "viewSource": "ソースコードを表示",
+    "popular": "人気",
+    "createYourOwn": "独自の可視化を作成",
+    "createYourOwnDesc": "AIを使ってインタラクティブな数学と物理の可視化を生成します。コーディング不要 — コンセプトを説明するだけで、それが生き生きと動き出します。",
+    "startCreating": "作成を開始",
+    "createFirst": "最初の可視化を作成",
     "fork": "フォーク",
     "forkFailed": "フォークに失敗しました",
     "forked": "フォーク成功"

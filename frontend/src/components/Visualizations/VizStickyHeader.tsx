@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { ChevronLeft } from 'lucide-react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
@@ -68,6 +69,18 @@ export default function VizStickyHeader({
   onShare,
 }: Props) {
   const t = useTranslations();
+  const [scrolled, setScrolled] = useState(false);
+  const [scrollPercent, setScrollPercent] = useState(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+      const docH = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+      setScrollPercent(docH > 0 ? (window.scrollY / docH) * 100 : 0);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const actions: ToolbarAction[] = [
     { key: 'code', icon: Code, label: t('viz.viewSource'), onClick: onToggleCode, active: showCode },
@@ -88,7 +101,13 @@ export default function VizStickyHeader({
   const overflowActions = visibleActions.slice(3);
 
   return (
-    <div className="sticky top-0 z-30 bg-surface/80 backdrop-blur-xl border-b border-outline-variant">
+    <div
+      className={`sticky top-0 z-30 border-b transition-all duration-300 ${
+        scrolled
+          ? 'bg-surface/80 backdrop-blur-xl border-outline-variant shadow-lg'
+          : 'bg-surface/30 backdrop-blur-sm border-transparent'
+      }`}
+    >
       <div className="max-w-grid mx-auto px-3 sm:px-6 py-2 flex items-center justify-between">
         <Link
           href="/visualizations"
@@ -109,8 +128,8 @@ export default function VizStickyHeader({
           )}
         </div>
 
-        {/* Desktop toolbar */}
-        <div className="hidden lg:flex items-center gap-1">
+        {/* Desktop toolbar — icon-only buttons */}
+        <div className="hidden lg:flex items-center gap-0.5">
           {visibleActions.map(action => (
             <Button
               key={action.key}
@@ -119,10 +138,13 @@ export default function VizStickyHeader({
               onClick={action.onClick}
               disabled={action.disabled}
               title={action.label}
-              className={action.active ? 'bg-tertiary hover:bg-tertiary/90 text-surface' : ''}
+              className={`relative transition-all duration-200 ${
+                action.active
+                  ? 'bg-tertiary hover:bg-tertiary/90 text-surface shadow-md shadow-tertiary/20'
+                  : 'hover:bg-white/[0.06] text-on-surface-variant hover:text-on-surface'
+              }`}
             >
               <action.icon className="h-4 w-4" />
-              {action.key === 'share' && <span className="ml-1 hidden xl:inline">{action.label}</span>}
             </Button>
           ))}
         </div>
@@ -131,7 +153,7 @@ export default function VizStickyHeader({
         <div className="lg:hidden">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm">
+              <Button variant="ghost" size="sm" className="hover:bg-white/[0.06]">
                 <MoreHorizontal className="h-5 w-5" />
               </Button>
             </DropdownMenuTrigger>
@@ -142,7 +164,6 @@ export default function VizStickyHeader({
                   {action.label}
                 </DropdownMenuItem>
               ))}
-              {/* Show primary actions in mobile menu too for completeness */}
               {primaryActions.map(action => (
                 <DropdownMenuItem key={`m-${action.key}`} onClick={action.onClick} disabled={action.disabled}>
                   <action.icon className="h-4 w-4 mr-2" />
@@ -152,6 +173,14 @@ export default function VizStickyHeader({
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
+      </div>
+
+      {/* Reading progress bar */}
+      <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-outline-variant/30">
+        <div
+          className="h-full bg-gradient-to-r from-clay via-tertiary to-clay transition-[width] duration-150 ease-out"
+          style={{ width: `${scrollPercent}%` }}
+        />
       </div>
     </div>
   );

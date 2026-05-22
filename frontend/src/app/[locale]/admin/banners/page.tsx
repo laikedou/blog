@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   DndContext,
   closestCenter,
@@ -364,14 +365,15 @@ export default function AdminBannersPage() {
                     required
                     className="flex-1"
                   />
-                  <select
-                    value={aiProvider}
-                    onChange={e => setAiProvider(e.target.value)}
-                    className="h-10 px-3 rounded-lg border border-border bg-surface-container text-on-surface font-label-md text-label-md focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all"
-                  >
-                    <option value="grok">{t('admin.bannerProviderGrok')}</option>
-                    <option value="cloudflare">{t('admin.bannerProviderCloudflare')}</option>
-                  </select>
+                  <Select value={aiProvider} onValueChange={setAiProvider}>
+                    <SelectTrigger className="w-[140px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="grok">{t('admin.bannerProviderGrok')}</SelectItem>
+                      <SelectItem value="cloudflare">{t('admin.bannerProviderCloudflare')}</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <Button
                     type="button"
                     variant="outline"
@@ -405,16 +407,17 @@ export default function AdminBannersPage() {
                   <label className="block font-body-sm text-body-sm text-on-surface-variant mb-1.5">
                     {t('admin.bannerLinkToPost')}
                   </label>
-                  <select
-                    value={form.postId}
-                    onChange={e => handleChange('postId', e.target.value)}
-                    className="w-full h-10 px-3 rounded-lg border border-border bg-surface-container text-on-surface font-body-md text-body-md focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all"
-                  >
-                    <option value="none">{t('admin.bannerNoLink')}</option>
-                    {posts.map(p => (
-                      <option key={p.id} value={String(p.id)}>{p.title}</option>
-                    ))}
-                  </select>
+                  <Select value={form.postId || 'none'} onValueChange={v => handleChange('postId', v)}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">{t('admin.bannerNoLink')}</SelectItem>
+                      {posts.map(p => (
+                        <SelectItem key={p.id} value={String(p.id)}>{p.title}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div>
                   <label className="block font-body-sm text-body-sm text-on-surface-variant mb-1.5">
@@ -442,16 +445,17 @@ export default function AdminBannersPage() {
                 <label className="block font-body-sm text-body-sm text-on-surface-variant mb-1.5">
                   Zone
                 </label>
-                <select
-                  value={form.zone}
-                  onChange={e => handleChange('zone', e.target.value)}
-                  className="w-full h-10 px-3 rounded-lg border border-border bg-surface-container text-on-surface font-body-md text-body-md focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all"
-                >
-                  <option value="hero">Hero (main carousel)</option>
-                  <option value="sidebar">Sidebar</option>
-                  <option value="inline">Inline (between sections)</option>
-                  <option value="footer">Footer (above footer)</option>
-                </select>
+                <Select value={form.zone} onValueChange={v => handleChange('zone', v)}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="hero">Hero (main carousel)</SelectItem>
+                    <SelectItem value="sidebar">Sidebar</SelectItem>
+                    <SelectItem value="inline">Inline (between sections)</SelectItem>
+                    <SelectItem value="footer">Footer (above footer)</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* Scheduling */}

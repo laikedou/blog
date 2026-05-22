@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 function formatTokens(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
@@ -264,47 +265,31 @@ export default function AdminAiUsagePage() {
         <div className="p-6 border-b border-border flex flex-wrap gap-4 items-center justify-between">
           <div className="flex gap-4 items-center">
             {/* Provider Filter */}
-            <div className="relative">
-              <select
-                value={providerFilter || '__all'}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  setProviderFilter(v === '__all' ? '' : v);
-                  setPage(1);
-                }}
-                className="appearance-none bg-surface-container px-4 py-2 pr-10 rounded-lg border border-white/10 text-body-sm text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary min-w-[140px] cursor-pointer"
-              >
-                <option value="__all">{t('admin.aiUsageAll')}</option>
-                <option value="deepseek">DeepSeek</option>
-                <option value="openai">OpenAI</option>
-                <option value="claude">Claude</option>
-                <option value="gemini">Gemini</option>
-                <option value="grok">Grok</option>
-              </select>
-              <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant text-sm">
-                expand_more
-              </span>
-            </div>
+            <Select value={providerFilter || '__all'} onValueChange={(v) => { setProviderFilter(v === '__all' ? '' : v); setPage(1); }}>
+              <SelectTrigger className="min-w-[140px]">
+                <SelectValue placeholder={t('admin.aiUsageAll')} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all">{t('admin.aiUsageAll')}</SelectItem>
+                <SelectItem value="deepseek">DeepSeek</SelectItem>
+                <SelectItem value="openai">OpenAI</SelectItem>
+                <SelectItem value="claude">Claude</SelectItem>
+                <SelectItem value="gemini">Gemini</SelectItem>
+                <SelectItem value="grok">Grok</SelectItem>
+              </SelectContent>
+            </Select>
 
             {/* Status Filter */}
-            <div className="relative">
-              <select
-                value={statusFilter || '__all'}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  setStatusFilter(v === '__all' ? '' : v);
-                  setPage(1);
-                }}
-                className="appearance-none bg-surface-container px-4 py-2 pr-10 rounded-lg border border-white/10 text-body-sm text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary min-w-[140px] cursor-pointer"
-              >
-                <option value="__all">{t('admin.aiUsageAll')}</option>
-                <option value="success">Success</option>
-                <option value="error">Error</option>
-              </select>
-              <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant text-sm">
-                expand_more
-              </span>
-            </div>
+            <Select value={statusFilter || '__all'} onValueChange={(v) => { setStatusFilter(v === '__all' ? '' : v); setPage(1); }}>
+              <SelectTrigger className="min-w-[140px]">
+                <SelectValue placeholder={t('admin.aiUsageAll')} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all">{t('admin.aiUsageAll')}</SelectItem>
+                <SelectItem value="success">Success</SelectItem>
+                <SelectItem value="error">Error</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="flex gap-2 items-center">
