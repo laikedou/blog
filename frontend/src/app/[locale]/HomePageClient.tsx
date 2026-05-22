@@ -11,7 +11,7 @@ import { posts as postsApi, categories as categoriesApi } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { animate, stagger } from 'animejs';
-import { ArrowRight, Sparkles, Cpu, Globe, Database, ChevronRight } from 'lucide-react';
+import { ArrowRight, Sparkles, Cpu, Globe, Database, ChevronRight, ChevronDown } from 'lucide-react';
 
 const TOPICS = [
   { slug: 'ai', label: 'Artificial Intelligence', icon: Sparkles, desc: 'LLMs, AI agents, prompt engineering, and the future of intelligence', color: 'from-violet-500/20 to-fuchsia-500/10' },
@@ -129,22 +129,62 @@ export default function HomePageClient() {
       <BannerCarousel zone="hero" />
 
       {/* ── Hero Section ── */}
-      <section className="relative overflow-hidden bg-cream-200 border-b border-border" aria-labelledby="hero-heading">
-        {/* Grid background */}
-        <div className="absolute inset-0 bg-grid-pattern opacity-40 pointer-events-none" aria-hidden="true" />
-        {/* Radial glow */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-clay/5 blur-[120px] pointer-events-none" aria-hidden="true" />
+      <section
+        className="relative overflow-hidden bg-cream-200 border-b border-border min-h-[85vh] flex items-center"
+        aria-labelledby="hero-heading"
+        onMouseMove={(e) => {
+          const glow = document.getElementById('hero-cursor-glow');
+          if (glow) {
+            const rect = e.currentTarget.getBoundingClientRect();
+            glow.style.left = `${e.clientX - rect.left}px`;
+            glow.style.top = `${e.clientY - rect.top}px`;
+            glow.style.opacity = '1';
+          }
+        }}
+        onMouseLeave={() => {
+          const glow = document.getElementById('hero-cursor-glow');
+          if (glow) glow.style.opacity = '0';
+        }}
+      >
+        {/* Particle field */}
+        <div className="particle-field" aria-hidden="true">
+          <div className="particle-dot fast" style={{ width: 4, height: 4, background: 'rgba(76,215,246,0.4)', top: '15%', left: '10%', animationDelay: '0s', boxShadow: '0 0 8px rgba(76,215,246,0.3)' }} />
+          <div className="particle-dot slow" style={{ width: 3, height: 3, background: 'rgba(175,198,255,0.45)', top: '25%', left: '75%', animationDelay: '1s' }} />
+          <div className="particle-dot fast" style={{ width: 5, height: 5, background: 'rgba(76,215,246,0.2)', top: '60%', left: '18%', animationDelay: '2s', boxShadow: '0 0 10px rgba(76,215,246,0.15)' }} />
+          <div className="particle-dot slow" style={{ width: 3, height: 3, background: 'rgba(221,183,255,0.4)', top: '40%', left: '85%', animationDelay: '0.5s' }} />
+          <div className="particle-dot fast" style={{ width: 4, height: 4, background: 'rgba(175,198,255,0.3)', top: '70%', left: '50%', animationDelay: '1.5s', boxShadow: '0 0 6px rgba(175,198,255,0.2)' }} />
+          <div className="particle-dot slow" style={{ width: 6, height: 6, background: 'rgba(76,215,246,0.12)', top: '8%', left: '45%', animationDelay: '3s' }} />
+          <div className="particle-dot fast" style={{ width: 2, height: 2, background: 'rgba(221,183,255,0.5)', top: '80%', left: '65%', animationDelay: '0.8s' }} />
+          <div className="particle-dot slow" style={{ width: 3, height: 3, background: 'rgba(76,215,246,0.3)', top: '35%', left: '32%', animationDelay: '2.5s' }} />
+          <div className="particle-dot fast" style={{ width: 5, height: 5, background: 'rgba(175,198,255,0.18)', top: '55%', left: '55%', animationDelay: '1.2s', boxShadow: '0 0 8px rgba(175,198,255,0.12)' }} />
+          <div className="particle-dot slow" style={{ width: 2, height: 2, background: 'rgba(76,215,246,0.35)', top: '90%', left: '15%', animationDelay: '3.5s' }} />
+        </div>
 
-        <div className="section-container py-section-sm md:py-section relative z-10">
+        {/* Orbiting rings — right side on desktop */}
+        <div className="absolute right-[-5%] top-1/2 -translate-y-1/2 hidden lg:block" aria-hidden="true">
+          <div className="orbit-ring" style={{ width: 480, height: 480, marginLeft: -240, marginTop: -240 }} />
+          <div className="orbit-ring" style={{ width: 360, height: 360, marginLeft: -180, marginTop: -180, animationDuration: '45s', animationDirection: 'reverse' }} />
+          <div className="orbit-ring" style={{ width: 240, height: 240, marginLeft: -120, marginTop: -120, animationDuration: '38s' }} />
+        </div>
+
+        {/* Cursor glow — positioned inside hero */}
+        <div id="hero-cursor-glow" className="cursor-glow" style={{ opacity: 0 }} aria-hidden="true" />
+
+        {/* Grid background */}
+        <div className="absolute inset-0 bg-grid-pattern opacity-30 pointer-events-none" aria-hidden="true" />
+        {/* Radial ambient glow */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full bg-gradient-to-br from-clay/4 via-primary/2 to-transparent blur-[150px] pointer-events-none" aria-hidden="true" />
+
+        <div className="section-container py-section-sm md:py-section w-full relative z-10">
           <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
             {/* Left: Text */}
-            <div className="flex-1 text-center lg:text-left">
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-clay/10 border border-clay/20 text-clay text-body-sm mb-8">
+            <div className="flex-1 text-center lg:text-left max-w-xl">
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass-card mb-8">
                 <span className="relative flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-clay opacity-75" />
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-clay" />
                 </span>
-                <span>{t('home.role')}</span>
+                <span className="text-ink-muted text-body-sm">{t('home.role')}</span>
               </div>
 
               <h1 id="hero-heading" className="font-display text-hero text-ink mb-6 text-balance leading-[1.1]">
@@ -160,13 +200,12 @@ export default function HomePageClient() {
 
               <nav className="flex items-center gap-4 justify-center lg:justify-start" aria-label="Homepage actions">
                 <Link href="#posts">
-                  <Button size="lg" className="group relative overflow-hidden">
-                    <span className="relative z-10">{t('home.browseArticles')}</span>
-                    <span className="absolute inset-0 bg-gradient-to-r from-primary to-clay opacity-0 group-hover:opacity-20 transition-opacity duration-300" />
+                  <Button size="lg" className="magnetic-btn group relative overflow-hidden bg-gradient-to-r from-primary to-primary-container hover:from-primary-container hover:to-primary">
+                    <span className="relative z-10 text-primary-foreground">{t('home.browseArticles')}</span>
                   </Button>
                 </Link>
                 <Link href="/category/ai">
-                  <Button variant="outline" size="lg" className="group">
+                  <Button variant="outline" size="lg" className="magnetic-btn group border-clay/20 hover:border-clay/40">
                     {t('home.exploreAI')}
                     <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
                   </Button>
@@ -174,21 +213,21 @@ export default function HomePageClient() {
               </nav>
             </div>
 
-            {/* Right: 3D Wireframe Sphere */}
+            {/* Right: Wireframe sphere — enlarged */}
             <div className="hidden lg:flex items-center justify-center flex-shrink-0">
-              <div className="wireframe-sphere animate-spin-slow" aria-hidden="true" />
+              <div className="wireframe-sphere animate-spin-slow" aria-hidden="true" style={{ width: 360, height: 360 }} />
             </div>
           </div>
 
           {/* Scroll indicator */}
-          <div className="flex justify-center mt-16 lg:mt-20">
+          <div className="flex justify-center mt-16 lg:mt-24">
             <button
               onClick={() => document.getElementById('posts')?.scrollIntoView({ behavior: 'smooth' })}
               className="flex flex-col items-center gap-2 text-ink-muted hover:text-clay transition-colors animate-bounce"
               aria-label="Scroll to content"
             >
               <span className="text-caption-sm">{t('home.scrollDown')}</span>
-              <span className="material-symbols-outlined text-[20px]">keyboard_arrow_down</span>
+              <ChevronDown className="h-5 w-5" />
             </button>
           </div>
         </div>
