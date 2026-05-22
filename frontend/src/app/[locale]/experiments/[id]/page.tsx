@@ -58,13 +58,13 @@ export default function ExperimentDetailPage() {
   if (error || !group) {
     return (
       <div className="min-h-screen bg-cream-200 flex items-center justify-center">
-        <Card className="p-12 text-center max-w-md">
+        <div className="p-12 text-center max-w-md rounded-2xl border border-border bg-surface">
           <Layers className="h-16 w-16 mx-auto mb-4 text-ink-faint" />
           <p className="text-body text-ink-muted">{error || t('viz.experiment.notFound')}</p>
           <Link href="/experiments" className="mt-4 inline-block">
             <Button variant="outline"><ChevronLeft className="h-4 w-4 mr-1" /> {t('common.back')}</Button>
           </Link>
-        </Card>
+        </div>
       </div>
     );
   }

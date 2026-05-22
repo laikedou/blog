@@ -39,7 +39,7 @@ export default function PostCard({ post, featured, index }: PostCardProps) {
       duration: 600,
       delay: index !== undefined ? index * 80 : 100,
     });
-    return () => { anim.stop(); };
+    return () => { (anim as any).stop?.(); };
   }, [index]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {

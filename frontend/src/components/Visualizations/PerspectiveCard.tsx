@@ -50,7 +50,7 @@ export default function PerspectiveCard({ experiment, index }: Props) {
       duration: 500,
       delay: index !== undefined ? index * 100 : 0,
     });
-    return () => { anim.stop(); };
+    return () => { (anim as any).stop?.(); };
   }, [index]);
 
   const concept = experiment.concept || 'math';
