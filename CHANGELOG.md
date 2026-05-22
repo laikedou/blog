@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-05-22 — Grok TTS Migration
+
+### Breaking Changes
+- **TTS Provider** — Replaced Cloudflare Workers AI, Azure, and Edge TTS with a single Grok (xAI) TTS service (`backend/src/visualization/grok-tts.service.ts`)
+
+### Changes
+- **Removed** `azure-tts.service.ts`, `edge-tts.service.ts`, `cloudflare-tts.service.ts`
+- **Added** `GrokTtsService` — calls `https://api.x.ai/v1/tts` with `XAI_API_KEY` auth
+- **Simplified** `generateNarration()` — single TTS call instead of 3-provider fallback chain
+- **Config** — `.env.example` updated: added `XAI_API_KEY`, removed Cloudflare/Azure TTS vars
+- **Debug** — `http-exception.filter.ts` now logs to console in development
+
 ## 2026-05-22 — NestJS v11 Upgrade
 
 ### Breaking Changes

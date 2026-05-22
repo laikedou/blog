@@ -6,8 +6,7 @@ import { CloudflareAiService } from '../common/cloudflare-ai.service';
 import { NotificationsGateway } from '../common/notifications.gateway';
 import { heuristicSpamCheck, aiSpamCheck } from '../common/spam-checker';
 import { VisualizationAiService } from './visualization-ai.service';
-import { AzureTtsService } from './azure-tts.service';
-import { EdgeTtsService } from './edge-tts.service';
+import { GrokTtsService } from './grok-tts.service';
 import {
   CreateVisualizationDto,
   UpdateVisualizationDto,
@@ -27,8 +26,7 @@ export class VisualizationService {
     private ai: VisualizationAiService,
     private cloudflareAi: CloudflareAiService,
     private notifications: NotificationsGateway,
-    private azureTts: AzureTtsService,
-    private edgeTts: EdgeTtsService,
+    private grokTts: GrokTtsService,
   ) {}
 
   async generate(dto: GenerateVisualizationDto, authorId: number) {
@@ -871,6 +869,8 @@ export class VisualizationService {
   // ─── Narration (Feature 3) ─────────────────────────────────────
 
   async generateNarration(id: number, authorId: number, locale?: string) {
+    this.logger.debug(`generateNarration start: id=${id}, authorId=${authorId}, locale=${locale || 'en'}`);
+
     const viz = await this.findOne(id);
     if (viz.authorId !== authorId) throw new BadRequestException('Only the author can generate narration');
 
@@ -889,45 +889,26 @@ export class VisualizationService {
       authorId,
     );
 
-    // Generate audio via TTS:
-    // Priority: 1) Edge TTS (free, always available) 2) Azure TTS (if configured) 3) Browser fallback
+    this.logger.debug(`generateNarration script generated: segments=${segments.length}, fullTextLength=${fullText.length}`);
+    this.logger.debug(`generateNarration first segment: ${segments[0]?.text?.slice(0, 120) ?? 'N/A'}`);
+
     let audioUrl = '';
-    const ttsSources: { name: string; fn: () => Promise<Buffer> }[] = [
-      {
-        name: 'Edge TTS',
-        fn: () => this.edgeTts.synthesize(fullText, targetLocale),
-      },
-    ];
-    if (this.azureTts.isConfigured()) {
-      // If Azure is configured, try it first (higher reliability/throughput)
-      ttsSources.unshift({
-        name: 'Azure TTS',
-        fn: () => this.azureTts.synthesize(fullText, targetLocale),
-      });
-    }
 
-    for (const source of ttsSources) {
-      try {
-        const audioBuffer = await source.fn();
-        const narrationsDir = path.join(process.cwd(), 'uploads', 'narrations');
-        if (!fs.existsSync(narrationsDir)) {
-          fs.mkdirSync(narrationsDir, { recursive: true });
-        }
-        const fileName = `${id}_${targetLocale}.mp3`;
-        fs.writeFileSync(path.join(narrationsDir, fileName), audioBuffer);
-        audioUrl = `/uploads/narrations/${fileName}`;
-        this.logger.log(`Narration audio generated via ${source.name}: ${audioUrl}`);
-        break;
-      } catch (err: any) {
-        this.logger.warn(
-          `${source.name} failed for narration ${id}/${targetLocale}: ${err.message}`,
-        );
+    try {
+      const audioBuffer = await this.grokTts.synthesize(fullText, targetLocale);
+
+      const narrationsDir = path.join(process.cwd(), 'uploads', 'narrations');
+      if (!fs.existsSync(narrationsDir)) {
+        fs.mkdirSync(narrationsDir, { recursive: true });
       }
-    }
-
-    if (!audioUrl) {
+      const fileName = `${id}_${targetLocale}.mp3`;
+      const filePath = path.join(narrationsDir, fileName);
+      fs.writeFileSync(filePath, audioBuffer);
+      audioUrl = `/uploads/narrations/${fileName}`;
+      this.logger.log(`Narration audio generated via Grok TTS: ${audioUrl}`);
+    } catch (err: any) {
       this.logger.warn(
-        `No TTS provider available for narration ${id}/${targetLocale} — browser Web Speech API will be used as fallback`,
+        `Grok TTS failed for narration ${id}/${targetLocale}: ${err.message}`,
       );
     }
 
@@ -935,28 +916,40 @@ export class VisualizationService {
       where: { visualizationId_locale: { visualizationId: id, locale: targetLocale } },
     });
 
-    const data = {
-      segments: JSON.stringify(segments),
-      fullText,
-      audioUrl,
-      ...(existing ? { version: existing.version + 1, generatedAt: new Date() } : {}),
-    };
+    const segmentsJson = JSON.stringify(segments);
 
-    if (existing) {
-      return this.prisma.narrationScript.update({
-        where: { id: existing.id },
-        data,
+    try {
+      if (existing) {
+        const result = await this.prisma.narrationScript.update({
+          where: { id: existing.id },
+          data: {
+            segments: segmentsJson,
+            fullText,
+            audioUrl,
+            version: existing.version + 1,
+            generatedAt: new Date(),
+          },
+        });
+        this.logger.log(`Narration updated: id=${result.id}, version=${result.version}`);
+        return result;
+      }
+
+      const result = await this.prisma.narrationScript.create({
+        data: {
+          visualizationId: id,
+          locale: targetLocale,
+          title: viz.title,
+          segments: segmentsJson,
+          fullText,
+          audioUrl,
+        },
       });
+      this.logger.log(`Narration created: id=${result.id}`);
+      return result;
+    } catch (err: any) {
+      this.logger.error(`Failed to save narration: ${err.message}`, err.stack);
+      throw new InternalServerErrorException('Failed to save narration');
     }
-
-    return this.prisma.narrationScript.create({
-      data: {
-        visualizationId: id,
-        locale: targetLocale,
-        title: viz.title,
-        ...data,
-      },
-    });
   }
 
   async getNarration(id: number, locale?: string) {
