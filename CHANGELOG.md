@@ -1,5 +1,20 @@
 # Changelog
 
+## 2026-05-22 — Plate.js AI Editor & Multi-Provider AI Support
+
+### Breaking Changes
+- **Plate.js Editor** — Replaced wangeditor with Plate.js rich-text editor (192 component files). Maintains same `{ value, onChange, placeholder }` interface
+- **AI Multi-Provider** — Added `/api/ai/command` and `/api/ai/copilot` endpoints supporting OpenAI (via Gateway), DeepSeek, and Grok. Provider routing by model prefix (`deepseek/*`, `grok/*`, `openai/*`)
+
+### Dependencies
+- **Added**: `@ai-sdk/gateway`, `@ai-sdk/openai-compatible`, `@platejs/ai`, `@platejs/dnd`, `@platejs/markdown`, `@platejs/suggestion`, `@platejs/selection`, `@platejs/table`, `@platejs/media`, `@platejs/list`, `@platejs/link`, `@platejs/emoji`, `@platejs/indent`, `@platejs/docx`, `@platejs/callout`, `@platejs/code-block`, `@platejs/alignment`, `@platejs/font`, `platejs`, `react-dnd`, `react-dnd-html5-backend`, `showdown`, `@faker-js/faker`, `lodash`, `dedent`, `@types/lodash`, `@types/showdown`
+- **Removed**: `@wangeditor-next/editor`, `@wangeditor-next/editor-for-react`
+
+### Features
+- **RichEditor** — One-way data sync with `serializeMd` + `showdown` for HTML serialization, avoiding React context issues during static rendering. `BlogEditorKit` for lightweight editing without DnD/collaboration overhead
+- **AI Provider Routing** — `getModel()` in `src/lib/ai-providers.ts` auto-routes to DeepSeek when no `AI_GATEWAY_API_KEY` configured. Built-in support for API key config via env vars
+- **TooltipProvider** — Added to root layout (required by Plate.js components)
+
 ## 2026-05-21 — shadcn/ui & Tailwind CSS v4 Upgrade
 
 ### Breaking Changes

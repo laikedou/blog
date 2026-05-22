@@ -1,4 +1,6 @@
 @import "tailwindcss";
+
+@plugin "tailwind-scrollbar-hide";
 @import "tw-animate-css";
 
 @custom-variant dark (&:where(.dark, .dark *));
@@ -27,6 +29,8 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  --color-brand: var(--brand);
+  --color-highlight: var(--highlight);
 }
 
 @theme {
@@ -219,6 +223,8 @@
 
 :root {
   --radius: 0.5rem;
+  --highlight: oklch(0.852 0.199 91.936);
+  --brand: oklch(0.623 0.214 259.815);
 }
 
 :root,
@@ -689,3 +695,8 @@ html {
 .code-preview:not(.is-dark) .hljs-meta { color: #6e7781; }
 .code-preview:not(.is-dark) .hljs-doctag { color: #6e7781; }
 .code-preview:not(.is-dark) .hljs-punctuation { color: #6e7781; }
+
+.dark {
+  --highlight: oklch(0.852 0.199 91.936);
+  --brand: oklch(0.707 0.165 254.624);
+}
