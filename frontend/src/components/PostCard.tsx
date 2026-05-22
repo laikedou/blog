@@ -49,15 +49,17 @@ export default function PostCard({ post, featured, index }: PostCardProps) {
     const x = (e.clientX - rect.left) / rect.width - 0.5;
     const y = (e.clientY - rect.top) / rect.height - 0.5;
     setTiltStyle({
-      transform: `perspective(1000px) rotateY(${x * 4}deg) rotateX(${-y * 4}deg)`,
-      transition: 'transform 0.1s ease-out',
+      transform: `perspective(1000px) rotateY(${x * 6}deg) rotateX(${-y * 6}deg)`,
+      boxShadow: `${x * 6}px ${y * 6}px 24px rgba(0,0,0,0.25)`,
+      transition: 'transform 0.1s ease-out, box-shadow 0.1s ease-out',
     });
   }, []);
 
   const handleMouseLeave = useCallback(() => {
     setTiltStyle({
       transform: 'perspective(1000px) rotateY(0deg) rotateX(0deg)',
-      transition: 'transform 0.6s cubic-bezier(0.23, 1, 0.32, 1)',
+      boxShadow: 'none',
+      transition: 'transform 0.5s cubic-bezier(0.23, 1, 0.32, 1), box-shadow 0.5s cubic-bezier(0.23, 1, 0.32, 1)',
     });
   }, []);
 
