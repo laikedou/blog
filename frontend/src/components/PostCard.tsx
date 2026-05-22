@@ -32,13 +32,14 @@ export default function PostCard({ post, featured, index }: PostCardProps) {
   useEffect(() => {
     const el = cardRef.current;
     if (!el) return;
-    animate(el, {
+    const anim = animate(el, {
       opacity: [0, 1],
       translateY: [16, 0],
       easing: 'easeOutCubic',
       duration: 600,
       delay: index !== undefined ? index * 80 : 100,
     });
+    return () => { anim.stop(); };
   }, [index]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
@@ -89,7 +90,7 @@ export default function PostCard({ post, featured, index }: PostCardProps) {
         <div className="space-y-3">
           <div className="flex items-center gap-3">
             {post.category && (
-              <Link href={`/category/${post.category.slug}`}>
+              <Link href={`/category/${post.category.slug}`} aria-label={`Category: ${post.category.name}`}>
                 <Badge variant="outline" className="text-caption-sm" style={{ color: post.category.color, borderColor: post.category.color + '40' }}>
                   {post.category.name}
                 </Badge>
