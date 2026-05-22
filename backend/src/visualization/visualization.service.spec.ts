@@ -5,8 +5,7 @@ import { VisualizationAiService } from './visualization-ai.service';
 import { PrismaService } from '../common/prisma.service';
 import { CloudflareAiService } from '../common/cloudflare-ai.service';
 import { NotificationsGateway } from '../common/notifications.gateway';
-import { AzureTtsService } from './azure-tts.service';
-import { EdgeTtsService } from './edge-tts.service';
+import { GrokTtsService } from './grok-tts.service';
 
 describe('VisualizationService', () => {
   let service: VisualizationService;
@@ -55,11 +54,7 @@ describe('VisualizationService', () => {
     notifyVisualizationCreated: jest.fn(),
   };
 
-  const mockAzureTts = {
-    synthesize: jest.fn().mockResolvedValue(Buffer.from('')),
-  };
-
-  const mockEdgeTts = {
+  const mockGrokTts = {
     synthesize: jest.fn().mockResolvedValue(Buffer.from('')),
   };
 
@@ -72,8 +67,7 @@ describe('VisualizationService', () => {
         { provide: VisualizationAiService, useValue: mockAi },
         { provide: CloudflareAiService, useValue: mockCloudflareAi },
         { provide: NotificationsGateway, useValue: mockNotifications },
-        { provide: AzureTtsService, useValue: mockAzureTts },
-        { provide: EdgeTtsService, useValue: mockEdgeTts },
+        { provide: GrokTtsService, useValue: mockGrokTts },
       ],
     }).compile();
 

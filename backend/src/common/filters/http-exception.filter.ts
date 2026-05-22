@@ -26,6 +26,13 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const responseMessage =
       typeof message === 'string' ? message : message.message || message;
 
+    // Always log to console so errors are visible during development
+    if (exception instanceof HttpException) {
+      console.error(`[HTTP ${status}] ${request.method} ${request.url}: ${responseMessage}`);
+    } else {
+      console.error(`[${status}] ${request.method} ${request.url}:`, exception);
+    }
+
     // Log error to database (non-blocking — don't await to avoid feedback loop)
     if (this.logsService && status >= 400) {
       const userId = (request as any).user?.id;
