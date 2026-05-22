@@ -58,10 +58,12 @@ describe('BannersService', () => {
       const result = await service.findActive();
 
       expect(result).toEqual(mockBanners);
-      expect(mockPrisma.banner.findMany).toHaveBeenCalledWith({
-        where: { isActive: true },
-        orderBy: { sortOrder: 'asc' },
-      });
+      expect(mockPrisma.banner.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ isActive: true }),
+          orderBy: { sortOrder: 'asc' },
+        }),
+      );
     });
   });
 

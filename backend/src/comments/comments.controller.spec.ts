@@ -39,7 +39,7 @@ describe('CommentsController', () => {
     it('should call service.findAll with pagination', async () => {
       mockService.findAll.mockResolvedValue({ data: [], total: 0 });
       const result = await controller.findAll(1, 20);
-      expect(mockService.findAll).toHaveBeenCalledWith(1, 20);
+      expect(mockService.findAll).toHaveBeenCalledWith(1, 20, undefined);
       expect(result.total).toBe(0);
     });
   });

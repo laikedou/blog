@@ -3,6 +3,7 @@ import { CrawlService } from './crawl.service';
 import { PrismaService } from '../common/prisma.service';
 import { AiService } from '../ai/ai.service';
 import { CloudflareAiService } from '../common/cloudflare-ai.service';
+import { NotificationsGateway } from '../common/notifications.gateway';
 
 describe('CrawlService', () => {
   let service: CrawlService;
@@ -14,7 +15,7 @@ describe('CrawlService', () => {
     crawlSource: {
       findMany: jest.fn(),
       findUniqueOrThrow: jest.fn(),
-      findUnique: jest.fn(),
+      findUnique: jest.fn().mockResolvedValue({ id: 1 }),
       create: jest.fn(),
       update: jest.fn(),
       delete: jest.fn(),
@@ -72,6 +73,13 @@ describe('CrawlService', () => {
     generateCover: jest.fn().mockResolvedValue('/uploads/cover.jpg'),
   };
 
+  const mockNotificationsGateway = {
+    notifyCrawlStarted: jest.fn(),
+    notifyArticleCrawled: jest.fn(),
+    notifyCrawlComplete: jest.fn(),
+    notifyLog: jest.fn(),
+  };
+
   beforeEach(async () => {
     jest.clearAllMocks();
 
@@ -81,6 +89,7 @@ describe('CrawlService', () => {
         { provide: PrismaService, useValue: mockPrisma },
         { provide: AiService, useValue: mockAiService },
         { provide: CloudflareAiService, useValue: mockCloudflareAi },
+        { provide: NotificationsGateway, useValue: mockNotificationsGateway },
       ],
     }).compile();
 

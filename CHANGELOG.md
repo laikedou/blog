@@ -1,5 +1,24 @@
 # Changelog
 
+## 2026-05-22 — NestJS v11 Upgrade
+
+### Breaking Changes
+- **NestJS v11** — Upgraded from `@nestjs/core` v10.3.0 → v11.1.23 with Express v5 platform, updated CLI/schematics/testing to v11.x
+- **TypeScript** — Upgraded from v5.3.3 → v5.7.3
+- **reflect-metadata** — Upgraded from v0.1.14 → v0.2.2
+
+### Dependencies
+- **Updated**: `@nestjs/common`, `@nestjs/core`, `@nestjs/platform-express`, `@nestjs/websockets`, `@nestjs/platform-socket.io` → 11.1.23
+- **Updated**: `@nestjs/swagger` → 11.4.4, `@nestjs/jwt` → 11.0.2, `@nestjs/passport` → 11.0.5
+- **Updated**: `@nestjs/cli` → 11.0.21, `@nestjs/schematics` → 11.1.0, `@nestjs/testing` → 11.1.23
+- **Updated**: `typescript` → 5.7.3, `reflect-metadata` → 0.2.2, `rxjs` → 7.8.2
+
+### Fixes
+- **Test DI resolution** — Fixed test mocks for stricter NestJS v11 dependency injection (added missing `NotificationsGateway`, `AzureTtsService`, `EdgeTtsService` mocks, updated controller test expectations)
+
+### Verification
+- All 248 tests pass across 31 suites, build succeeds with no errors
+
 ## 2026-05-22 — Plate.js AI Editor & Multi-Provider AI Support
 
 ### Breaking Changes
