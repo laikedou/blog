@@ -1,18 +1,14 @@
 import { NextIntlClientProvider, hasLocale } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import { notFound } from 'next/navigation';
-import dynamic from 'next/dynamic';
 import { AuthProvider } from '@/lib/auth';
 import { Live2DProvider } from '@/lib/live2d-context';
 import ChatBot from '@/components/ChatBot';
+import Live2DWidgetLoader from '@/components/Live2DWidgetLoader';
 import { CustomHeadInjector } from '@/components/CustomHeadInjector';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { routing } from '@/i18n/routing';
 import './globals.css';
-
-const Live2DWidget = dynamic(() => import('@/components/Live2DWidget'), {
-  ssr: false,
-});
 
 export default async function LocaleLayout({
   children,
@@ -38,7 +34,7 @@ export default async function LocaleLayout({
               {children}
             </div>
             <ChatBot />
-            <Live2DWidget />
+            <Live2DWidgetLoader />
             <CustomHeadInjector />
           </TooltipProvider>
         </Live2DProvider>
