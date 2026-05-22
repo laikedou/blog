@@ -6,9 +6,7 @@ import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { experiments } from '@/lib/api';
 import { HtmlVisualizationRenderer } from '@/components/Visualizations/VisualizationRenderer';
-import ExperimentSwitcher from '@/components/Visualizations/ExperimentSwitcher';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ChevronLeft, Layers, BookOpen, Atom } from 'lucide-react';
 
@@ -43,8 +41,15 @@ export default function ExperimentDetailPage() {
     return (
       <div className="min-h-screen bg-cream-200">
         <div className="max-w-grid mx-auto px-6 py-section-sm">
-          <Skeleton className="h-8 w-48 mb-8" />
-          <Skeleton className="h-[500px] rounded-xl" />
+          <Skeleton className="h-5 w-48 mb-2 shimmer" />
+          <Skeleton className="h-10 w-96 mb-3 shimmer" />
+          <Skeleton className="h-5 w-64 mb-8 shimmer" />
+          <div className="flex gap-2 mb-6">
+            <Skeleton className="h-9 w-28 rounded-lg shimmer" />
+            <Skeleton className="h-9 w-28 rounded-lg shimmer" />
+            <Skeleton className="h-9 w-28 rounded-lg shimmer" />
+          </div>
+          <Skeleton className="h-[500px] rounded-2xl shimmer" />
         </div>
       </div>
     );
@@ -78,14 +83,26 @@ export default function ExperimentDetailPage() {
         <h1 className="font-display text-display-lg text-ink mb-2">{group.title}</h1>
         <p className="text-lead text-ink-muted mb-6">{group.description}</p>
 
-        <ExperimentSwitcher
-          perspectives={group.perspectives}
-          activeIndex={activeIndex}
-          onChange={(idx) => setActiveIndex(idx)}
-        />
+        {/* Pill-style perspective switcher */}
+        <div className="pill-switcher mb-6" role="tablist">
+          {group.perspectives.map((p: any, i: number) => (
+            <button
+              key={p.id}
+              role="tab"
+              aria-selected={i === activeIndex}
+              onClick={() => setActiveIndex(i)}
+              className={`pill-tab whitespace-nowrap ${i === activeIndex ? 'active' : ''}`}
+            >
+              {p.perspectiveName}
+            </button>
+          ))}
+        </div>
 
-        <Card className="border-border shadow-card overflow-hidden">
-          <div className="bg-white relative min-h-[500px]">
+        {/* Viz container with ambient glow */}
+        <div className="relative rounded-2xl border border-border bg-surface overflow-hidden shadow-card">
+          <div className="absolute inset-0 bg-gradient-to-br from-clay/[0.02] via-transparent to-primary/[0.02] pointer-events-none" aria-hidden="true" />
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[400px] h-px bg-gradient-to-r from-transparent via-clay/10 to-transparent pointer-events-none" aria-hidden="true" />
+          <div className="relative min-h-[500px]">
             {activeViz ? (
               <HtmlVisualizationRenderer
                 htmlContent={activeViz.htmlContent}
@@ -93,20 +110,17 @@ export default function ExperimentDetailPage() {
               />
             ) : (
               <div className="flex items-center justify-center h-[500px] text-ink-muted">
-                {t('viz.experiment.noViz')}
+                <Layers className="h-10 w-10 animate-breathe opacity-40" />
               </div>
             )}
           </div>
-        </Card>
-
-        {activeViz?.description && (
-          <Card className="border-border bg-surface-warm mt-6">
-            <CardContent className="p-6">
-              <h2 className="font-display text-display-xs text-ink mb-2">{activePerspective.perspectiveName}</h2>
-              <p className="text-body text-ink-muted">{activePerspective.subtitle}</p>
-            </CardContent>
-          </Card>
-        )}
+          {activeViz?.description && (
+            <div className="px-6 py-5 border-t border-border bg-surface-warm/50">
+              <h2 className="font-display text-display-xs text-ink mb-1">{activePerspective.perspectiveName}</h2>
+              <p className="text-body-sm text-ink-muted">{activePerspective.subtitle}</p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
