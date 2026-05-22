@@ -78,7 +78,7 @@ export default function BannerCarousel({ zone = 'hero' }: { zone?: string }) {
         {banners.map((b, i) => (
           <div
             key={b.id}
-            className={`absolute inset-0 transition-opacity duration-700 ${i === current ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+            className={`absolute inset-0 transition-all duration-700 ease-out ${i === current ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}`}
           >
             <img
               src={b.imageUrl}
