@@ -1103,6 +1103,21 @@
     "feedbackError": "Failed to submit feedback",
     "feedbackDesc": "Help me improve the blog! Share your thoughts or report an issue."
   },
+  "live2d": {
+    "menu": {
+      "hide": "Hide",
+      "show": "Show"
+    },
+    "tips": {
+      "0": "Welcome to the lab! Explore interactive visualizations.",
+      "1": "Got questions? Click the chat button to ask me anything!",
+      "2": "Check out the latest experiments in the lab.",
+      "welcome": {
+        "0": "Hi there! I'm your learning companion.",
+        "1": "Welcome back! Ready to explore?"
+      }
+    }
+  },
   "errors": {
     "generic": "Something went wrong",
     "notFound": "Page not found",
