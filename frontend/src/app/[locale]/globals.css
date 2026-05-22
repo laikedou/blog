@@ -221,6 +221,62 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-6px); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 5px rgba(76, 215, 246, 0.3); }
+  50% { box-shadow: 0 0 20px rgba(76, 215, 246, 0.6); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes typewriter-cursor {
+  0%, 100% { border-right-color: #4cd7f6; }
+  50% { border-right-color: transparent; }
+}
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes breathe {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.05); }
+}
+
+@keyframes draw-line {
+  from { stroke-dashoffset: 1000; }
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes count-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes node-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.7; }
+  50% { transform: scale(1.5); opacity: 1; }
+}
+
+@keyframes chain-glow {
+  0% { border-color: rgba(76, 215, 246, 0.2); }
+  100% { border-color: rgba(76, 215, 246, 0.8); }
+}
+
 :root {
   --radius: 0.5rem;
   --highlight: oklch(0.852 0.199 91.936);
@@ -699,4 +755,160 @@ html {
 .dark {
   --highlight: oklch(0.852 0.199 91.936);
   --brand: oklch(0.707 0.165 254.624);
+}
+
+/* Shimmer skeleton */
+.shimmer {
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.03) 50%, transparent 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Magnetic hover zone */
+.magnetic-zone {
+  transition: transform 0.3s cubic-bezier(0.33, 1, 0.68, 1);
+}
+
+/* Perspective card */
+.perspective-card {
+  perspective: 1000px;
+  transform-style: preserve-3d;
+}
+
+/* Grid background pattern */
+.bg-grid-pattern {
+  background-image:
+    linear-gradient(rgba(76, 215, 246, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(76, 215, 246, 0.03) 1px, transparent 1px);
+  background-size: 60px 60px;
+}
+
+/* Circuit pattern for AI section */
+.bg-circuit-pattern {
+  background-image:
+    radial-gradient(circle at 25% 25%, rgba(76, 215, 246, 0.04) 1px, transparent 1px),
+    radial-gradient(circle at 75% 75%, rgba(76, 215, 246, 0.04) 1px, transparent 1px);
+  background-size: 40px 40px, 60px 60px;
+}
+
+/* Typewriter text */
+.typewriter {
+  border-right: 2px solid #4cd7f6;
+  animation: typewriter-cursor 0.8s infinite;
+}
+
+/* Floating animation */
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* Pulse glow */
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* Slow spin */
+.animate-spin-slow {
+  animation: spin-slow 20s linear infinite;
+}
+
+/* Breathe */
+.animate-breathe {
+  animation: breathe 3s ease-in-out infinite;
+}
+
+/* Gradient text */
+.gradient-text {
+  background: linear-gradient(135deg, #afc6ff 0%, #4cd7f6 50%, #ddb7ff 100%);
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradient-shift 3s ease-in-out infinite;
+}
+
+/* Gradient border glow */
+.gradient-border-glow {
+  position: relative;
+}
+.gradient-border-glow::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(76, 215, 246, 0.3), rgba(175, 198, 255, 0.3), rgba(76, 215, 246, 0.1));
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+.gradient-border-glow:hover::before {
+  opacity: 1;
+}
+
+/* 3D wireframe sphere (CSS-only) */
+.wireframe-sphere {
+  width: 320px;
+  height: 320px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 50%, transparent 48%, rgba(76, 215, 246, 0.15) 49%, rgba(76, 215, 246, 0.15) 51%, transparent 52%),
+    radial-gradient(circle at 50% 50%, transparent 30%, rgba(76, 215, 246, 0.08) 31%, rgba(76, 215, 246, 0.08) 32%, transparent 33%),
+    radial-gradient(circle at 50% 50%, transparent 60%, rgba(76, 215, 246, 0.06) 61%, rgba(76, 215, 246, 0.06) 62%, transparent 63%),
+    conic-gradient(from 0deg, transparent 0deg, rgba(76, 215, 246, 0.1) 10deg, transparent 30deg, rgba(175, 198, 255, 0.1) 50deg, transparent 70deg, rgba(76, 215, 246, 0.1) 90deg, transparent 120deg, rgba(175, 198, 255, 0.1) 140deg, transparent 170deg, rgba(76, 215, 246, 0.1) 190deg, transparent 220deg, rgba(175, 198, 255, 0.1) 240deg, transparent 270deg, rgba(76, 215, 246, 0.1) 290deg, transparent 320deg, rgba(175, 198, 255, 0.1) 340deg, transparent 360deg);
+  position: relative;
+}
+.wireframe-sphere::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  border: 1px solid rgba(76, 215, 246, 0.15);
+  animation: spin-slow 20s linear infinite;
+}
+
+/* Floating geometry particles */
+.floating-geo {
+  position: absolute;
+  border-radius: 4px;
+  opacity: 0.1;
+}
+.floating-geo.circle {
+  border: 1px solid #4cd7f6;
+  border-radius: 50%;
+}
+
+/* Sticky progress bar */
+.scroll-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #afc6ff, #4cd7f6);
+  z-index: 100;
+  transition: width 0.1s linear;
+}
+
+/* Back to top button */
+.back-to-top {
+  position: fixed;
+  bottom: 32px;
+  right: 32px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(23, 31, 51, 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 50;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.3s, transform 0.3s;
+}
+.back-to-top.visible {
+  opacity: 1;
+  transform: translateY(0);
 }
