@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { visualizations, classrooms } from '@/lib/api';
@@ -16,17 +16,23 @@ import VizStickyHeader from '@/components/Visualizations/VizStickyHeader';
 import VizMetadataSection from '@/components/Visualizations/VizMetadataSection';
 import VizRendererCard from '@/components/Visualizations/VizRendererCard';
 import VizContentTabs from '@/components/Visualizations/VizContentTabs';
-import VizSocialTabs from '@/components/Visualizations/VizSocialTabs';
+import VisualizationComments from '@/components/Visualizations/VisualizationComments';
+import RelatedVisualizations from '@/components/Visualizations/RelatedVisualizations';
 import VizMobileBottomBar from '@/components/Visualizations/VizMobileBottomBar';
+import VisualizationLikeButton from '@/components/Visualizations/VisualizationLikeButton';
 import { useAITutor } from '@/hooks/useAITutor';
 import { useNarrationPlayer } from '@/hooks/useNarrationPlayer';
 import { useAudioNarrationPlayer } from '@/hooks/useAudioNarrationPlayer';
 import { useClassroomSocket } from '@/hooks/useClassroomSocket';
 import { useLivekitClassroom } from '@/hooks/useLivekitClassroom';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ChevronLeft, BarChart3 } from 'lucide-react';
+import {
+  ChevronLeft, BarChart3, Sparkles, Users, Play,
+  Share2, Code, Download, Maximize2, Minimize2, GitFork, Code2,
+  MessageSquare, Layers,
+} from 'lucide-react';
 import { useTranslations, useLocale } from 'next-intl';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
@@ -44,7 +50,6 @@ export default function VisualizationDetailPage() {
   const [embedOpen, setEmbedOpen] = useState(false);
   const t = useTranslations();
   const locale = useLocale();
-  const rendererRef = useRef<HTMLDivElement>(null);
 
   // AI Tutor (Feature 1)
   const tutor = useAITutor({ visualizationId: id, language: locale });
@@ -195,6 +200,8 @@ export default function VisualizationDetailPage() {
     handleInteractionForClassroom(payload);
   }, [tutor.sendInteraction, handleInteractionForClassroom]);
 
+  const [sidebarTab, setSidebarTab] = useState<'tutor' | 'classroom'>('tutor');
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
@@ -209,11 +216,16 @@ export default function VisualizationDetailPage() {
   if (error || !viz) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <Card className="p-12 text-center max-w-md">
-          <BarChart3 className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
-          <h2 className="font-display text-display-md text-foreground mb-2">{t('common.pageNotFound')}</h2>
-          <p className="text-body-sm text-muted-foreground mb-6">{error || t('viz.notFound')}</p>
-          <Link href="/visualizations" className="inline-flex items-center gap-1.5 text-body-sm text-primary hover:underline">
+        <Card className="p-12 text-center max-w-md border-0 shadow-card">
+          <div className="relative inline-block mb-8">
+            <div className="absolute inset-0 bg-gradient-to-br from-clay/10 to-tertiary/10 rounded-[2rem] blur-2xl" />
+            <div className="relative w-20 h-20 rounded-[2rem] bg-surface-container-high border border-outline-variant flex items-center justify-center mx-auto">
+              <BarChart3 className="h-10 w-10 text-on-surface-variant" />
+            </div>
+          </div>
+          <h2 className="font-display text-display-md text-on-surface mb-2">{t('common.pageNotFound')}</h2>
+          <p className="text-body-sm text-on-surface-variant mb-6">{error || t('viz.notFound')}</p>
+          <Link href="/visualizations" className="inline-flex items-center gap-1.5 text-body-sm text-clay hover:underline">
             <ChevronLeft className="h-4 w-4" />
             {t('viz.browseAll')}
           </Link>
@@ -233,6 +245,21 @@ export default function VisualizationDetailPage() {
       />
     </ClassroomAudioOverlay>
   );
+
+  // Action buttons for the toolbar
+  const primaryActions = [
+    { key: 'tutor', icon: Sparkles, label: t('viz.tutor.title'), onClick: tutor.toggle, active: tutor.open, primary: true },
+    ...(isAuthenticated ? [
+      { key: 'classroom', icon: Users, label: t('viz.classroom.create'), onClick: handleCreateClassroom, disabled: classroomCreating, primary: true },
+      { key: 'narration', icon: Play, label: t('viz.narration.generate'), onClick: handleGenerateNarration, disabled: narrationGenerating, primary: true },
+    ] : []),
+    { key: 'source', icon: Code, label: t('viz.viewSource'), onClick: () => setSourceOpen(true) },
+    { key: 'fullscreen', icon: fullscreen ? Minimize2 : Maximize2, label: t('viz.fullscreen'), onClick: handleFullscreen },
+    { key: 'fork', icon: GitFork, label: t('viz.fork'), onClick: handleFork },
+    { key: 'embed', icon: Code2, label: t('viz.embed'), onClick: () => setEmbedOpen(true) },
+    { key: 'share', icon: Share2, label: t('viz.share'), onClick: handleShare },
+    { key: 'download', icon: Download, label: t('viz.downloadHtml'), onClick: handleDownload },
+  ];
 
   return (
     <>
@@ -261,83 +288,208 @@ export default function VisualizationDetailPage() {
           <VizMetadataSection viz={viz} visualizationId={id} onShare={handleShare} />
 
           {difficultyVariants && (
-            <DifficultySwitcher
-              variants={difficultyVariants}
-              active={difficultyLevel}
-              onChange={handleDifficultySwitch}
-            />
+            <div className="animate-fade-up" style={{ animationDelay: '0.1s' }}>
+              <DifficultySwitcher
+                variants={difficultyVariants}
+                active={difficultyLevel}
+                onChange={handleDifficultySwitch}
+              />
+            </div>
           )}
 
           {/* Two-column layout on desktop: viz content + side panel */}
           <div className="lg:grid lg:grid-cols-[1fr_380px] lg:gap-6">
             {/* Left column: viz + content */}
             <div className="min-w-0">
-              {viz.articleMode ? (
-                <VizContentTabs viz={viz} renderer={renderer} showCode={false} />
-              ) : (
-                <>
-                  <VizRendererCard
-                    fullscreen={fullscreen}
-                    showCode={false}
-                    onToggleFullscreen={handleFullscreen}
-                    onDownload={handleDownload}
-                    onToggleCode={() => setSourceOpen(true)}
-                  >
-                    {renderer}
-                  </VizRendererCard>
+              <div className="animate-fade-up" style={{ animationDelay: '0.15s' }}>
+                {viz.articleMode ? (
+                  <VizContentTabs viz={viz} renderer={renderer} showCode={false} />
+                ) : (
+                  <>
+                    <VizRendererCard
+                      fullscreen={fullscreen}
+                      showCode={false}
+                      onToggleFullscreen={handleFullscreen}
+                      onDownload={handleDownload}
+                      onToggleCode={() => setSourceOpen(true)}
+                    >
+                      {renderer}
+                    </VizRendererCard>
 
-                  {/* Mobile classroom controls — inline between viz and content */}
-                  {classroomCreated && (
-                    <div className="lg:hidden mb-6">
-                      <ClassroomPanel
-                        classroomId={classroomCreated.id}
-                        classroomName={classroomCreated.name}
-                        joinCode={classroomCreated.joinCode}
-                        students={classroomSocket.students || []}
-                        connectionStatus={classroomSocket.status}
-                        onEnd={() => {
-                          classrooms.remove(classroomCreated.id).catch(() => {});
-                          setClassroomCreated(null);
-                          toast.success(t('viz.classroom.ended'));
-                        }}
-                      />
+                    {/* === Action Toolbar — prominent, directly below renderer === */}
+                    <div className="mb-6 animate-fade-up" style={{ animationDelay: '0.18s' }}>
+                      <Card className="border-0 bg-surface-container-high/60 backdrop-blur-sm shadow-sm">
+                        <CardContent className="p-3 sm:p-4">
+                          <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
+                            {primaryActions.map((action, i) => (
+                              <button
+                                key={action.key}
+                                onClick={action.onClick}
+                                disabled={(action as any).disabled}
+                                className={`shrink-0 inline-flex items-center gap-2 px-3.5 py-2 rounded-editorial-xs text-body-sm font-medium transition-all duration-200 ${
+                                  action.active
+                                    ? 'bg-clay text-surface shadow-md shadow-clay/20'
+                                    : action.primary
+                                      ? 'bg-surface-container-high border border-outline-variant/40 text-on-surface hover:bg-surface-container-highest hover:border-outline-variant hover:shadow-md active:scale-[0.97]'
+                                      : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high active:scale-[0.97]'
+                                } disabled:opacity-30 disabled:cursor-not-allowed`}
+                              >
+                                <action.icon className="h-4 w-4" />
+                                <span className="hidden sm:inline">{action.label}</span>
+                              </button>
+                            ))}
+                            {/* Like button integrated */}
+                            <div className="shrink-0 ml-auto">
+                              <VisualizationLikeButton visualizationId={id} initialLikes={viz.likesCount || 0} />
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
                     </div>
-                  )}
 
-                  <VizContentTabs viz={viz} showCode={false} />
-                </>
-              )}
+                    {/* Mobile classroom controls */}
+                    {classroomCreated && (
+                      <div className="lg:hidden mb-6">
+                        <ClassroomPanel
+                          classroomId={classroomCreated.id}
+                          classroomName={classroomCreated.name}
+                          joinCode={classroomCreated.joinCode}
+                          students={classroomSocket.students || []}
+                          connectionStatus={classroomSocket.status}
+                          onEnd={() => {
+                            classrooms.remove(classroomCreated.id).catch(() => {});
+                            setClassroomCreated(null);
+                            toast.success(t('viz.classroom.ended'));
+                          }}
+                        />
+                      </div>
+                    )}
 
-              <VizSocialTabs visualizationId={id} currentSubject={viz.subject} />
+                    <VizContentTabs viz={viz} showCode={false} />
+                  </>
+                )}
+              </div>
+
+              {/* === Comments Section — productized, full-width === */}
+              <div className="animate-fade-up mt-10" style={{ animationDelay: '0.3s' }}>
+                <Card className="border-0 bg-surface-container-high shadow-card overflow-hidden">
+                  <CardContent className="p-5 sm:p-6">
+                    <div className="flex items-center gap-2 mb-1">
+                      <MessageSquare className="h-5 w-5 text-clay" />
+                      <h2 className="font-display text-display-xs text-on-surface">{t('viz.comments_tab')}</h2>
+                    </div>
+                    <p className="text-body-sm text-on-surface-variant/60 mb-6">
+                      {t('viz.commentPlaceholder')}
+                    </p>
+                    <VisualizationComments visualizationId={id} />
+                  </CardContent>
+                </Card>
+              </div>
             </div>
 
-            {/* Right column: Classroom controls + AI Tutor (desktop) */}
-            <div className="hidden lg:flex lg:flex-col lg:gap-4">
-              <div className="sticky top-20 flex flex-col gap-4">
-                {classroomCreated && (
-                  <ClassroomPanel
-                    classroomId={classroomCreated.id}
-                    classroomName={classroomCreated.name}
-                    joinCode={classroomCreated.joinCode}
-                    students={classroomSocket.students || []}
-                    connectionStatus={classroomSocket.status}
-                    onEnd={() => {
-                      classrooms.remove(classroomCreated.id).catch(() => {});
-                      setClassroomCreated(null);
-                      toast.success(t('viz.classroom.ended'));
-                    }}
-                  />
-                )}
-                <AITutorSidebar
-                  open={true}
-                  onClose={() => {}}
-                  messages={tutor.messages}
-                  loading={tutor.loading}
-                  onAskQuestion={tutor.askQuestion}
-                  onClearHistory={tutor.clearHistory}
-                  variant="inline"
-                />
+            {/* Right column: Tabbed side panel (Classroom + AI Tutor) */}
+            <div className="hidden lg:block">
+              <div className="sticky top-20 animate-fade-up" style={{ animationDelay: '0.2s' }}>
+                <Card className="border-0 bg-surface-container-high/80 backdrop-blur-xl shadow-card overflow-hidden">
+                  <div className="flex border-b border-outline-variant/30">
+                    <button
+                      onClick={() => setSidebarTab('tutor')}
+                      className={`flex-1 flex items-center justify-center gap-1.5 px-4 py-3 text-body-sm font-medium transition-all duration-200 relative ${
+                        sidebarTab === 'tutor'
+                          ? 'text-clay'
+                          : 'text-on-surface-variant/60 hover:text-on-surface-variant'
+                      }`}
+                    >
+                      <Sparkles className="h-4 w-4" />
+                      {t('viz.tutor.title')}
+                      {sidebarTab === 'tutor' && (
+                        <div className="absolute bottom-0 left-2 right-2 h-[2px] bg-gradient-to-r from-clay to-tertiary rounded-full" />
+                      )}
+                    </button>
+                    <button
+                      onClick={() => setSidebarTab('classroom')}
+                      className={`flex-1 flex items-center justify-center gap-1.5 px-4 py-3 text-body-sm font-medium transition-all duration-200 relative ${
+                        sidebarTab === 'classroom'
+                          ? 'text-clay'
+                          : 'text-on-surface-variant/60 hover:text-on-surface-variant'
+                      }`}
+                    >
+                      <Users className="h-4 w-4" />
+                      {t('viz.classroom.create')}
+                      {sidebarTab === 'classroom' && (
+                        <div className="absolute bottom-0 left-2 right-2 h-[2px] bg-gradient-to-r from-clay to-tertiary rounded-full" />
+                      )}
+                    </button>
+                  </div>
+
+                  <div className="animate-fade-up" key={sidebarTab}>
+                    {sidebarTab === 'tutor' && (
+                      <AITutorSidebar
+                        open={true}
+                        onClose={() => {}}
+                        messages={tutor.messages}
+                        loading={tutor.loading}
+                        onAskQuestion={tutor.askQuestion}
+                        onClearHistory={tutor.clearHistory}
+                        variant="inline"
+                      />
+                    )}
+                    {sidebarTab === 'classroom' && (
+                      <div className="p-4">
+                        {classroomCreated ? (
+                          <ClassroomPanel
+                            classroomId={classroomCreated.id}
+                            classroomName={classroomCreated.name}
+                            joinCode={classroomCreated.joinCode}
+                            students={classroomSocket.students || []}
+                            connectionStatus={classroomSocket.status}
+                            onEnd={() => {
+                              classrooms.remove(classroomCreated.id).catch(() => {});
+                              setClassroomCreated(null);
+                              toast.success(t('viz.classroom.ended'));
+                            }}
+                          />
+                        ) : (
+                          <div className="text-center py-8">
+                            <div className="w-14 h-14 rounded-2xl bg-clay/10 border border-clay/20 flex items-center justify-center mx-auto mb-4">
+                              <Users className="h-6 w-6 text-clay" />
+                            </div>
+                            <p className="text-body-sm text-on-surface-variant mb-4">
+                              {t('viz.classroom.shareCode')}
+                            </p>
+                            <Button
+                              onClick={handleCreateClassroom}
+                              disabled={classroomCreating}
+                              size="sm"
+                              className="gap-2"
+                            >
+                              {classroomCreating && <span className="h-3 w-3 border-2 border-current border-t-transparent rounded-full animate-spin" />}
+                              {t('viz.classroom.create')}
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </Card>
               </div>
+            </div>
+          </div>
+        </div>
+
+        {/* === Related Visualizations — standalone section at bottom === */}
+        <div className="mt-8 border-t border-outline-variant/20">
+          <div className="max-w-grid mx-auto px-3 sm:px-6 py-section-sm">
+            <div className="animate-fade-up" style={{ animationDelay: '0.4s' }}>
+              <div className="flex items-center gap-3 mb-6">
+                <div className="h-px flex-1 bg-gradient-to-r from-transparent via-outline-variant/30 to-transparent" />
+                <div className="flex items-center gap-2 px-4 py-2 rounded-pill bg-surface-container-high border border-outline-variant/30">
+                  <Layers className="h-4 w-4 text-clay" />
+                  <span className="text-body-sm font-medium text-on-surface">{t('viz.related_tab')}</span>
+                </div>
+                <div className="h-px flex-1 bg-gradient-to-r from-transparent via-outline-variant/30 to-transparent" />
+              </div>
+              <RelatedVisualizations visualizationId={id} currentSubject={viz.subject || ''} />
             </div>
           </div>
         </div>

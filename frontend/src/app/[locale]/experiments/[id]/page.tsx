@@ -40,7 +40,7 @@ export default function ExperimentDetailPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-cream-200">
-        <div className="max-w-grid mx-auto px-6 py-section-sm">
+        <div className="max-w-grid mx-auto px-6 py-16 md:py-24">
           <Skeleton className="h-5 w-48 mb-2 shimmer" />
           <Skeleton className="h-10 w-96 mb-3 shimmer" />
           <Skeleton className="h-5 w-64 mb-8 shimmer" />
@@ -74,7 +74,7 @@ export default function ExperimentDetailPage() {
 
   return (
     <div className="min-h-screen bg-cream-200">
-      <div className="max-w-grid mx-auto px-6 py-section-sm">
+      <div className="max-w-grid mx-auto px-6 py-16 md:py-24">
         <Link href="/experiments" className="inline-flex items-center gap-1.5 text-body-sm text-ink-muted hover:text-ink mb-4">
           <ChevronLeft className="h-4 w-4" />
           {t('viz.experiment.title')}

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { ai } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface AIToolsProps {
   onGenerate: (data: any) => void;
@@ -142,16 +143,17 @@ export default function AITools({ onGenerate, currentContent, currentTitle, isOp
                   className="w-full bg-black/20 border border-white/10 rounded-lg px-4 py-2.5 text-body-md text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
                 />
                 <div className="flex gap-2">
-                  <select
-                    value={style}
-                    onChange={e => setStyle(e.target.value)}
-                    className="flex-1 bg-black/20 border border-white/10 rounded-lg px-4 py-2.5 text-body-md text-on-surface appearance-none focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
-                  >
-                    <option value="professional">{t('common.professional')}</option>
-                    <option value="casual">{t('common.casual')}</option>
-                    <option value="technical">{t('common.technical')}</option>
-                    <option value="storytelling">{t('common.storytelling')}</option>
-                  </select>
+                  <Select value={style} onValueChange={setStyle}>
+                    <SelectTrigger className="flex-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="professional">{t('common.professional')}</SelectItem>
+                      <SelectItem value="casual">{t('common.casual')}</SelectItem>
+                      <SelectItem value="technical">{t('common.technical')}</SelectItem>
+                      <SelectItem value="storytelling">{t('common.storytelling')}</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <input
                     type="number"
                     value={wordCount}

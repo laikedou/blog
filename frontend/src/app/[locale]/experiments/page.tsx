@@ -24,10 +24,10 @@ export default function ExperimentsPage() {
   const [activeConcept, setActiveConcept] = useState<string | null>(null);
 
   const CONCEPTS = [
-    { slug: null, label: 'All', icon: Beaker },
-    { slug: 'math', label: 'Mathematics', icon: Binary },
-    { slug: 'physics', label: 'Physics', icon: Atom },
-    { slug: 'biology', label: 'Biology', icon: Dna },
+    { slug: null, label: t('admin.all'), icon: Beaker },
+    { slug: 'math', label: t('viz.mathematics'), icon: Binary },
+    { slug: 'physics', label: t('viz.physicsLabel'), icon: Atom },
+    { slug: 'biology', label: t('viz.biology'), icon: Dna },
   ];
 
   const filteredData = activeConcept
@@ -52,7 +52,7 @@ export default function ExperimentsPage() {
         </div>
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-clay/5 blur-[100px] pointer-events-none" aria-hidden="true" />
 
-        <div className="max-w-grid mx-auto px-6 py-section-sm relative z-10">
+        <div className="max-w-grid mx-auto px-6 py-16 md:py-24 relative z-10">
           <Link href="/visualizations" className="inline-flex items-center gap-1.5 text-body-sm text-ink-muted hover:text-ink transition-colors mb-6">
             <ChevronLeft className="h-4 w-4" />
             {t('viz.browseAll')}
@@ -89,7 +89,7 @@ export default function ExperimentsPage() {
       </section>
 
       {/* Cards Grid */}
-      <div className="max-w-grid mx-auto px-6 py-section-sm">
+      <div className="max-w-grid mx-auto px-6 py-16 md:py-24">
         {loading ? (
           <div className="grid gap-6 md:grid-cols-2">
             {[1, 2].map((i) => <Skeleton key={i} className="h-72 rounded-2xl shimmer" />)}
@@ -103,7 +103,7 @@ export default function ExperimentsPage() {
             <p className="text-body text-ink-muted">{t('viz.experiment.empty')}</p>
             {activeConcept && (
               <Button variant="ghost" size="sm" onClick={() => setActiveConcept(null)} className="mt-3">
-                Clear Filter
+                {t('common.clearFilter')}
               </Button>
             )}
           </div>

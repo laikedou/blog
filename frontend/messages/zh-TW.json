@@ -27,6 +27,9 @@
     "less": "收起",
     "viewAll": "檢視全部",
     "showMore": "展開更多",
+    "loadMore": "載入更多",
+    "view": "檢視",
+    "clearFilter": "清除篩選",
     "noData": "暫無資料",
     "noResults": "沒有找到結果",
     "pageNotFound": "頁面未找到",
@@ -196,7 +199,15 @@
     "topicFrontend": "前端",
     "topicAI": "AI",
     "topicWeb3": "Web3",
-    "topicBlockchain": "區塊鏈"
+    "topicBlockchain": "區塊鏈",
+    "aboutQuote": "預測未來最好的方式就是創造它。",
+    "scrollDown": "向下滾動探索",
+    "sectionAiLabel": "人工智慧",
+    "sectionAiDesc": "大型語言模型、AI 代理、提示工程與智慧未來",
+    "sectionWeb3Label": "Web3",
+    "sectionWeb3Desc": "去中心化網路、dApp、智慧合約與下一代網際網路",
+    "sectionBlockchainLabel": "區塊鏈",
+    "sectionBlockchainDesc": "分散式帳本、共識機制、DeFi 與加密基礎設施"
   },
   "posts": {
     "title": "文章",
@@ -944,6 +955,7 @@
     "generationPrompt": "生成提示詞",
     "mathematics": "數學",
     "physicsLabel": "物理",
+    "biology": "生物",
     "versionLabel": "版本 {version}",
     "updated": "更新於",
     "downloaded": "已下載為 HTML",
@@ -1032,7 +1044,8 @@
       "switchPerspective": "切換視角",
       "empty": "暫無實驗。請從管理面板建立。",
       "notFound": "實驗未找到",
-      "noViz": "無視覺化內容"
+      "noViz": "無視覺化內容",
+      "morePerspectives": "更多視角"
     },
     "fullscreen": "全螢幕",
     "interactive": "互動視覺化",
@@ -1058,6 +1071,11 @@
       "changeAction": "更改了 \"{param}\""
     },
     "viewSource": "檢視原始碼",
+    "popular": "熱門",
+    "createYourOwn": "創建你自己的可視化",
+    "createYourOwnDesc": "使用 AI 生成互動式數學和物理可視化。無需程式設計 — 只需描述一個概念，就能看到它變得生動起來。",
+    "startCreating": "開始創建",
+    "createFirst": "創建你的第一個可視化",
     "fork": "複刻",
     "forkFailed": "複刻失敗",
     "forked": "複刻成功"

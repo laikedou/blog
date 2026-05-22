@@ -13,10 +13,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { animate, stagger } from 'animejs';
 import { ArrowRight, Sparkles, Cpu, Globe, Database, ChevronRight, ChevronDown } from 'lucide-react';
 
-const TOPICS = [
-  { slug: 'ai', label: 'Artificial Intelligence', icon: Sparkles, desc: 'LLMs, AI agents, prompt engineering, and the future of intelligence', color: 'from-violet-500/20 to-fuchsia-500/10' },
-  { slug: 'web3', label: 'Web3', icon: Globe, desc: 'Decentralized web, dApps, smart contracts, and the evolving internet', color: 'from-blue-500/20 to-cyan-500/10' },
-  { slug: 'blockchain', label: 'Blockchain', icon: Database, desc: 'Distributed ledgers, consensus mechanisms, DeFi, and crypto infrastructure', color: 'from-amber-500/20 to-orange-500/10' },
+const TOPIC_SLUGS = [
+  { slug: 'ai', icon: Sparkles, color: 'from-violet-500/20 to-fuchsia-500/10' },
+  { slug: 'web3', icon: Globe, color: 'from-blue-500/20 to-cyan-500/10' },
+  { slug: 'blockchain', icon: Database, color: 'from-amber-500/20 to-orange-500/10' },
 ];
 
 function ScrollProgress() {
@@ -97,7 +97,7 @@ export default function HomePageClient() {
 
   useEffect(() => {
     if (categories.length === 0) return;
-    TOPICS.forEach(topic => {
+    TOPIC_SLUGS.forEach(topic => {
       const cat = categories.find((c: any) => c.slug === topic.slug);
       if (cat) {
         postsApi.list({ categoryId: cat.id, limit: 4, status: 'published' })
@@ -119,6 +119,12 @@ export default function HomePageClient() {
     }
   }, [loading, page]);
 
+  const topicMeta: Record<string, { label: string; desc: string }> = {
+    ai: { label: t('home.sectionAiLabel'), desc: t('home.sectionAiDesc') },
+    web3: { label: t('home.sectionWeb3Label'), desc: t('home.sectionWeb3Desc') },
+    blockchain: { label: t('home.sectionBlockchainLabel'), desc: t('home.sectionBlockchainDesc') },
+  };
+
   return (
     <>
       <Header />
@@ -127,6 +133,7 @@ export default function HomePageClient() {
       <ScrollProgress />
 
       <BannerCarousel zone="hero" />
+      <div className="h-8 md:h-12" />
 
       {/* ── Hero Section ── */}
       <section
@@ -175,7 +182,7 @@ export default function HomePageClient() {
         {/* Radial ambient glow */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full bg-gradient-to-br from-clay/4 via-primary/2 to-transparent blur-[150px] pointer-events-none" aria-hidden="true" />
 
-        <div className="section-container py-section-sm md:py-section w-full relative z-10">
+        <div className="section-container py-16 md:py-28 w-full relative z-10">
           <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
             {/* Left: Text */}
             <div className="flex-1 text-center lg:text-left max-w-xl">
@@ -236,7 +243,7 @@ export default function HomePageClient() {
       </section>
 
       {/* ── Topic Sections ── */}
-      {TOPICS.map((topic, ti) => {
+      {TOPIC_SLUGS.map((topic, ti) => {
         const Icon = topic.icon;
         const postsForTopic = topicPosts[topic.slug] || [];
         const cat = categories.find((c: any) => c.slug === topic.slug);
@@ -258,7 +265,7 @@ export default function HomePageClient() {
               {/* Corner accent glow */}
               <div className={`absolute top-0 right-0 w-[400px] h-[400px] rounded-full bg-gradient-to-br ${topic.color} blur-[120px] opacity-15 pointer-events-none`} aria-hidden="true" />
 
-              <div className="section-container py-section-sm relative z-10">
+              <div className="section-container py-20 md:py-28 relative z-10">
                 {/* Section Header */}
                 <div className="flex items-center justify-between mb-10">
                   <div className="flex items-center gap-5">
@@ -267,9 +274,9 @@ export default function HomePageClient() {
                     </div>
                     <div>
                       <h2 id={`topic-heading-${topic.slug}`} className="font-display text-display-md text-ink heading-underline">
-                        {topic.label}
+                        {topicMeta[topic.slug].label}
                       </h2>
-                      <p className="text-body-sm text-ink-muted mt-1">{topic.desc}</p>
+                      <p className="text-body-sm text-ink-muted mt-1">{topicMeta[topic.slug].desc}</p>
                     </div>
                   </div>
                   {cat && (
@@ -307,12 +314,14 @@ export default function HomePageClient() {
         );
       })}
 
-      <BannerCarousel zone="inline" />
+      <div className="py-8 md:py-12">
+        <BannerCarousel zone="inline" />
+      </div>
 
       {/* ── Latest Posts ── */}
       <section id="posts" className="relative bg-cream-200" aria-labelledby="latest-heading">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-px bg-gradient-to-r from-transparent via-clay/15 to-transparent pointer-events-none" aria-hidden="true" />
-        <div className="section-container py-section-sm">
+        <div className="section-container py-20 md:py-28">
           <div className="flex items-end justify-between mb-6">
             <div>
               <h2 id="latest-heading" className="font-display text-display-md text-ink">{t('home.latestPosts')}</h2>
@@ -369,13 +378,15 @@ export default function HomePageClient() {
         </div>
       </section>
 
-      <BannerCarousel zone="sidebar" />
+      <div className="py-8 md:py-12">
+        <BannerCarousel zone="sidebar" />
+      </div>
 
       {/* ── About Author ── */}
       <section className="relative bg-cream-100 border-t border-border overflow-hidden" aria-labelledby="about-heading">
         <div className="absolute top-0 left-0 w-[300px] h-[300px] rounded-full bg-clay/5 blur-[120px] pointer-events-none" aria-hidden="true" />
         <div className="absolute bottom-0 right-0 w-[300px] h-[300px] rounded-full bg-primary/5 blur-[120px] pointer-events-none" aria-hidden="true" />
-        <div className="section-container py-section-sm relative z-10">
+        <div className="section-container py-20 md:py-28 relative z-10">
           <div className="max-w-content mx-auto text-center mb-12">
             <div className="w-20 h-20 rounded-full bg-gradient-to-br from-clay to-primary flex items-center justify-center mx-auto mb-6 shadow-lg shadow-clay/25 animate-pulse-glow" aria-hidden="true">
               <span className="font-display text-display-md text-white">F</span>
@@ -424,7 +435,9 @@ export default function HomePageClient() {
         </div>
       </section>
 
-      <BannerCarousel zone="footer" />
+      <div className="py-8 md:py-12">
+        <BannerCarousel zone="footer" />
+      </div>
 
       <BackToTop />
       <Footer />

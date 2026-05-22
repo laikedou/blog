@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const RichEditor = dynamic(() => import('@/components/RichEditor'), { ssr: false });
 
@@ -133,14 +134,15 @@ export default function NewPostPage() {
                 <h3 className="font-headline-md text-headline-md text-on-surface">{t('admin.publish')}</h3>
                 <div>
                   <label className="block font-label-sm text-label-sm text-on-surface-variant mb-1.5">{t('admin.selectStatus')}</label>
-                  <select
-                    value={form.status}
-                    onChange={e => handleChange('status', e.target.value)}
-                    className="w-full bg-black/20 border border-border rounded-lg px-4 py-2.5 text-body-md text-on-surface appearance-none focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
-                  >
-                    <option value="draft">{t('admin.draft')}</option>
-                    <option value="published">{t('admin.published')}</option>
-                  </select>
+                  <Select value={form.status} onValueChange={v => handleChange('status', v)}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="draft">{t('admin.draft')}</SelectItem>
+                      <SelectItem value="published">{t('admin.published')}</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <Button
                   type="submit"
@@ -166,14 +168,15 @@ export default function NewPostPage() {
             <Card>
               <CardContent className="p-5 space-y-3">
                 <h3 className="font-headline-md text-headline-md text-on-surface">{t('admin.category')}</h3>
-                <select
-                  value={form.categoryId}
-                  onChange={e => handleChange('categoryId', e.target.value)}
-                  className="w-full bg-black/20 border border-border rounded-lg px-4 py-2.5 text-body-md text-on-surface appearance-none focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
-                >
-                  <option value="none">{t('admin.uncategorized')}</option>
-                  {categories.map(cat => <option key={cat.id} value={String(cat.id)}>{cat.name}</option>)}
-                </select>
+                <Select value={form.categoryId || 'none'} onValueChange={v => handleChange('categoryId', v)}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">{t('admin.uncategorized')}</SelectItem>
+                    {categories.map(cat => <SelectItem key={cat.id} value={String(cat.id)}>{cat.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
               </CardContent>
             </Card>
 
