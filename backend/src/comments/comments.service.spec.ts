@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { CommentsService } from './comments.service';
 import { PrismaService } from '../common/prisma.service';
+import { NotificationsGateway } from '../common/notifications.gateway';
 
 describe('CommentsService', () => {
   let service: CommentsService;
@@ -19,11 +20,22 @@ describe('CommentsService', () => {
     post: {
       findUnique: jest.fn(),
     },
+    user: {
+      findUnique: jest.fn(),
+    },
+  };
+
+  const mockNotifications = {
+    notifyComment: jest.fn(),
   };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [CommentsService, { provide: PrismaService, useValue: mockPrisma }],
+      providers: [
+        CommentsService,
+        { provide: PrismaService, useValue: mockPrisma },
+        { provide: NotificationsGateway, useValue: mockNotifications },
+      ],
     }).compile();
     service = module.get<CommentsService>(CommentsService);
     prisma = module.get<PrismaService>(PrismaService);

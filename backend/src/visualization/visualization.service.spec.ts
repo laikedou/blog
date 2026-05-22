@@ -4,6 +4,9 @@ import { VisualizationService } from './visualization.service';
 import { VisualizationAiService } from './visualization-ai.service';
 import { PrismaService } from '../common/prisma.service';
 import { CloudflareAiService } from '../common/cloudflare-ai.service';
+import { NotificationsGateway } from '../common/notifications.gateway';
+import { AzureTtsService } from './azure-tts.service';
+import { EdgeTtsService } from './edge-tts.service';
 
 describe('VisualizationService', () => {
   let service: VisualizationService;
@@ -48,6 +51,18 @@ describe('VisualizationService', () => {
     generateCover: jest.fn().mockResolvedValue('/uploads/covers/test.png'),
   };
 
+  const mockNotifications = {
+    notifyVisualizationCreated: jest.fn(),
+  };
+
+  const mockAzureTts = {
+    synthesize: jest.fn().mockResolvedValue(Buffer.from('')),
+  };
+
+  const mockEdgeTts = {
+    synthesize: jest.fn().mockResolvedValue(Buffer.from('')),
+  };
+
   beforeEach(async () => {
     jest.clearAllMocks();
     const module: TestingModule = await Test.createTestingModule({
@@ -56,6 +71,9 @@ describe('VisualizationService', () => {
         { provide: PrismaService, useValue: mockPrisma },
         { provide: VisualizationAiService, useValue: mockAi },
         { provide: CloudflareAiService, useValue: mockCloudflareAi },
+        { provide: NotificationsGateway, useValue: mockNotifications },
+        { provide: AzureTtsService, useValue: mockAzureTts },
+        { provide: EdgeTtsService, useValue: mockEdgeTts },
       ],
     }).compile();
 
@@ -75,7 +93,7 @@ describe('VisualizationService', () => {
 
       const result = await service.generate(dto, authorId);
 
-      expect(mockAi.generate).toHaveBeenCalledWith('Pythagorean theorem', 'math', undefined);
+      expect(mockAi.generate).toHaveBeenCalledWith('Pythagorean theorem', 'math', undefined, undefined, undefined);
       expect(mockPrisma.visualization.create).toHaveBeenCalledWith(
         expect.objectContaining({ data: expect.objectContaining({ subject: 'math', authorId: 1 }) }),
       );
@@ -106,8 +124,7 @@ describe('VisualizationService', () => {
 
       await service.generate({ ...dto, provider: 'grok' }, authorId);
 
-      expect(mockAi.generate).toHaveBeenCalledWith('Pythagorean theorem', 'math', 'grok');
-    });
+      expect(mockAi.generate).toHaveBeenCalledWith('Pythagorean theorem', 'math', 'grok', undefined, undefined);    });
   });
 
   describe('refine', () => {
@@ -125,7 +142,7 @@ describe('VisualizationService', () => {
 
       const result = await service.refine({ visualizationId: 1, feedback: 'make it interactive' }, 1);
 
-      expect(mockAi.refine).toHaveBeenCalledWith('old code', 'make it interactive');
+      expect(mockAi.refine).toHaveBeenCalledWith('old code', 'make it interactive', undefined, undefined, undefined);
       expect(mockPrisma.visualization.update).toHaveBeenCalledWith(
         expect.objectContaining({ data: expect.objectContaining({ htmlContent: 'new code', version: 3 }) }),
       );

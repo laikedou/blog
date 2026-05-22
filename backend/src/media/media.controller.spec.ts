@@ -25,17 +25,17 @@ describe('MediaController', () => {
   afterEach(() => jest.clearAllMocks());
 
   describe('findAll', () => {
-    it('should call service.findAll with pagination', async () => {
+    it('should call service.findAll with query', async () => {
       mockService.findAll.mockResolvedValue({ data: [], total: 0 });
-      const result = await controller.findAll(1, 20);
-      expect(mockService.findAll).toHaveBeenCalledWith(1, 20);
+      const result = await controller.findAll({ page: 1, limit: 20 });
+      expect(mockService.findAll).toHaveBeenCalledWith({ page: 1, limit: 20 });
       expect(result.total).toBe(0);
     });
 
-    it('should handle undefined pagination params', async () => {
+    it('should handle empty query', async () => {
       mockService.findAll.mockResolvedValue({ data: [], total: 0 });
-      const result = await controller.findAll(undefined, undefined);
-      expect(mockService.findAll).toHaveBeenCalledWith(undefined, undefined);
+      const result = await controller.findAll({});
+      expect(mockService.findAll).toHaveBeenCalledWith({});
       expect(result.total).toBe(0);
     });
   });
