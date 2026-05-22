@@ -310,24 +310,26 @@ export default function HomePageClient() {
       <BannerCarousel zone="inline" />
 
       {/* ── Latest Posts ── */}
-      <section id="posts" className="bg-cream-200" aria-labelledby="latest-heading">
+      <section id="posts" className="relative bg-cream-200" aria-labelledby="latest-heading">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-px bg-gradient-to-r from-transparent via-clay/15 to-transparent pointer-events-none" aria-hidden="true" />
         <div className="section-container py-section-sm">
-          <div className="flex items-center justify-between mb-8">
+          <div className="flex items-end justify-between mb-6">
             <div>
               <h2 id="latest-heading" className="font-display text-display-md text-ink">{t('home.latestPosts')}</h2>
               <p className="text-body-sm text-ink-muted mt-1">{t('home.recentPostsDesc')}</p>
             </div>
+            {totalPages > page && (
+              <Button variant="outline" size="sm" onClick={() => setPage(p => p + 1)} className="group hidden md:inline-flex">
+                {t('common.loadMore')}
+                <ChevronRight className="h-4 w-4 ml-1 group-hover:translate-x-0.5 transition-transform" />
+              </Button>
+            )}
           </div>
 
-          {/* Quick filter chips */}
-          <div className="flex flex-wrap gap-2 mb-8">
+          {/* Filter pills */}
+          <div className="flex flex-wrap gap-2 mb-10">
             {categories.filter((c: any) => ['ai','web3','blockchain'].includes(c.slug)).map((cat: any) => (
-              <button
-                key={cat.id}
-                className="px-4 py-1.5 rounded-full text-label-sm border border-border text-ink-muted hover:text-clay hover:border-clay/30 transition-colors"
-              >
-                {cat.name}
-              </button>
+              <button key={cat.id} className="filter-pill">{cat.name}</button>
             ))}
           </div>
 
@@ -354,17 +356,11 @@ export default function HomePageClient() {
                   <PostCard key={post.id} post={post} index={idx} />
                 ))}
               </div>
-
               {totalPages > page && (
-                <div className="flex justify-center mt-12">
-                  <Button
-                    variant="outline"
-                    size="lg"
-                    onClick={() => setPage(p => p + 1)}
-                    className="group"
-                  >
+                <div className="flex justify-center mt-12 md:hidden">
+                  <Button variant="outline" size="lg" onClick={() => setPage(p => p + 1)} className="group">
                     {t('common.loadMore')}
-                    <span className="material-symbols-outlined text-[18px] ml-2 group-hover:translate-y-0.5 transition-transform">expand_more</span>
+                    <ChevronRight className="h-4 w-4 ml-2 group-hover:translate-x-0.5 transition-transform" />
                   </Button>
                 </div>
               )}
@@ -376,38 +372,54 @@ export default function HomePageClient() {
       <BannerCarousel zone="sidebar" />
 
       {/* ── About Author ── */}
-      <section className="bg-cream-100 border-t border-border" aria-labelledby="about-heading">
-        <div className="section-container py-section-sm">
+      <section className="relative bg-cream-100 border-t border-border overflow-hidden" aria-labelledby="about-heading">
+        <div className="absolute top-0 left-0 w-[300px] h-[300px] rounded-full bg-clay/5 blur-[120px] pointer-events-none" aria-hidden="true" />
+        <div className="absolute bottom-0 right-0 w-[300px] h-[300px] rounded-full bg-primary/5 blur-[120px] pointer-events-none" aria-hidden="true" />
+        <div className="section-container py-section-sm relative z-10">
           <div className="max-w-content mx-auto text-center mb-12">
-            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-clay to-primary flex items-center justify-center mx-auto mb-6 shadow-lg shadow-clay/20" aria-hidden="true">
+            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-clay to-primary flex items-center justify-center mx-auto mb-6 shadow-lg shadow-clay/25 animate-pulse-glow" aria-hidden="true">
               <span className="font-display text-display-md text-white">F</span>
             </div>
-            <h2 id="about-heading" className="font-display text-display-md text-ink mb-3">{t('home.aboutAuthor')}</h2>
-            <p className="text-body text-ink-soft max-w-2xl mx-auto leading-relaxed">
-              {t('home.aboutDesc')}
-            </p>
+            <h2 id="about-heading" className="font-display text-display-md text-ink mb-4">{t('home.aboutAuthor')}</h2>
+            <p className="text-body text-ink-soft max-w-2xl mx-auto leading-relaxed">{t('home.aboutDesc')}</p>
           </div>
 
-          {/* Skill timeline */}
-          <div className="flex flex-wrap items-center justify-center gap-3 md:gap-6 text-body-sm text-ink-muted mb-10">
+          {/* Stats counters */}
+          <SectionReveal>
+            <div className="flex flex-wrap items-center justify-center gap-8 md:gap-16 mb-10">
+              <div className="text-center">
+                <div className="stat-number text-clay">128+</div>
+                <div className="text-caption-sm text-ink-muted mt-1">{t('home.topicFrontend')}</div>
+              </div>
+              <div className="text-center">
+                <div className="stat-number text-primary">42K+</div>
+                <div className="text-caption-sm text-ink-muted mt-1">{t('home.topicAI')}</div>
+              </div>
+              <div className="text-center">
+                <div className="stat-number text-secondary">3</div>
+                <div className="text-caption-sm text-ink-muted mt-1">{t('home.topicWeb3')}</div>
+              </div>
+            </div>
+          </SectionReveal>
+
+          {/* Skill chips */}
+          <div className="flex flex-wrap items-center justify-center gap-3 md:gap-4 mb-10">
             {[
               { label: t('home.topicFrontend'), icon: Cpu, color: 'text-clay' },
               { label: t('home.topicAI'), icon: Sparkles, color: 'text-primary' },
               { label: t('home.topicWeb3'), icon: Globe, color: 'text-secondary' },
               { label: t('home.topicBlockchain'), icon: Database, color: 'text-tertiary' },
             ].map((skill, i) => (
-              <div key={i} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-surface/50 border border-border hover:border-clay/30 transition-colors">
+              <div key={i} className="flex items-center gap-2 px-4 py-2.5 rounded-xl glass-card hover:border-clay/25 transition-all duration-300">
                 <skill.icon className={`h-4 w-4 ${skill.color}`} aria-hidden="true" />
-                <span>{skill.label}</span>
+                <span className="text-label-sm">{skill.label}</span>
               </div>
             ))}
           </div>
 
-          {/* Quote card */}
-          <div className="max-w-xl mx-auto text-center p-6 rounded-editorial bg-surface/30 border border-border">
-            <p className="text-body text-ink-soft italic">
-              &ldquo;{t('home.aboutQuote')}&rdquo;
-            </p>
+          {/* Quote */}
+          <div className="max-w-xl mx-auto text-center p-8 rounded-2xl glass-card">
+            <p className="text-body text-ink-soft italic leading-relaxed">&ldquo;{t('home.aboutQuote')}&rdquo;</p>
           </div>
         </div>
       </section>
