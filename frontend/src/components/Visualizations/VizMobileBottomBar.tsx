@@ -21,32 +21,44 @@ export default function VizMobileBottomBar({
   hasNarration,
 }: Props) {
   return (
-    <div className="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-surface/90 backdrop-blur-xl border-t border-outline-variant">
-      <div className="flex items-center justify-around py-2 px-4">
-        <button
-          onClick={onToggleTutor}
-          className={`flex flex-col items-center gap-0.5 px-4 py-1.5 rounded-xl transition-colors ${
-            tutorOpen ? 'text-tertiary' : 'text-on-surface-variant hover:text-on-surface'
-          }`}
-        >
-          <Sparkles className="h-5 w-5" />
-          <span className="text-[10px] font-medium">Tutor</span>
-        </button>
+    <div className="lg:hidden fixed bottom-0 left-0 right-0 z-30">
+      {/* Top glow line */}
+      <div className="absolute top-0 left-4 right-4 h-[1px] bg-gradient-to-r from-transparent via-clay/30 to-transparent" />
 
-        {hasNarration && (
+      <div className="bg-surface/80 backdrop-blur-xl border-t border-outline-variant/50">
+        <div className="flex items-center justify-around py-2 px-4">
           <button
-            onClick={onToggleNarration}
-            className={`flex flex-col items-center gap-0.5 px-4 py-1.5 rounded-xl transition-colors ${
-              isNarrationPlaying ? 'text-tertiary' : 'text-on-surface-variant hover:text-on-surface'
+            onClick={onToggleTutor}
+            className={`relative flex flex-col items-center gap-0.5 px-4 py-1.5 rounded-xl transition-all duration-200 ${
+              tutorOpen
+                ? 'text-clay'
+                : 'text-on-surface-variant/60 hover:text-on-surface active:scale-95'
             }`}
           >
-            {isNarrationPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
-            <span className="text-[10px] font-medium">Narrate</span>
+            <Sparkles className="h-5 w-5" />
+            <span className="text-[10px] font-medium">Tutor</span>
+            {!tutorOpen && (
+              <span className="absolute top-1 right-2 w-2 h-2 rounded-full bg-clay animate-pulse" />
+            )}
           </button>
-        )}
 
-        <div className="flex flex-col items-center">
-          <VisualizationLikeButton visualizationId={visualizationId} />
+          {hasNarration && (
+            <button
+              onClick={onToggleNarration}
+              className={`flex flex-col items-center gap-0.5 px-4 py-1.5 rounded-xl transition-all duration-200 ${
+                isNarrationPlaying
+                  ? 'text-clay'
+                  : 'text-on-surface-variant/60 hover:text-on-surface active:scale-95'
+              }`}
+            >
+              {isNarrationPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
+              <span className="text-[10px] font-medium">Narrate</span>
+            </button>
+          )}
+
+          <div className="flex flex-col items-center">
+            <VisualizationLikeButton visualizationId={visualizationId} />
+          </div>
         </div>
       </div>
     </div>

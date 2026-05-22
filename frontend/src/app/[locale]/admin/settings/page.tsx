@@ -13,6 +13,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const defaultSocialLinks = JSON.stringify({ twitter: '', github: '', linkedin: '' }, null, 2);
 
@@ -400,19 +401,17 @@ export default function AdminSettingsPage() {
             <CardContent className="space-y-5">
               <div>
                 <Label>{t('admin.postsPerPage')}</Label>
-                <div className="relative w-32 mt-1.5">
-                  <select
-                    value={String(config.postsPerPage || 10)}
-                    onChange={e => updateField('postsPerPage', Number(e.target.value))}
-                    className="w-full appearance-none bg-surface-container border border-border rounded-lg px-3 py-2.5 text-body-sm text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all cursor-pointer pr-8"
-                  >
-                    {[5, 10, 15, 20, 25, 30, 50].map(n => (
-                      <option key={n} value={String(n)} className="bg-surface-container text-on-surface">{n}</option>
-                    ))}
-                  </select>
-                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5">
-                    <span className="material-symbols-outlined text-[16px] text-on-surface-variant" aria-hidden="true">expand_more</span>
-                  </div>
+                <div className="w-32 mt-1.5">
+                  <Select value={String(config.postsPerPage || 10)} onValueChange={v => updateField('postsPerPage', Number(v))}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[5, 10, 15, 20, 25, 30, 50].map(n => (
+                        <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <p className="text-label-sm text-on-surface-variant/70 mt-1">{t('admin.postsPerPageHint')}</p>
               </div>

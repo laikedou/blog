@@ -64,8 +64,8 @@ export default function EditPostPage() {
       postsApi.get(Number(id)), categoriesApi.list(), tagsApi.list(),
     ]).then(([post, cats, tgs]) => {
       setForm({
-        title: post.title, content: post.content, excerpt: post.excerpt, slug: post.slug,
-        status: post.status, categoryId: post.category?.id?.toString() || '',
+        title: post.title || '', content: post.content || '', excerpt: post.excerpt || '', slug: post.slug || '',
+        status: post.status || 'draft', categoryId: post.category?.id?.toString() || '',
         tagIds: post.tags?.map((t: any) => t.id) || [],
         featuredImage: post.featuredImage || '', seoTitle: post.seoTitle || '',
         seoDescription: post.seoDescription || '',

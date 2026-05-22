@@ -1,5 +1,24 @@
 # Changelog
 
+## 2026-05-22 — Homepage & Experiments UI Redesign
+
+### Features
+- **Immersive Homepage** — Cinematic hero section with CSS particle field, orbiting rings, cursor-aware glow, and magnetic button effects. Topic zones with branded gradient backgrounds (AI/Web3/Blockchain), accent corner glows, and animated heading underlines. About section with stats counters and glass-card skill chips. Scroll progress bar and back-to-top button
+- **Lab-Themed Experiments Page** — Floating geometric shapes, glow dot particles, and concept filter pills (All/Mathematics/Physics/Biology). Enhanced `PerspectiveCard` with top gradient stripe, icon header, and inset perspective panels with hover-reveal arrows. Experiment detail page with pill-style perspective switcher and ambient glow viz container
+- **3D Card Tilt** — `PostCard` now features perspective transform on mouse move with dynamic shadow lift, smooth transition easing
+
+### Enhancements
+- **i18n Wording Completion** — Replaced all hardcoded English text in homepage and experiments pages with proper i18n keys. Added 13 new translation keys across all 4 locales (en/zh-CN/zh-TW/ja): `common.loadMore`, `common.view`, `common.clearFilter`, `home.aboutQuote`, `home.scrollDown`, `home.sectionAiLabel/Desc`, `home.sectionWeb3Label/Desc`, `home.sectionBlockchainLabel/Desc`, `viz.biology`, `viz.experiment.morePerspectives`
+- **Section Spacing** — Increased vertical padding across all homepage and experiments sections for better visual breathing room (mobile: 64-80px, desktop: 96-112px). Added spacing containers around `BannerCarousel` instances
+- **Visualization Components** — Enhanced `VizContentTabs`, `VizMetadataSection`, `VizSocialTabs`, `VizStickyHeader`, `VizMobileBottomBar`, `VizRendererCard`, `VisualizationComments`, `RelatedVisualizations`, `NarrationPlayer` with improved layout and styling
+- **Admin Pages** — Refined `ai-usage`, `banners`, `logs`, `posts/edit`, `posts/new`, `settings` admin pages
+- **UI Components** — Updated `tabs` component, `RichEditor`, and `AITools` with enhanced styling
+
+### Effects & Animation
+- **CSS Keyframes** — Added 7 new animations: `particle-float`, `particle-float-slow`, `orbit-rotate`, `stripe-shift`, `lab-float-1/2/3`
+- **Utility Classes** — Added 20+ new CSS utility classes for particle fields, orbit rings, cursor glow, magnetic buttons, topic backgrounds, filter pills, perspective stripes/rows, lab shapes, stat counters, and pill switchers
+- **animejs** — Scroll-triggered stagger animations via `IntersectionObserver` + `SectionReveal` component
+
 ## 2026-05-22 — Plate.js AI Editor & Multi-Provider AI Support
 
 ### Breaking Changes

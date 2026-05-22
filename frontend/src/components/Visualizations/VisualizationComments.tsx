@@ -85,12 +85,13 @@ export default function VisualizationComments({ visualizationId }: Props) {
   };
 
   const canDelete = (authorId: number) => isAuthenticated && user?.id === authorId;
+  const isOwn = (authorId: number) => isAuthenticated && user?.id === authorId;
 
   return (
     <div>
       <div className="flex items-center gap-2 mb-6">
-        <MessageSquare className="h-5 w-5 text-ink-muted" />
-        <h3 className="font-display text-display-sm text-ink">{t('viz.commentsTitle', { count: comments.length })}</h3>
+        <MessageSquare className="h-5 w-5 text-on-surface-variant" />
+        <h3 className="font-display text-display-sm text-on-surface">{t('viz.commentsTitle', { count: comments.length })}</h3>
       </div>
 
       {isAuthenticated ? (
@@ -109,7 +110,7 @@ export default function VisualizationComments({ visualizationId }: Props) {
           </div>
         </div>
       ) : (
-        <div className="mb-8 p-4 bg-cream-100 rounded-editorial-xs text-center text-body-sm text-ink-muted border border-border">
+        <div className="mb-8 p-4 bg-cream-100 rounded-editorial-xs text-center text-body-sm text-on-surface-variant border border-outline-variant/50">
           <a href="/login" className="text-clay hover:underline">{t('viz.signInToComment')}</a>
         </div>
       )}
@@ -127,38 +128,45 @@ export default function VisualizationComments({ visualizationId }: Props) {
           ))}
         </div>
       ) : comments.length === 0 ? (
-        <div className="text-center py-12 text-ink-muted">
+        <div className="text-center py-12 text-on-surface-variant/60">
           <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-40" />
           <p className="text-body-sm">{t('viz.noComments')}</p>
         </div>
       ) : (
         <div className="space-y-6">
           {comments.map(comment => (
-            <div key={comment.id} className="border-b border-border pb-5 last:border-0">
+            <div
+              key={comment.id}
+              className={`border-b border-outline-variant/30 pb-5 last:border-0 ${
+                isOwn(comment.authorId) ? 'border-l-[3px] border-l-clay/30 pl-4 -ml-0' : ''
+              }`}
+            >
               <div className="flex items-start gap-3">
-                <Avatar className="h-8 w-8 shrink-0">
-                  <AvatarFallback className="text-caption-sm bg-clay text-white">
-                    {comment.author.displayName?.charAt(0).toUpperCase() || 'U'}
-                  </AvatarFallback>
-                </Avatar>
+                <div className="relative shrink-0">
+                  <Avatar className={`h-8 w-8 ${isOwn(comment.authorId) ? 'ring-2 ring-clay/30 ring-offset-2 ring-offset-surface' : ''}`}>
+                    <AvatarFallback className="text-caption-sm bg-clay text-surface">
+                      {comment.author.displayName?.charAt(0).toUpperCase() || 'U'}
+                    </AvatarFallback>
+                  </Avatar>
+                </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-body-sm font-medium text-ink">{comment.author.displayName}</span>
+                    <span className="text-body-sm font-medium text-on-surface">{comment.author.displayName}</span>
                     {comment.author.role === 'admin' && (
                       <Badge variant="outline" className="ml-1 text-[10px] px-1.5 py-0 bg-primary/10 text-primary border-primary/20">STAFF</Badge>
                     )}
-                    <span className="text-caption-sm text-ink-muted">
+                    <span className="text-caption-sm text-on-surface-variant/60">
                       {new Date(comment.createdAt).toLocaleDateString()}
                     </span>
                   </div>
-                  <div className="text-body-sm text-ink-soft">
+                  <div className="text-body-sm text-on-surface-variant">
                     <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>{comment.content}</ReactMarkdown>
                   </div>
                   <div className="flex items-center gap-3 mt-2">
                     {isAuthenticated && (
                       <button
                         onClick={() => setReplyTo(replyTo === comment.id ? null : comment.id)}
-                        className="text-caption-sm text-ink-muted hover:text-clay transition-colors"
+                        className="text-caption-sm text-on-surface-variant/60 hover:text-clay transition-colors"
                       >
                         {t('viz.reply')}
                       </button>
@@ -167,7 +175,7 @@ export default function VisualizationComments({ visualizationId }: Props) {
                       <button
                         onClick={() => handleDelete(comment.id)}
                         disabled={deleting === comment.id}
-                        className="text-caption-sm text-ink-muted hover:text-red-500 transition-colors"
+                        className="text-caption-sm text-on-surface-variant/60 hover:text-red-400 transition-colors"
                       >
                         {deleting === comment.id ? <Loader2 className="h-3 w-3 inline animate-spin" /> : <Trash2 className="h-3 w-3 inline" />}
                         {t('viz.deleteComment')}
@@ -198,31 +206,38 @@ export default function VisualizationComments({ visualizationId }: Props) {
 
                   {/* Replies */}
                   {comment.replies && comment.replies.length > 0 && (
-                    <div className="mt-4 ml-4 space-y-4 border-l-2 border-border pl-4">
+                    <div className="mt-4 ml-4 space-y-4 border-l-2 border-outline-variant/30 pl-4">
                       {comment.replies.map(reply => (
-                        <div key={reply.id} className="flex items-start gap-3">
-                          <Avatar className="h-6 w-6 shrink-0">
-                            <AvatarFallback className="text-caption-sm bg-clay text-white text-[10px]">
-                              {reply.author.displayName?.charAt(0).toUpperCase() || 'U'}
-                            </AvatarFallback>
-                          </Avatar>
+                        <div
+                          key={reply.id}
+                          className={`flex items-start gap-3 ${
+                            isOwn(reply.authorId) ? 'border-l-[3px] border-l-clay/20 pl-3 -ml-3' : ''
+                          }`}
+                        >
+                          <div className="relative shrink-0">
+                            <Avatar className={`h-6 w-6 ${isOwn(reply.authorId) ? 'ring-2 ring-clay/20 ring-offset-2 ring-offset-surface' : ''}`}>
+                              <AvatarFallback className="text-[10px] bg-clay text-surface">
+                                {reply.author.displayName?.charAt(0).toUpperCase() || 'U'}
+                              </AvatarFallback>
+                            </Avatar>
+                          </div>
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2 mb-0.5">
-                              <span className="text-caption-sm font-medium text-ink">{reply.author.displayName}</span>
+                              <span className="text-caption-sm font-medium text-on-surface">{reply.author.displayName}</span>
                               {reply.author.role === 'admin' && (
                                 <Badge variant="outline" className="ml-1 text-[10px] px-1.5 py-0 bg-primary/10 text-primary border-primary/20">STAFF</Badge>
                               )}
-                              <span className="text-caption-sm text-ink-muted">
+                              <span className="text-caption-sm text-on-surface-variant/60">
                                 {new Date(reply.createdAt).toLocaleDateString()}
                               </span>
                             </div>
-                            <div className="text-body-sm text-ink-soft">
+                            <div className="text-body-sm text-on-surface-variant">
                               <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>{reply.content}</ReactMarkdown>
                             </div>
                             {canDelete(reply.authorId) && (
                               <button
                                 onClick={() => handleDelete(reply.id)}
-                                className="text-caption-sm text-ink-muted hover:text-red-500 transition-colors mt-1"
+                                className="text-caption-sm text-on-surface-variant/60 hover:text-red-400 transition-colors mt-1"
                               >
                                 {t('viz.deleteComment')}
                               </button>

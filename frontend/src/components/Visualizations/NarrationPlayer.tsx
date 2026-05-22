@@ -2,6 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { Play, Pause, Square, SkipBack, SkipForward, Volume2, VolumeX } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface Props {
   isPlaying: boolean;
@@ -141,15 +142,16 @@ export default function NarrationPlayer({
           ) : (
             <Volume2 className="h-3.5 w-3.5 text-ink-muted" />
           )}
-          <select
-            value={speed}
-            onChange={(e) => onSpeedChange(Number(e.target.value))}
-            className="text-caption-sm bg-transparent border border-border rounded-lg px-2 py-1 text-ink-muted cursor-pointer"
-          >
-            {SPEEDS.map((s) => (
-              <option key={s} value={s}>{s}x</option>
-            ))}
-          </select>
+          <Select value={String(speed)} onValueChange={(v) => onSpeedChange(Number(v))}>
+            <SelectTrigger className="w-[70px] h-7 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {SPEEDS.map((s) => (
+                <SelectItem key={s} value={String(s)}>{s}x</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Locale badge */}

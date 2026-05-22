@@ -27,6 +27,9 @@
     "less": "Less",
     "viewAll": "View All",
     "showMore": "Show More",
+    "loadMore": "Load More",
+    "view": "View",
+    "clearFilter": "Clear Filter",
     "noData": "No data available",
     "noResults": "No results found",
     "pageNotFound": "Page not found",
@@ -196,7 +199,15 @@
     "topicFrontend": "Frontend",
     "topicAI": "AI",
     "topicWeb3": "Web3",
-    "topicBlockchain": "Blockchain"
+    "topicBlockchain": "Blockchain",
+    "aboutQuote": "The best way to predict the future is to invent it.",
+    "scrollDown": "Scroll to explore",
+    "sectionAiLabel": "Artificial Intelligence",
+    "sectionAiDesc": "LLMs, AI agents, prompt engineering, and the future of intelligence",
+    "sectionWeb3Label": "Web3",
+    "sectionWeb3Desc": "Decentralized web, dApps, smart contracts, and the evolving internet",
+    "sectionBlockchainLabel": "Blockchain",
+    "sectionBlockchainDesc": "Distributed ledgers, consensus mechanisms, DeFi, and crypto infrastructure"
   },
   "posts": {
     "title": "Posts",
@@ -944,6 +955,7 @@
     "generationPrompt": "Generation Prompt",
     "mathematics": "Mathematics",
     "physicsLabel": "Physics",
+    "biology": "Biology",
     "versionLabel": "Version {version}",
     "updated": "Updated",
     "downloaded": "Downloaded as HTML",
@@ -1035,7 +1047,8 @@
       "switchPerspective": "Switch Perspective",
       "empty": "No experiments yet. Create one from the admin panel.",
       "notFound": "Experiment not found",
-      "noViz": "No visualization available"
+      "noViz": "No visualization available",
+      "morePerspectives": "more perspectives"
     },
     "fullscreen": "Fullscreen",
     "interactive": "Interactive Visualization",
@@ -1060,7 +1073,12 @@
       "clickAction": "Clicked \"{param}\"",
       "changeAction": "Changed \"{param}\""
     },
-    "viewSource": "View source code"
+    "viewSource": "View source code",
+    "popular": "Popular",
+    "createYourOwn": "Create Your Own Visualization",
+    "createYourOwnDesc": "Use AI to generate interactive math and physics visualizations. No coding required — just describe a concept and watch it come to life.",
+    "startCreating": "Start Creating",
+    "createFirst": "Create Your First Visualization"
   },
   "chat": {
     "title": "AI Assistant",

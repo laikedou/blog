@@ -15,6 +15,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const PIE_COLORS = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6'];
 
@@ -283,34 +284,36 @@ export default function AdminLogsPage() {
                     />
                   </div>
                   {/* Method filter */}
-                  <select
-                    value={methodFilter}
-                    onChange={e => { setMethodFilter(e.target.value); handleFilterChange(); }}
-                    className="bg-black/20 border border-border text-on-surface rounded-lg px-3 py-2 font-body-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all appearance-none cursor-pointer"
-                  >
-                    <option className="bg-surface-container text-on-surface" value="">{t('admin.logsAllMethods')}</option>
-                    <option className="bg-surface-container text-on-surface" value="GET">GET</option>
-                    <option className="bg-surface-container text-on-surface" value="POST">POST</option>
-                    <option className="bg-surface-container text-on-surface" value="PUT">PUT</option>
-                    <option className="bg-surface-container text-on-surface" value="DELETE">DELETE</option>
-                    <option className="bg-surface-container text-on-surface" value="PATCH">PATCH</option>
-                  </select>
+                  <Select value={methodFilter || '__all'} onValueChange={v => { setMethodFilter(v === '__all' ? '' : v); handleFilterChange(); }}>
+                    <SelectTrigger className="w-[140px]">
+                      <SelectValue placeholder={t('admin.logsAllMethods')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__all">{t('admin.logsAllMethods')}</SelectItem>
+                      <SelectItem value="GET">GET</SelectItem>
+                      <SelectItem value="POST">POST</SelectItem>
+                      <SelectItem value="PUT">PUT</SelectItem>
+                      <SelectItem value="DELETE">DELETE</SelectItem>
+                      <SelectItem value="PATCH">PATCH</SelectItem>
+                    </SelectContent>
+                  </Select>
                   {/* Status filter */}
-                  <select
-                    value={statusFilter}
-                    onChange={e => { setStatusFilter(e.target.value); handleFilterChange(); }}
-                    className="bg-black/20 border border-border text-on-surface rounded-lg px-3 py-2 font-body-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all appearance-none cursor-pointer"
-                  >
-                    <option className="bg-surface-container text-on-surface" value="">{t('admin.logsAllStatus')}</option>
-                    <option className="bg-surface-container text-on-surface" value="400">400 Bad Request</option>
-                    <option className="bg-surface-container text-on-surface" value="401">401 Unauthorized</option>
-                    <option className="bg-surface-container text-on-surface" value="403">403 Forbidden</option>
-                    <option className="bg-surface-container text-on-surface" value="404">404 Not Found</option>
-                    <option className="bg-surface-container text-on-surface" value="409">409 Conflict</option>
-                    <option className="bg-surface-container text-on-surface" value="422">422 Validation</option>
-                    <option className="bg-surface-container text-on-surface" value="429">429 Rate Limit</option>
-                    <option className="bg-surface-container text-on-surface" value="500">500 Server Error</option>
-                  </select>
+                  <Select value={statusFilter || '__all'} onValueChange={v => { setStatusFilter(v === '__all' ? '' : v); handleFilterChange(); }}>
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder={t('admin.logsAllStatus')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__all">{t('admin.logsAllStatus')}</SelectItem>
+                      <SelectItem value="400">400 Bad Request</SelectItem>
+                      <SelectItem value="401">401 Unauthorized</SelectItem>
+                      <SelectItem value="403">403 Forbidden</SelectItem>
+                      <SelectItem value="404">404 Not Found</SelectItem>
+                      <SelectItem value="409">409 Conflict</SelectItem>
+                      <SelectItem value="422">422 Validation</SelectItem>
+                      <SelectItem value="429">429 Rate Limit</SelectItem>
+                      <SelectItem value="500">500 Server Error</SelectItem>
+                    </SelectContent>
+                  </Select>
                   {/* Clear filters */}
                   <Button
                     variant="outline"

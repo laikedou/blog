@@ -27,6 +27,9 @@
     "less": "收起",
     "viewAll": "查看全部",
     "showMore": "展开更多",
+    "loadMore": "加载更多",
+    "view": "查看",
+    "clearFilter": "清除筛选",
     "noData": "暂无数据",
     "noResults": "没有找到结果",
     "pageNotFound": "页面未找到",
@@ -196,7 +199,15 @@
     "topicFrontend": "前端",
     "topicAI": "AI",
     "topicWeb3": "Web3",
-    "topicBlockchain": "区块链"
+    "topicBlockchain": "区块链",
+    "aboutQuote": "预测未来最好的方式就是创造它。",
+    "scrollDown": "向下滚动探索",
+    "sectionAiLabel": "人工智能",
+    "sectionAiDesc": "大语言模型、AI 代理、提示工程与智能未来",
+    "sectionWeb3Label": "Web3",
+    "sectionWeb3Desc": "去中心化网络、dApp、智能合约与下一代互联网",
+    "sectionBlockchainLabel": "区块链",
+    "sectionBlockchainDesc": "分布式账本、共识机制、DeFi 与加密基础设施"
   },
   "posts": {
     "title": "文章",
@@ -945,6 +956,7 @@
     "generationPrompt": "生成提示词",
     "mathematics": "数学",
     "physicsLabel": "物理",
+    "biology": "生物",
     "versionLabel": "版本 {version}",
     "updated": "更新于",
     "downloaded": "已下载为 HTML",
@@ -1033,7 +1045,8 @@
       "switchPerspective": "切换视角",
       "empty": "暂无实验。请从管理面板创建。",
       "notFound": "实验未找到",
-      "noViz": "无可视化内容"
+      "noViz": "无可视化内容",
+      "morePerspectives": "更多视角"
     },
     "fullscreen": "全屏",
     "interactive": "互动可视化",
@@ -1059,6 +1072,11 @@
       "changeAction": "更改了 \"{param}\""
     },
     "viewSource": "查看源代码",
+    "popular": "热门",
+    "createYourOwn": "创建你自己的可视化",
+    "createYourOwnDesc": "使用 AI 生成交互式数学和物理可视化。无需编程 — 只需描述一个概念，就能看到它变得生动起来。",
+    "startCreating": "开始创建",
+    "createFirst": "创建你的第一个可视化",
     "fork": "复刻",
     "forkFailed": "复刻失败",
     "forked": "复刻成功"

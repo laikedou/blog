@@ -1,8 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -20,6 +19,8 @@ interface Props {
 export default function VizContentTabs({ viz, renderer, showCode }: Props) {
   const t = useTranslations();
   const [activeTab, setActiveTab] = useState('overview');
+  const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 });
 
   const availableTabs = [
     { key: 'overview', label: t('viz.interactive') },
@@ -27,6 +28,19 @@ export default function VizContentTabs({ viz, renderer, showCode }: Props) {
     ...(viz.knowledgeSummary ? [{ key: 'summary', label: t('viz.keyKnowledge') }] : []),
     ...(viz.quiz ? [{ key: 'quiz', label: t('viz.article.quiz') }] : []),
   ];
+
+  useEffect(() => {
+    const el = tabRefs.current[activeTab];
+    if (el) {
+      const parent = el.parentElement;
+      if (parent) {
+        setIndicatorStyle({
+          left: el.offsetLeft,
+          width: el.offsetWidth,
+        });
+      }
+    }
+  }, [activeTab]);
 
   const handleCopyCode = () => {
     navigator.clipboard.writeText(viz.htmlContent);
@@ -44,77 +58,93 @@ export default function VizContentTabs({ viz, renderer, showCode }: Props) {
 
   const content = (
     <div className="space-y-6">
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="w-full overflow-x-auto">
+      {/* Sliding indicator tabs */}
+      <div className="relative">
+        <div className="flex overflow-x-auto gap-0 border-b border-outline-variant/50" role="tablist">
           {availableTabs.map(tab => (
-            <TabsTrigger key={tab.key} value={tab.key} className="shrink-0">
+            <button
+              key={tab.key}
+              ref={el => { tabRefs.current[tab.key] = el; }}
+              role="tab"
+              aria-selected={activeTab === tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={`relative shrink-0 px-4 py-3 text-body-sm font-medium transition-colors duration-200 whitespace-nowrap ${
+                activeTab === tab.key
+                  ? 'text-on-surface'
+                  : 'text-on-surface-variant/60 hover:text-on-surface-variant'
+              }`}
+            >
               {tab.label}
-            </TabsTrigger>
+            </button>
           ))}
-        </TabsList>
+        </div>
+        {/* Animated indicator */}
+        <div
+          className="absolute bottom-0 h-[2px] bg-gradient-to-r from-clay to-tertiary rounded-full transition-[left,width] duration-300 ease-out"
+          style={{ left: indicatorStyle.left, width: indicatorStyle.width }}
+        />
+      </div>
 
-        <TabsContent value="overview" className="animate-fade-in">
-          {viz.introduction ? (
-            <Card className="border-border bg-surface-warm">
+      {/* Tab panels */}
+      <div key={activeTab} className="animate-fade-up">
+        {activeTab === 'overview' && (
+          viz.introduction ? (
+            <Card className="border-border bg-surface-warm border-l-[3px] border-l-clay/50">
               <CardContent className="p-6">
-                <h2 className="font-display text-display-xs text-ink mb-2">{t('viz.aboutThis')}</h2>
-                <p className="text-body text-ink-muted leading-relaxed">{viz.introduction}</p>
+                <h2 className="font-display text-display-xs text-on-surface mb-2">{t('viz.aboutThis')}</h2>
+                <p className="text-body text-on-surface-variant leading-relaxed">{viz.introduction}</p>
               </CardContent>
             </Card>
           ) : (
-            <p className="text-body text-ink-muted">{t('viz.noVizDesc')}</p>
-          )}
-        </TabsContent>
-
-        {viz.detailedExplanation && (
-          <TabsContent value="explanation" className="animate-fade-in">
-            <Card className="border-border shadow-card">
-              <CardContent className="p-6">
-                <h2 className="font-display text-display-xs text-ink mb-3">{t('viz.detailedExplanation')}</h2>
-                <div className="text-body text-ink-muted leading-relaxed space-y-3">
-                  {viz.detailedExplanation.split('\n\n').filter(Boolean).map((para: string, i: number) => (
-                    <p key={i}>{para}</p>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+            <p className="text-body text-on-surface-variant">{t('viz.noVizDesc')}</p>
+          )
         )}
 
-        {viz.knowledgeSummary && (
-          <TabsContent value="summary" className="animate-fade-in">
-            <Card className="border-border shadow-card">
-              <CardContent className="p-6">
-                <h2 className="font-display text-display-xs text-ink mb-3">{t('viz.keyKnowledge')}</h2>
-                <ul className="space-y-2">
-                  {viz.knowledgeSummary.split('\n').filter(Boolean).map((point: string, i: number) => (
-                    <li key={i} className="flex items-start gap-3 text-body text-ink-muted">
-                      <span className="mt-1.5 h-2 w-2 rounded-full bg-clay shrink-0" />
-                      <span>{point.replace(/^[-•*]\s*/, '')}</span>
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
-            </Card>
-          </TabsContent>
+        {activeTab === 'explanation' && viz.detailedExplanation && (
+          <Card className="border-border shadow-card border-l-[3px] border-l-clay/50">
+            <CardContent className="p-6">
+              <h2 className="font-display text-display-xs text-on-surface mb-3">{t('viz.detailedExplanation')}</h2>
+              <div className="text-body text-on-surface-variant leading-relaxed space-y-3">
+                {viz.detailedExplanation.split('\n\n').filter(Boolean).map((para: string, i: number) => (
+                  <p key={i}>{para}</p>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         )}
 
-        {quizQuestions && (
-          <TabsContent value="quiz" className="animate-fade-in">
-            <Card className="border-border shadow-card">
-              <CardContent className="p-6">
-                <QuizPanel questions={quizQuestions} />
-              </CardContent>
-            </Card>
-          </TabsContent>
+        {activeTab === 'summary' && viz.knowledgeSummary && (
+          <Card className="border-border shadow-card">
+            <CardContent className="p-6">
+              <h2 className="font-display text-display-xs text-on-surface mb-3">{t('viz.keyKnowledge')}</h2>
+              <ul className="space-y-2">
+                {viz.knowledgeSummary.split('\n').filter(Boolean).map((point: string, i: number) => (
+                  <li key={i} className="flex items-start gap-3 text-body text-on-surface-variant group/item">
+                    <span className={`mt-1.5 h-2 w-2 rounded-full shrink-0 ${
+                      viz.subject === 'math' ? 'bg-blue-400' : 'bg-green-400'
+                    } group-hover/item:scale-150 transition-transform duration-200`} />
+                    <span>{point.replace(/^[-•*]\s*/, '')}</span>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
         )}
-      </Tabs>
+
+        {activeTab === 'quiz' && quizQuestions && (
+          <Card className="border-border shadow-card">
+            <CardContent className="p-6">
+              <QuizPanel questions={quizQuestions} />
+            </CardContent>
+          </Card>
+        )}
+      </div>
 
       {showCode && (
         <Card className="border-border">
           <CardContent className="p-0">
             <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-cream-100">
-              <span className="text-caption-sm font-medium text-ink-muted uppercase tracking-wider">{t('viz.htmlSourceCode')}</span>
+              <span className="text-caption-sm font-medium text-on-surface-variant uppercase tracking-wider">{t('viz.htmlSourceCode')}</span>
               <Button variant="ghost" size="sm" onClick={handleCopyCode}>
                 {t('common.copy')}
               </Button>
@@ -127,8 +157,8 @@ export default function VizContentTabs({ viz, renderer, showCode }: Props) {
       {viz.prompt && (
         <Card className="border-border bg-surface-warm">
           <CardContent className="p-5">
-            <p className="text-caption-sm text-ink-muted uppercase tracking-wider mb-1">{t('viz.generationPrompt')}</p>
-            <p className="text-body-sm text-ink-muted">{viz.prompt}</p>
+            <p className="text-caption-sm text-on-surface-variant/60 uppercase tracking-wider mb-1">{t('viz.generationPrompt')}</p>
+            <p className="text-body-sm text-on-surface-variant">{viz.prompt}</p>
           </CardContent>
         </Card>
       )}
@@ -149,10 +179,10 @@ export default function VizContentTabs({ viz, renderer, showCode }: Props) {
       >
         {viz.introduction && (
           <ArticleSection id="section-intro" title={t('viz.aboutThis')} className="mb-6">
-            <Card className="border-border bg-surface-warm">
+            <Card className="border-border bg-surface-warm border-l-[3px] border-l-clay/50">
               <CardContent className="p-6">
-                <h2 className="font-display text-display-xs text-ink mb-2">{t('viz.aboutThis')}</h2>
-                <p className="text-body text-ink-muted leading-relaxed">{viz.introduction}</p>
+                <h2 className="font-display text-display-xs text-on-surface mb-2">{t('viz.aboutThis')}</h2>
+                <p className="text-body text-on-surface-variant leading-relaxed">{viz.introduction}</p>
               </CardContent>
             </Card>
           </ArticleSection>
@@ -164,10 +194,10 @@ export default function VizContentTabs({ viz, renderer, showCode }: Props) {
 
         {viz.detailedExplanation && (
           <ArticleSection id="section-explanation" title={t('viz.detailedExplanation')} className="mb-6">
-            <Card className="border-border shadow-card">
+            <Card className="border-border shadow-card border-l-[3px] border-l-clay/50">
               <CardContent className="p-6">
-                <h2 className="font-display text-display-xs text-ink mb-3">{t('viz.detailedExplanation')}</h2>
-                <div className="text-body text-ink-muted leading-relaxed space-y-3">
+                <h2 className="font-display text-display-xs text-on-surface mb-3">{t('viz.detailedExplanation')}</h2>
+                <div className="text-body text-on-surface-variant leading-relaxed space-y-3">
                   {viz.detailedExplanation.split('\n\n').filter(Boolean).map((para: string, i: number) => (
                     <p key={i}>{para}</p>
                   ))}
@@ -181,11 +211,13 @@ export default function VizContentTabs({ viz, renderer, showCode }: Props) {
           <ArticleSection id="section-summary" title={t('viz.keyKnowledge')} className="mb-6">
             <Card className="border-border shadow-card">
               <CardContent className="p-6">
-                <h2 className="font-display text-display-xs text-ink mb-3">{t('viz.keyKnowledge')}</h2>
+                <h2 className="font-display text-display-xs text-on-surface mb-3">{t('viz.keyKnowledge')}</h2>
                 <ul className="space-y-2">
                   {viz.knowledgeSummary.split('\n').filter(Boolean).map((point: string, i: number) => (
-                    <li key={i} className="flex items-start gap-3 text-body text-ink-muted">
-                      <span className="mt-1.5 h-2 w-2 rounded-full bg-clay shrink-0" />
+                    <li key={i} className="flex items-start gap-3 text-body text-on-surface-variant group/item">
+                      <span className={`mt-1.5 h-2 w-2 rounded-full shrink-0 ${
+                        viz.subject === 'math' ? 'bg-blue-400' : 'bg-green-400'
+                      } group-hover/item:scale-150 transition-transform duration-200`} />
                       <span>{point.replace(/^[-•*]\s*/, '')}</span>
                     </li>
                   ))}
@@ -199,7 +231,7 @@ export default function VizContentTabs({ viz, renderer, showCode }: Props) {
           <Card className="border-border mb-6">
             <CardContent className="p-0">
               <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-cream-100">
-                <span className="text-caption-sm font-medium text-ink-muted uppercase tracking-wider">{t('viz.htmlSourceCode')}</span>
+                <span className="text-caption-sm font-medium text-on-surface-variant uppercase tracking-wider">{t('viz.htmlSourceCode')}</span>
                 <Button variant="ghost" size="sm" onClick={handleCopyCode}>
                   {t('common.copy')}
                 </Button>
@@ -212,8 +244,8 @@ export default function VizContentTabs({ viz, renderer, showCode }: Props) {
         {viz.prompt && (
           <Card className="border-border bg-surface-warm mb-6">
             <CardContent className="p-5">
-              <p className="text-caption-sm text-ink-muted uppercase tracking-wider mb-1">{t('viz.generationPrompt')}</p>
-              <p className="text-body-sm text-ink-muted">{viz.prompt}</p>
+              <p className="text-caption-sm text-on-surface-variant/60 uppercase tracking-wider mb-1">{t('viz.generationPrompt')}</p>
+              <p className="text-body-sm text-on-surface-variant">{viz.prompt}</p>
             </CardContent>
           </Card>
         )}
