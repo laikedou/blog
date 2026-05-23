@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, useRef } from 'react';
+import { useMemo, useState, useRef, useEffect, memo } from 'react';
 import { useTranslations } from 'next-intl';
 import { FileText, Eye, EyeOff, Download, FileDown } from 'lucide-react';
 import { examPaperSchema } from '@/lib/exam-schema';
@@ -218,7 +218,8 @@ function parseExamMarkdown(md: string): ExamPaper | null {
 
 // ── Sub-components ──
 
-function ExamHeader({ paper, accentColor }: { paper: ExamPaper; accentColor: string }) {
+const ExamHeader = memo(function ExamHeader({ paper, accentColor }: { paper: ExamPaper; accentColor: string }) {
+  const t = useTranslations('viz.tools');
   return (
     <div className="text-center mb-8 pb-6 border-b-2 border-double" style={{ borderColor: `${accentColor}30` }}>
       <h1 className="text-2xl font-bold text-white/90 mb-2">{paper.title}</h1>
@@ -226,20 +227,21 @@ function ExamHeader({ paper, accentColor }: { paper: ExamPaper; accentColor: str
         {paper.subject && <span>{paper.subject}</span>}
         {paper.gradeLevel && <span>{paper.gradeLevel}</span>}
         {paper.difficulty && <span>{paper.difficulty}</span>}
-        <span>Total: {paper.totalPoints} points</span>
-        {paper.timeLimit && <span>Time: {paper.timeLimit}</span>}
+        <span>{t('examGen.preview.total', { points: paper.totalPoints })}</span>
+        {paper.timeLimit && <span>{t('examGen.preview.time', { time: paper.timeLimit })}</span>}
       </div>
       <div className="mt-4 flex justify-center gap-8 text-sm">
-        <span className="text-white/35">Name: _______________</span>
-        <span className="text-white/35">Date: _______________</span>
-        <span className="text-white/35">Score: _____ / {paper.totalPoints}</span>
+        <span className="text-white/35">{t('examGen.preview.nameBlank')}</span>
+        <span className="text-white/35">{t('examGen.preview.dateBlank')}</span>
+        <span className="text-white/35">{t('examGen.preview.scoreBlank', { totalPoints: paper.totalPoints })}</span>
       </div>
     </div>
   );
-}
+});
 
-function QuestionCard({ question, accentColor, showAnswer }: { question: ExamQuestion; accentColor: string; showAnswer?: { answer: string; explanation?: string; rubric?: string } }) {
+const QuestionCard = memo(function QuestionCard({ question, accentColor, showAnswer }: { question: ExamQuestion; accentColor: string; showAnswer?: { answer: string; explanation?: string; rubric?: string } }) {
   const t = useTranslations('viz.tools');
+  const ptsLabel = t('examGen.preview.pointsAbbr');
   return (
     <div className="mb-6 pl-4 border-l-2" style={{ borderColor: `${accentColor}20` }}>
       <div className="flex items-start gap-2 mb-2">
@@ -250,7 +252,7 @@ function QuestionCard({ question, accentColor, showAnswer }: { question: ExamQue
         <div className="flex-1">
           <div className="flex items-start justify-between gap-2">
             <p className="text-sm text-white/80 leading-relaxed">{question.text}</p>
-            <span className="text-xs text-white/30 shrink-0">[{question.points} pts]</span>
+            <span className="text-xs text-white/30 shrink-0">[{question.points} {ptsLabel}]</span>
           </div>
         </div>
       </div>
@@ -311,9 +313,9 @@ function QuestionCard({ question, accentColor, showAnswer }: { question: ExamQue
       )}
     </div>
   );
-}
+});
 
-function AnswerKeyView({ paper, accentColor }: { paper: ExamPaper; accentColor: string }) {
+const AnswerKeyView = memo(function AnswerKeyView({ paper, accentColor }: { paper: ExamPaper; accentColor: string }) {
   const t = useTranslations('viz.tools');
   return (
     <div>
@@ -357,22 +359,32 @@ function AnswerKeyView({ paper, accentColor }: { paper: ExamPaper; accentColor: 
       )}
     </div>
   );
-}
+});
 
 // ── Main component ──
 
-export default function AIToolExamPaperPreview({ content, title, accentColor }: Props) {
+export default memo(function AIToolExamPaperPreview({ content, title, accentColor }: Props) {
   const t = useTranslations('viz.tools');
   const [version, setVersion] = useState<'student' | 'teacher'>('student');
   const [exporting, setExporting] = useState<string | null>(null);
   const paperRef = useRef<HTMLDivElement>(null);
 
-  const paper = useMemo(() => parseExamContent(content), [content]);
+  // Defer heavy parsing until after paint so the dialog open animation isn't blocked
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    setReady(true);
+  }, []);
+
+  const paper = useMemo(() => {
+    if (!ready) return null;
+    return parseExamContent(content);
+  }, [content, ready]);
   const showAnswers = version === 'teacher';
 
   const handleExport = async (format: 'pdf' | 'docx', includeAnswers: boolean) => {
     if (!paper) return;
     const key = `${format}-${includeAnswers ? 'teacher' : 'student'}`;
+    const versionLabel = includeAnswers ? t('examGen.preview.teacherVersion') : t('examGen.preview.studentVersion');
     setExporting(key);
     try {
       if (format === 'pdf') {
@@ -380,13 +392,23 @@ export default function AIToolExamPaperPreview({ content, title, accentColor }: 
       } else {
         await exportExamToDocx(paper, title, { includeAnswers });
       }
-      toast.success(`${format.toUpperCase()} (${includeAnswers ? 'Teacher' : 'Student'}) downloaded`);
+      toast.success(t('examGen.preview.exportSuccess', { format: format.toUpperCase(), version: versionLabel }));
     } catch {
-      toast.error(`${format.toUpperCase()} export failed`);
+      toast.error(t('examGen.preview.exportFailed', { format: format.toUpperCase() }));
     } finally {
       setExporting(null);
     }
   };
+
+  // Not ready yet — show a lightweight skeleton while dialog animates
+  if (!ready) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center p-8 gap-3">
+        <div className="w-8 h-8 rounded-full border-2 border-transparent border-t-white/20 animate-spin" />
+        <p className="text-sm text-white/20">{t('examGen.preview.generateToPreview')}</p>
+      </div>
+    );
+  }
 
   // Fallback: no structured data
   if (!paper || paper.sections.length === 0) {
@@ -394,7 +416,7 @@ export default function AIToolExamPaperPreview({ content, title, accentColor }: 
       return (
         <div className="flex-1 flex flex-col overflow-hidden">
           <div className="flex items-center px-4 py-1.5 border-b border-white/[0.06] shrink-0">
-            <span className="text-xs text-white/25 italic">Structured exam view unavailable — showing raw preview</span>
+            <span className="text-xs text-white/25 italic">{t('examGen.preview.rawFallback')}</span>
           </div>
           <AIToolTabPreview content={content} />
         </div>
@@ -514,7 +536,7 @@ export default function AIToolExamPaperPreview({ content, title, accentColor }: 
 
           {/* Footer */}
           <div className="text-center pt-6 border-t border-white/[0.06]">
-            <p className="text-sm text-white/30">{t('examGen.preview.endOfExam')} — Total: {paper.totalPoints} points</p>
+            <p className="text-sm text-white/30">{t('examGen.preview.endOfExam', { points: paper.totalPoints })}</p>
           </div>
 
           {/* Answer Key section (teacher version) */}
@@ -527,4 +549,4 @@ export default function AIToolExamPaperPreview({ content, title, accentColor }: 
       </div>
     </div>
   );
-}
+});

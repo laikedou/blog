@@ -1218,11 +1218,20 @@
           "studentDocx": "學生 DOCX",
           "teacherPdf": "教師 PDF",
           "teacherDocx": "教師 DOCX",
-          "endOfExam": "試卷結束",
+          "total": "總分：{points} 分",
+          "time": "時間：{time}",
+          "nameBlank": "姓名：_______________",
+          "dateBlank": "日期：_______________",
+          "scoreBlank": "得分：_____ / {totalPoints}",
+          "pointsAbbr": "分",
+          "endOfExam": "試卷結束 — 總分：{points} 分",
           "generateToPreview": "生成試卷以查看預覽",
           "answerKey": "答案與評分標準",
           "noAnswerKey": "未找到答案數據。",
-          "noAnswer": "（未提供答案）"
+          "noAnswer": "（未提供答案）",
+          "exportSuccess": "{format}（{version}）已下載",
+          "exportFailed": "{format} 匯出失敗",
+          "rawFallback": "結構化試卷視圖不可用 — 顯示原始預覽"
         },
         "editor": {
           "questionStem": "題幹",

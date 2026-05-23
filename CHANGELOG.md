@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026-05-23 — AI Tools Dialog Performance & Exam Preview i18n
+
+### Performance
+- **AIToolExamPaperPreview** — Deferred heavy `parseExamContent` (JSON.parse + Zod validation) to after paint via `useEffect`, preventing main-thread blocking during dialog open animation. Wrapped `ExamHeader`, `QuestionCard`, `AnswerKeyView`, and main export in `React.memo` to prevent cascade re-renders.
+- **AIToolParticles** — Replaced canvas-based particle system (50 particles, `requestAnimationFrame` draw loop, DPR scaling) with pure CSS `@keyframes` animations on 2 glow orbs + 12 micro-dots. Zero JS runtime, all animations run on GPU compositor via `transform` + `opacity`.
+- **AIToolDialogPortal** — Replaced `setInterval`-driven CSS custom property border animation with framer-motion `motion.div` using GPU-composited `rotate` transform. Added `AnimatePresence` for smooth mount/unmount transitions.
+
+### i18n
+- **AIToolExamPaperPreview** — Fixed 9 remaining hardcoded strings: exam header blanks (Name/Date/Score), points abbreviation, total/time labels, export success/error toasts, raw fallback banner. `endOfExam` now properly passes `{points}` parameter.
+- **New Keys** — Added `examGen.preview.{total,time,nameBlank,dateBlank,scoreBlank,pointsAbbr,exportSuccess,exportFailed,rawFallback}` across all 4 locales (en/zh-CN/zh-TW/ja).
+
+### Dependencies
+- **Added** `framer-motion` — GPU-accelerated animation library for border glow effects
+
 ## 2026-05-23 — Editor i18n Hardcoded String Cleanup
 
 ### Changes

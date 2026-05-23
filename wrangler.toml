@@ -1,0 +1,28 @@
+name = "blog"
+main = "cloudflare/worker/index.ts"
+compatibility_date = "2025-05-22"
+
+# Container configuration — Dockerfile at project root so COPY paths resolve
+[[containers]]
+class_name = "BlogContainer"
+image = "./Dockerfile.cloudflare"
+max_instances = 3
+
+# Bind the container as a Durable Object
+[[durable_objects.bindings]]
+name = "BLOG_CONTAINER"
+class_name = "BlogContainer"
+
+# DO migration — must use new_sqlite_classes for containers
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["BlogContainer"]
+
+# Worker environment variables (non-secret)
+[vars]
+NODE_ENV = "production"
+
+# Observability
+[observability]
+enabled = true
+head_sampling_rate = 1

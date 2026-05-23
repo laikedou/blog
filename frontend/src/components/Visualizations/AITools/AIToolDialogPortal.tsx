@@ -1,6 +1,8 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import AIToolParticles from './AIToolParticles';
 
@@ -11,22 +13,8 @@ interface Props {
 }
 
 export default function AIToolDialogPortal({ open, onOpenChange, children }: Props) {
+  const t = useTranslations();
   const contentRef = useRef<HTMLDivElement>(null);
-
-  // Animate border glow via CSS custom property rotation
-  useEffect(() => {
-    if (!open) return;
-    let angle = 0;
-    const el = contentRef.current;
-    if (!el) return;
-
-    const interval = setInterval(() => {
-      angle = (angle + 0.5) % 360;
-      el.style.setProperty('--border-angle', `${angle}deg`);
-    }, 30);
-
-    return () => clearInterval(interval);
-  }, [open]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -34,9 +22,8 @@ export default function AIToolDialogPortal({ open, onOpenChange, children }: Pro
         showCloseButton={false}
         className="!max-w-4xl !w-[95vw] !h-[90vh] !p-0 !gap-0 !border-0 !bg-transparent overflow-hidden"
       >
-        <DialogTitle className="sr-only">AI Tools</DialogTitle>
+        <DialogTitle className="sr-only">{t('viz.aiTools.title')}</DialogTitle>
 
-        {/* Outer glow ring */}
         <div
           ref={contentRef}
           className="relative w-full h-full rounded-2xl overflow-hidden flex flex-col"
@@ -47,40 +34,54 @@ export default function AIToolDialogPortal({ open, onOpenChange, children }: Pro
               0 0 40px rgba(124, 58, 237, 0.04),
               inset 0 1px 0 rgba(255,255,255,0.03)
             `,
-            '--border-angle': '0deg',
-          } as React.CSSProperties}
+          }}
         >
-          {/* Animated gradient border */}
-          <div
-            className="absolute inset-0 rounded-2xl pointer-events-none z-10"
-            style={{
-              padding: '1px',
-              background: `conic-gradient(from var(--border-angle, 0deg) at 50% 50%, transparent, rgba(0,240,255,0.15), transparent, rgba(124,58,237,0.1), transparent)`,
-              mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
-              maskComposite: 'exclude',
-              WebkitMaskComposite: 'xor',
-            } as React.CSSProperties}
-          />
+          {/* Animated gradient border rings — GPU-accelerated via framer-motion */}
+          <AnimatePresence>
+            {open && (
+              <>
+                <motion.div
+                  className="absolute inset-0 rounded-2xl pointer-events-none z-10"
+                  style={{
+                    padding: '1.5px',
+                    background: 'conic-gradient(from 0deg at 50% 50%, transparent 0%, rgba(0,240,255,0.2) 25%, transparent 50%, rgba(124,58,237,0.15) 75%, transparent 100%)',
+                    mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+                    maskComposite: 'exclude',
+                    WebkitMaskComposite: 'xor',
+                  }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1, rotate: 360 }}
+                  transition={{ opacity: { duration: 0.3 }, rotate: { duration: 8, repeat: Infinity, ease: 'linear' } }}
+                />
+                <motion.div
+                  className="absolute inset-0 rounded-2xl pointer-events-none z-10"
+                  style={{
+                    padding: '1.5px',
+                    background: 'conic-gradient(from 180deg at 50% 50%, transparent 0%, rgba(0,240,255,0.1) 25%, transparent 50%, rgba(124,58,237,0.08) 75%, transparent 100%)',
+                    mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+                    maskComposite: 'exclude',
+                    WebkitMaskComposite: 'xor',
+                  }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1, rotate: -360 }}
+                  transition={{ opacity: { duration: 0.3 }, rotate: { duration: 12, repeat: Infinity, ease: 'linear' } }}
+                />
+              </>
+            )}
+          </AnimatePresence>
 
           {/* Particle background */}
           <AIToolParticles />
 
-          {/* Grid overlay */}
-          <div
-            className="absolute inset-0 pointer-events-none opacity-[0.03]"
-            style={{
-              backgroundImage: `
-                linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px)
-              `,
-              backgroundSize: '48px 48px',
-            }}
-          />
-
           {/* Content */}
-          <div className="relative z-10 flex flex-col h-full">
+          <motion.div
+            className="relative z-10 flex flex-col h-full"
+            initial={{ opacity: 0 }}
+            animate={open ? { opacity: 1 } : { opacity: 0 }}
+            transition={{ duration: 0.2, delay: 0.05 }}
+          >
             {children}
-          </div>
+          </motion.div>
         </div>
       </DialogContent>
     </Dialog>

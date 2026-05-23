@@ -1218,11 +1218,20 @@
           "studentDocx": "生徒 DOCX",
           "teacherPdf": "教師 PDF",
           "teacherDocx": "教師 DOCX",
-          "endOfExam": "試験終了",
+          "total": "合計：{points} 点",
+          "time": "時間：{time}",
+          "nameBlank": "名前：_______________",
+          "dateBlank": "日付：_______________",
+          "scoreBlank": "得点：_____ / {totalPoints}",
+          "pointsAbbr": "点",
+          "endOfExam": "試験終了 — 合計：{points} 点",
           "generateToPreview": "試験を生成してプレビューを表示",
           "answerKey": "解答と採点基準",
           "noAnswerKey": "解答データが見つかりません。",
-          "noAnswer": "（解答なし）"
+          "noAnswer": "（解答なし）",
+          "exportSuccess": "{format}（{version}）をダウンロードしました",
+          "exportFailed": "{format} エクスポートに失敗しました",
+          "rawFallback": "構造化試験ビューは利用できません — 生のプレビューを表示中"
         },
         "editor": {
           "questionStem": "問題文",

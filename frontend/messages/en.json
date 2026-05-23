@@ -1222,11 +1222,20 @@
           "studentDocx": "Student DOCX",
           "teacherPdf": "Teacher PDF",
           "teacherDocx": "Teacher DOCX",
-          "endOfExam": "End of Exam",
+          "total": "Total: {points} points",
+          "time": "Time: {time}",
+          "nameBlank": "Name: _______________",
+          "dateBlank": "Date: _______________",
+          "scoreBlank": "Score: _____ / {totalPoints}",
+          "pointsAbbr": "pts",
+          "endOfExam": "End of Exam — Total: {points} points",
           "generateToPreview": "Generate an exam to see preview",
           "answerKey": "Answer Key & Scoring Rubric",
           "noAnswerKey": "No answer key data found.",
-          "noAnswer": "(No answer provided)"
+          "noAnswer": "(No answer provided)",
+          "exportSuccess": "{format} ({version}) downloaded",
+          "exportFailed": "{format} export failed",
+          "rawFallback": "Structured exam view unavailable — showing raw preview"
         },
         "editor": {
           "questionStem": "Question Stem",

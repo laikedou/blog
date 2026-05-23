@@ -1219,11 +1219,20 @@
           "studentDocx": "学生 DOCX",
           "teacherPdf": "教师 PDF",
           "teacherDocx": "教师 DOCX",
-          "endOfExam": "试卷结束",
+          "total": "总分：{points} 分",
+          "time": "时间：{time}",
+          "nameBlank": "姓名：_______________",
+          "dateBlank": "日期：_______________",
+          "scoreBlank": "得分：_____ / {totalPoints}",
+          "pointsAbbr": "分",
+          "endOfExam": "试卷结束 — 总分：{points} 分",
           "generateToPreview": "生成试卷以查看预览",
           "answerKey": "答案与评分标准",
           "noAnswerKey": "未找到答案数据。",
-          "noAnswer": "（未提供答案）"
+          "noAnswer": "（未提供答案）",
+          "exportSuccess": "{format}（{version}）已下载",
+          "exportFailed": "{format} 导出失败",
+          "rawFallback": "结构化试卷视图不可用 — 显示原始预览"
         },
         "editor": {
           "questionStem": "题干",

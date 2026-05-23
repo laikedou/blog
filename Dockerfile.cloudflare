@@ -1,0 +1,65 @@
+# ---- Stage 1: Build backend ----
+FROM node:20-alpine AS backend-builder
+
+WORKDIR /app
+
+COPY backend/package.json backend/package-lock.json ./
+RUN npm ci
+
+COPY backend/tsconfig.json backend/tsconfig.build.json backend/nest-cli.json ./
+COPY backend/prisma/ ./prisma/
+COPY backend/src/ ./src/
+
+RUN npx prisma generate
+RUN npm run build
+# Strip devDependencies, then bring back prisma CLI for migrations
+RUN npm prune --production && npm install prisma@^5.8.0 --no-save
+
+# ---- Stage 2: Build frontend ----
+FROM node:20-alpine AS frontend-builder
+
+WORKDIR /app
+
+COPY frontend/package.json frontend/package-lock.json ./
+RUN npm ci
+
+COPY frontend/tsconfig.json frontend/next.config.ts frontend/postcss.config.js frontend/components.json ./
+COPY frontend/src/ ./src/
+COPY frontend/public/ ./public/
+COPY frontend/messages/ ./messages/
+
+ENV NEXT_PUBLIC_API_URL=/api
+
+RUN npm run build
+# Strip devDependencies from standalone output
+RUN npm prune --production
+
+# ---- Stage 3: Production image ----
+FROM node:20-alpine
+
+RUN apk add --no-cache tini curl
+
+# --- Backend ---
+WORKDIR /app/backend
+COPY --from=backend-builder /app/node_modules ./node_modules
+COPY --from=backend-builder /app/dist ./dist
+COPY --from=backend-builder /app/prisma ./prisma
+COPY --from=backend-builder /app/package.json ./
+
+# --- Frontend (standalone output) ---
+WORKDIR /app/frontend
+COPY --from=frontend-builder /app/.next/standalone ./
+COPY --from=frontend-builder /app/.next/static ./.next/static
+COPY --from=frontend-builder /app/public ./public
+
+# --- Entrypoint ---
+COPY cloudflare/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+EXPOSE 3000 4000
+
+HEALTHCHECK --interval=15s --timeout=3s --start-period=30s --retries=3 \
+  CMD curl -f http://localhost:4000/api/health || exit 1
+
+ENTRYPOINT ["/sbin/tini", "--"]
+CMD ["/entrypoint.sh"]
