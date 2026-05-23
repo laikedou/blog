@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useTranslations } from 'next-intl';
 
 import { DndPlugin, useDraggable, useDropLine } from '@platejs/dnd';
 import { expandListItemsWithChildren } from '@platejs/list';
@@ -232,6 +233,7 @@ const DragHandle = React.memo(function DragHandle({
   resetPreview: () => void;
   setPreviewTop: (top: number) => void;
 }) {
+  const t = useTranslations();
   const editor = useEditorRef();
   const element = useElement();
 
@@ -328,7 +330,7 @@ const DragHandle = React.memo(function DragHandle({
           <GripVertical className="text-muted-foreground" />
         </div>
       </TooltipTrigger>
-      <TooltipContent>Drag to move</TooltipContent>
+      <TooltipContent>{t('editor.dragToMove')}</TooltipContent>
     </Tooltip>
   );
 });

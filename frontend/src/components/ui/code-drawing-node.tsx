@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useTranslations } from 'next-intl';
 
 import type {
   CodeDrawingType,
@@ -48,7 +49,8 @@ import {
 function createDebouncedCodeDrawingRenderer(
   setImage: React.Dispatch<React.SetStateAction<string>>,
   setLoading: React.Dispatch<React.SetStateAction<boolean>>,
-  setError: React.Dispatch<React.SetStateAction<string | null>>
+  setError: React.Dispatch<React.SetStateAction<string | null>>,
+  t: ReturnType<typeof useTranslations>
 ) {
   let lastRequestId = 0;
 
@@ -79,7 +81,7 @@ function createDebouncedCodeDrawingRenderer(
         }
       } catch (err) {
         if (lastRequestId === requestId) {
-          setError(err instanceof Error ? err.message : 'Rendering failed');
+          setError(err instanceof Error ? err.message : t('editor.renderingFailed'));
           setImage('');
         }
       } finally {
@@ -93,6 +95,7 @@ function createDebouncedCodeDrawingRenderer(
 }
 
 function useCodeDrawingElement({ element }: { element: TCodeDrawingElement }) {
+  const t = useTranslations();
   const editor = useEditorRef();
   const readOnly = useReadOnly();
   const [loading, setLoading] = React.useState(false);
@@ -100,7 +103,7 @@ function useCodeDrawingElement({ element }: { element: TCodeDrawingElement }) {
   const [image, setImage] = React.useState<string>('');
 
   const debouncedRender = React.useMemo(
-    () => createDebouncedCodeDrawingRenderer(setImage, setLoading, setError),
+    () => createDebouncedCodeDrawingRenderer(setImage, setLoading, setError, t),
     []
   );
 
@@ -132,6 +135,7 @@ function useCodeDrawingElement({ element }: { element: TCodeDrawingElement }) {
 export function CodeDrawingElement(
   props: PlateElementProps<TCodeDrawingElement>
 ) {
+  const t = useTranslations();
   const { children } = props;
   const isMobile = useIsMobile();
   const editor = useEditorRef();
@@ -252,7 +256,7 @@ export function CodeDrawingElement(
               variant="ghost"
               className="size-8"
               onClick={handleDownload}
-              title="Export"
+              title={t('editor.export')}
             >
               <DownloadIcon className="size-4" />
             </Button>
@@ -262,7 +266,7 @@ export function CodeDrawingElement(
             variant="ghost"
             className="size-8"
             onClick={removeNode}
-            title="Delete"
+            title={t('common.delete')}
           >
             <Trash2 className="size-4" />
           </Button>
@@ -295,6 +299,7 @@ function CodeDrawingPreview({
   readOnly?: boolean;
   isMobile?: boolean;
 }) {
+  const t = useTranslations();
   const viewMode = drawingMode;
   const showCode = viewMode === VIEW_MODE.Both || viewMode === VIEW_MODE.Code;
   const showBorder = viewMode === VIEW_MODE.Both;
@@ -367,6 +372,7 @@ function CodeDrawingToolbar({
   onDrawingTypeChange: (type: CodeDrawingType) => void;
   onDrawingModeChange: (mode: ViewMode) => void;
 }) {
+  const t = useTranslations();
   const [toolbarVisible, setToolbarVisible] = React.useState(false);
   const [languageSelectOpen, setLanguageSelectOpen] = React.useState(false);
   const [viewModeSelectOpen, setViewModeSelectOpen] = React.useState(false);
@@ -459,6 +465,7 @@ function CodeDrawingTextarea({
   onCodeChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   toolbar?: React.ReactNode;
 }) {
+  const t = useTranslations();
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
   const isCodeOnlyMode = viewMode === VIEW_MODE.Code;
 
@@ -516,7 +523,7 @@ function CodeDrawingTextarea({
               readOnly={readOnly}
               className="m-0 h-full w-full resize-none overflow-auto border-0 bg-transparent p-0 font-mono text-sm outline-none"
               style={{ minHeight: `${DEFAULT_MIN_HEIGHT}px` }}
-              placeholder="Enter your code here..."
+              placeholder={t('editor.enterCodeHere')}
               spellCheck={false}
             />
           </code>
@@ -545,6 +552,7 @@ function CodeDrawingPreviewArea({
   showBorder?: boolean;
   toolbar?: React.ReactNode;
 }) {
+  const t = useTranslations();
   const showImage = viewMode === VIEW_MODE.Both || viewMode === VIEW_MODE.Image;
 
   return (
@@ -571,17 +579,17 @@ function CodeDrawingPreviewArea({
             'flex flex-1 items-center justify-center rounded-md bg-muted/30 p-4'
           }
         >
-          {loading && <div className="text-muted-foreground">Loading...</div>}
+          {loading && <div className="text-muted-foreground">{t('common.loading')}</div>}
           {!loading && image && (
             <img
               src={image}
-              alt="Code drawing"
+              alt={t('editor.codeDrawingAlt')}
               className="max-h-full max-w-full object-contain"
             />
           )}
           {!loading && !image && (
             <div className="text-muted-foreground">
-              {code.trim() ? 'Rendering...' : 'Preview will appear here'}
+              {code.trim() ? t('editor.rendering') : t('editor.previewWillAppear')}
             </div>
           )}
         </div>

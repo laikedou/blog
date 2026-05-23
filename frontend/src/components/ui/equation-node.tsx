@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useTranslations } from 'next-intl';
 import TextareaAutosize, {
   type TextareaAutosizeProps,
 } from 'react-textarea-autosize';
@@ -31,6 +32,7 @@ import { cn } from '@/lib/utils';
 import { inlineSuggestionVariants } from '@/lib/suggestion';
 
 export function EquationElement(props: PlateElementProps<TEquationElement>) {
+  const t = useTranslations();
   const selected = useSelected();
   const [open, setOpen] = React.useState(selected);
   const katexRef = React.useRef<HTMLDivElement | null>(null);
@@ -76,7 +78,7 @@ export function EquationElement(props: PlateElementProps<TEquationElement>) {
             ) : (
               <div className="flex h-7 w-full items-center gap-2 whitespace-nowrap text-muted-foreground text-sm">
                 <RadicalIcon className="size-6 text-muted-foreground/80" />
-                <div>Add a Tex equation</div>
+                {t("editor.addTexEquation")}
               </div>
             )}
             {lineBreakBadge}
@@ -101,6 +103,7 @@ export function EquationElement(props: PlateElementProps<TEquationElement>) {
 export function InlineEquationElement(
   props: PlateElementProps<TEquationElement>
 ) {
+  const t = useTranslations();
   const { element } = props;
   const katexRef = React.useRef<HTMLDivElement | null>(null);
   const selected = useSelected();
@@ -164,7 +167,7 @@ export function InlineEquationElement(
             {element.texExpression.length === 0 && (
               <span>
                 <RadicalIcon className="mr-1 inline-block h-[19px] w-4 py-[1.5px] align-text-bottom" />
-                New equation
+                {t("editor.newEquation")}
               </span>
             )}
           </div>
@@ -173,7 +176,7 @@ export function InlineEquationElement(
         <EquationPopoverContent
           className="my-auto"
           open={open}
-          placeholder="E = mc^2"
+          placeholder={t('editor.equationPlaceholder')}
           setOpen={setOpen}
           isInline
         />

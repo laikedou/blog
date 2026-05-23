@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useTranslations } from 'next-intl';
 
 import type { TPlaceholderElement } from 'platejs';
 import type { PlateElementProps } from 'platejs/react';
@@ -18,39 +19,40 @@ import { useFilePicker } from 'use-file-picker';
 import { cn } from '@/lib/utils';
 import { useUploadFile } from '@/hooks/use-upload-file';
 
-const CONTENT: Record<
+const getContent = (t: ReturnType<typeof useTranslations>): Record<
   string,
   {
     accept: string[];
-    content: React.ReactNode;
+    content: string;
     icon: React.ReactNode;
   }
-> = {
+> => ({
   [KEYS.audio]: {
     accept: ['audio/*'],
-    content: 'Add an audio file',
+    content: t('editor.addAudioFile'),
     icon: <AudioLines />,
   },
   [KEYS.file]: {
     accept: ['*'],
-    content: 'Add a file',
+    content: t('editor.addFile'),
     icon: <FileUp />,
   },
   [KEYS.img]: {
     accept: ['image/*'],
-    content: 'Add an image',
+    content: t('editor.addImage'),
     icon: <ImageIcon />,
   },
   [KEYS.video]: {
     accept: ['video/*'],
-    content: 'Add a video',
+    content: t('editor.addVideo'),
     icon: <Film />,
   },
-};
+});
 
 export const PlaceholderElement = withHOC(
   PlaceholderProvider,
   function PlaceholderElement(props: PlateElementProps<TPlaceholderElement>) {
+    const t = useTranslations();
     const { editor, element } = props;
 
     const { api } = useEditorPlugin(PlaceholderPlugin);
@@ -60,7 +62,7 @@ export const PlaceholderElement = withHOC(
 
     const loading = isUploading && uploadingFile;
 
-    const currentContent = CONTENT[element.mediaType];
+    const currentContent = getContent(t)[element.mediaType];
 
     const isImage = element.mediaType === KEYS.img;
 

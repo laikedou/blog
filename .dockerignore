@@ -1,0 +1,43 @@
+# Dependencies
+node_modules
+backend/node_modules
+frontend/node_modules
+
+# Build outputs
+backend/dist
+frontend/.next
+frontend/out
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Git
+.git
+.gitattributes
+.gitignore
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Tests
+coverage
+backend/coverage
+frontend/coverage
+
+# Misc
+*.log
+*.db
+*.db-journal
+uploads/*
+!uploads/.gitkeep
+.cache
+tmp

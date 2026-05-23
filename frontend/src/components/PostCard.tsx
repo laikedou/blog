@@ -1,9 +1,9 @@
 'use client';
 
-import { useRef, useEffect, useState, useCallback } from 'react';
+import { useRef, useEffect, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { animate } from 'animejs';
+import { motion, useMotionValue, useTransform, useSpring } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
 
 interface PostCardProps {
@@ -27,41 +27,30 @@ interface PostCardProps {
 export default function PostCard({ post, featured, index }: PostCardProps) {
   const t = useTranslations();
   const cardRef = useRef<HTMLDivElement>(null);
-  const [tiltStyle, setTiltStyle] = useState<React.CSSProperties>({});
 
-  useEffect(() => {
-    const el = cardRef.current;
-    if (!el) return;
-    const anim = animate(el, {
-      opacity: [0, 1],
-      translateY: [16, 0],
-      easing: 'easeOutCubic',
-      duration: 600,
-      delay: index !== undefined ? index * 80 : 100,
-    });
-    return () => { (anim as any).stop?.(); };
-  }, [index]);
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+
+  const springX = useSpring(mouseX, { stiffness: 400, damping: 30 });
+  const springY = useSpring(mouseY, { stiffness: 400, damping: 30 });
+
+  const rotateY = useTransform(springX, [-0.5, 0.5], [6, -6]);
+  const rotateX = useTransform(springY, [-0.5, 0.5], [-6, 6]);
+  const shadowX = useTransform(springX, [-0.5, 0.5], [-6, 6]);
+  const shadowY = useTransform(springY, [-0.5, 0.5], [-6, 6]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     const el = cardRef.current;
     if (!el) return;
     const rect = el.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / rect.width - 0.5;
-    const y = (e.clientY - rect.top) / rect.height - 0.5;
-    setTiltStyle({
-      transform: `perspective(1000px) rotateY(${x * 6}deg) rotateX(${-y * 6}deg)`,
-      boxShadow: `${x * 6}px ${y * 6}px 24px rgba(0,0,0,0.25)`,
-      transition: 'transform 0.1s ease-out, box-shadow 0.1s ease-out',
-    });
-  }, []);
+    mouseX.set((e.clientX - rect.left) / rect.width - 0.5);
+    mouseY.set((e.clientY - rect.top) / rect.height - 0.5);
+  }, [mouseX, mouseY]);
 
   const handleMouseLeave = useCallback(() => {
-    setTiltStyle({
-      transform: 'perspective(1000px) rotateY(0deg) rotateX(0deg)',
-      boxShadow: 'none',
-      transition: 'transform 0.5s cubic-bezier(0.23, 1, 0.32, 1), box-shadow 0.5s cubic-bezier(0.23, 1, 0.32, 1)',
-    });
-  }, []);
+    mouseX.set(0);
+    mouseY.set(0);
+  }, [mouseX, mouseY]);
 
   const date = post.publishedAt
     ? new Date(post.publishedAt).toLocaleDateString('en-US', {
@@ -71,8 +60,26 @@ export default function PostCard({ post, featured, index }: PostCardProps) {
 
   if (featured) {
     return (
-      <article ref={cardRef} className="opacity-0 group" style={tiltStyle} onMouseMove={handleMouseMove} onMouseLeave={handleMouseLeave}>
-        <Link href={`/posts/${post.slug}`} className="block" aria-label={`Read ${post.title}`}>
+      <motion.article
+        ref={cardRef}
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{
+          duration: 0.6,
+          ease: [0.32, 0.72, 0, 1],
+          delay: index !== undefined ? index * 0.08 : 0.1,
+        }}
+        className="group"
+        style={{
+          rotateX,
+          rotateY,
+          transformStyle: 'preserve-3d',
+          perspective: 1000,
+        }}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
+      >
+        <Link href={`/posts/${post.slug}`} className="block" aria-label={t('common.readPost', { title: post.title })}>
           <figure className="aspect-[16/9] bg-cream-200 overflow-hidden rounded-editorial mb-5 shadow-card group-hover:shadow-card-hover transition-shadow duration-500">
             {post.featuredImage ? (
               <img
@@ -92,7 +99,7 @@ export default function PostCard({ post, featured, index }: PostCardProps) {
         <div className="space-y-3">
           <div className="flex items-center gap-3">
             {post.category && (
-              <Link href={`/category/${post.category.slug}`} aria-label={`Category: ${post.category.name}`}>
+              <Link href={`/category/${post.category.slug}`} aria-label={t('common.categoryLabel', { name: post.category.name })}>
                 <Badge variant="outline" className="text-caption-sm" style={{ color: post.category.color, borderColor: post.category.color + '40' }}>
                   {post.category.name}
                 </Badge>
@@ -107,13 +114,31 @@ export default function PostCard({ post, featured, index }: PostCardProps) {
           </Link>
           <p className="text-body text-ink-soft line-clamp-3">{post.excerpt || t('common.noExcerpt')}</p>
         </div>
-      </article>
+      </motion.article>
     );
   }
 
   return (
-    <article ref={cardRef} className="opacity-0 group perspective-card" style={tiltStyle} onMouseMove={handleMouseMove} onMouseLeave={handleMouseLeave}>
-      <Link href={`/posts/${post.slug}`} className="block" aria-label={`Read ${post.title}`}>
+    <motion.article
+      ref={cardRef}
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{
+        duration: 0.6,
+        ease: [0.32, 0.72, 0, 1],
+        delay: index !== undefined ? index * 0.08 : 0.1,
+      }}
+      className="group perspective-card"
+      style={{
+        rotateX,
+        rotateY,
+        transformStyle: 'preserve-3d',
+        perspective: 1000,
+      }}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+    >
+      <Link href={`/posts/${post.slug}`} className="block" aria-label={t('common.readPost', { title: post.title })}>
         {post.featuredImage ? (
           <figure className="aspect-[4/3] bg-cream-200 overflow-hidden rounded-editorial mb-5 shadow-card group-hover:shadow-card-hover transition-shadow duration-500">
             <img
@@ -134,7 +159,7 @@ export default function PostCard({ post, featured, index }: PostCardProps) {
       <div className="space-y-3">
         <div className="flex items-center gap-3">
           {post.category && (
-            <Link href={`/category/${post.category.slug}`} aria-label={`Category: ${post.category.name}`}>
+            <Link href={`/category/${post.category.slug}`} aria-label={t('common.categoryLabel', { name: post.category.name })}>
               <Badge variant="outline" className="text-caption-sm" style={{ color: post.category.color, borderColor: post.category.color + '40' }}>
                 {post.category.name}
               </Badge>
@@ -168,6 +193,6 @@ export default function PostCard({ post, featured, index }: PostCardProps) {
           </div>
         </div>
       </div>
-    </article>
+    </motion.article>
   );
 }

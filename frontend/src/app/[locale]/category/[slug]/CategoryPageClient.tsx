@@ -1,14 +1,15 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { motion } from 'framer-motion';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import PostCard from '@/components/PostCard';
 import { posts as postsApi } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { animate, stagger } from 'animejs';
+import { staggerContainer, staggerItem } from '@/lib/animations';
 import { useTranslations } from 'next-intl';
 
 export default function CategoryPageClient({ slug }: { slug: string }) {
@@ -16,7 +17,6 @@ export default function CategoryPageClient({ slug }: { slug: string }) {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const postsRef = useRef<HTMLDivElement>(null);
   const t = useTranslations();
 
   useEffect(() => {
@@ -26,15 +26,6 @@ export default function CategoryPageClient({ slug }: { slug: string }) {
       .then(res => { setPosts(res.data); setTotalPages(res.totalPages); })
       .finally(() => setLoading(false));
   }, [slug, page]);
-
-  useEffect(() => {
-    if (!loading && postsRef.current) {
-      animate(postsRef.current.children, {
-        opacity: [0, 1], translateY: [20, 0],
-        easing: 'easeOutCubic', duration: 500, delay: stagger(80),
-      });
-    }
-  }, [loading]);
 
   const categoryName = slug.charAt(0).toUpperCase() + slug.slice(1).replace(/-/g, ' ');
 
@@ -50,7 +41,7 @@ export default function CategoryPageClient({ slug }: { slug: string }) {
           </div>
         </section>
 
-        <section className="bg-cream-200" aria-label="Category posts">
+        <section className="bg-cream-200" aria-label={t('common.categoryPosts')}>
           <div className="section-container py-section-sm">
             {loading ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -68,11 +59,20 @@ export default function CategoryPageClient({ slug }: { slug: string }) {
               </div>
             ) : (
               <>
-                <div ref={postsRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16">
-                  {posts.map(post => <PostCard key={post.id} post={post} />)}
-                </div>
+                <motion.div
+                  variants={staggerContainer}
+                  initial="hidden"
+                  animate="visible"
+                  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16"
+                >
+                  {posts.map(post => (
+                    <motion.div key={post.id} variants={staggerItem}>
+                      <PostCard post={post} />
+                    </motion.div>
+                  ))}
+                </motion.div>
                 {totalPages > 1 && (
-                  <nav className="flex justify-center gap-3 mt-16" aria-label="Pagination">
+                  <nav className="flex justify-center gap-3 mt-16" aria-label={t('common.pagination')}>
                     <Button variant="outline" onClick={() => setPage(p => Math.max(1, p-1))} disabled={page === 1}>{t('common.previous')}</Button>
                     <span className="text-body-sm text-ink-muted self-center">{t('common.pageOf', { page, total: totalPages })}</span>
                     <Button variant="outline" onClick={() => setPage(p => Math.min(totalPages, p+1))} disabled={page === totalPages}>{t('common.next')}</Button>

@@ -1,5 +1,28 @@
 # Changelog
 
+## 2026-05-23 — AI Tools Dialog Performance & Exam Preview i18n
+
+### Performance
+- **AIToolExamPaperPreview** — Deferred heavy `parseExamContent` (JSON.parse + Zod validation) to after paint via `useEffect`, preventing main-thread blocking during dialog open animation. Wrapped `ExamHeader`, `QuestionCard`, `AnswerKeyView`, and main export in `React.memo` to prevent cascade re-renders.
+- **AIToolParticles** — Replaced canvas-based particle system (50 particles, `requestAnimationFrame` draw loop, DPR scaling) with pure CSS `@keyframes` animations on 2 glow orbs + 12 micro-dots. Zero JS runtime, all animations run on GPU compositor via `transform` + `opacity`.
+- **AIToolDialogPortal** — Replaced `setInterval`-driven CSS custom property border animation with framer-motion `motion.div` using GPU-composited `rotate` transform. Added `AnimatePresence` for smooth mount/unmount transitions.
+
+### i18n
+- **AIToolExamPaperPreview** — Fixed 9 remaining hardcoded strings: exam header blanks (Name/Date/Score), points abbreviation, total/time labels, export success/error toasts, raw fallback banner. `endOfExam` now properly passes `{points}` parameter.
+- **New Keys** — Added `examGen.preview.{total,time,nameBlank,dateBlank,scoreBlank,pointsAbbr,exportSuccess,exportFailed,rawFallback}` across all 4 locales (en/zh-CN/zh-TW/ja).
+
+### Dependencies
+- **Added** `framer-motion` — GPU-accelerated animation library for border glow effects
+
+## 2026-05-23 — Editor i18n Hardcoded String Cleanup
+
+### Changes
+- **Editor Components** — Replaced all hardcoded English strings in 20+ editor/UI components with i18n translation keys. Updated files: `block-context-menu`, `ai-menu`, `slash-node`, `insert-toolbar-button`, `turn-into-toolbar-button`, `table-toolbar-button`, `table-node`, `equation-node`, `equation-toolbar-button`, `mode-toolbar-button`, `media-toolbar`, `media-toolbar-button`, `media-audio-node`, `media-embed-node`, `media-file-node`, `media-image-node`, `media-video-node`, `block-suggestion`, `code-block-node`, `code-drawing-node`, `comment`, `emoji-node`, `emoji-toolbar-button`, `mention-node`, `font-color-toolbar-button`, `fixed-toolbar-buttons`, `line-height-toolbar-button`, `link-toolbar`, `footnote-node`, `sheet`, `settings-dialog`
+- **Pattern** — Module-level arrays/objects using `t()` converted to `getXxx(t)` factory functions accepting translator parameter (applied to `aiChatItems`, `turnIntoItems`, `groups`, `languages`, `getReferenceContextLabel`, `getFootnotePreviewLabel`)
+- **New Keys** — Added 6 editor translation keys (`emptyFootnote`, `noPreviewAvailable`, `createDefinitionFor`, `renumberTo`, `newFootnote`, `reference`) across all 4 locales (en/zh-CN/zh-TW/ja)
+- **Other** — `HomePageClient`, `AIToolFooter`, and other page-level components also updated
+- **Second Pass** — Fixed additional hardcoded strings in `confirm-dialog`, `media-placeholder-node`, `suggestion-toolbar-button`, `media-toolbar-button`, `column-node`, `block-draggable`, `AIToolTabGenerate`, `AIToolTabVersions`, `slash-node`. Added 15+ new keys (`areYouSure`, `addAudioFile`, `addFile`, `addImage`, `addVideo`, `turnOffSuggesting`, `suggestionEdits`, `dragToMoveColumn`, `dragToMove`, `insertHighlightedBlock`, viz.tools hints/diff/noDescription/cancel). Build verified with Turbopack.
+
 ## 2026-05-22 — Live2D Companion Widget (Phase 1)
 
 ### Features

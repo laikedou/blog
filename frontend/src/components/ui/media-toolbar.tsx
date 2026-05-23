@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useTranslations } from 'next-intl';
 
 import type { WithRequiredKey } from 'platejs';
 
@@ -43,6 +44,7 @@ export function MediaToolbar({
   children: React.ReactNode;
   plugin: WithRequiredKey;
 }) {
+  const t = useTranslations();
   const editor = useEditorRef();
   const readOnly = useReadOnly();
   const selected = useSelected();
@@ -87,7 +89,7 @@ export function MediaToolbar({
 
               <FloatingMediaPrimitive.UrlInput
                 className={inputVariants()}
-                placeholder="Paste the embed link..."
+                placeholder={t('editor.pasteEmbedLink')}
                 options={{ plugin }}
               />
             </div>

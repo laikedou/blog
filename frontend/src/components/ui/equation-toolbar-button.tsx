@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useTranslations } from 'next-intl';
 
 import { insertInlineEquation } from '@platejs/math';
 import { RadicalIcon } from 'lucide-react';
@@ -11,6 +12,7 @@ import { ToolbarButton } from './toolbar';
 export function InlineEquationToolbarButton(
   props: React.ComponentProps<typeof ToolbarButton>
 ) {
+  const t = useTranslations();
   const editor = useEditorRef();
 
   return (
@@ -19,7 +21,7 @@ export function InlineEquationToolbarButton(
       onClick={() => {
         insertInlineEquation(editor);
       }}
-      tooltip="Mark as equation"
+      tooltip={t("editor.markAsEquation")}
     >
       <RadicalIcon />
     </ToolbarButton>

@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useTranslations } from 'next-intl';
 
 import type { TComboboxInputElement, TMentionElement } from 'platejs';
 import type { PlateElementProps } from 'platejs/react';
@@ -81,6 +82,7 @@ const onSelectItem = getMentionOnSelectItem();
 export function MentionInputElement(
   props: PlateElementProps<TComboboxInputElement>
 ) {
+  const t = useTranslations();
   const { editor, element } = props;
   const [search, setSearch] = React.useState('');
 
@@ -98,7 +100,7 @@ export function MentionInputElement(
         </span>
 
         <InlineComboboxContent className="my-1.5">
-          <InlineComboboxEmpty>No results</InlineComboboxEmpty>
+          <InlineComboboxEmpty>{t('editor.noResults')}</InlineComboboxEmpty>
 
           <InlineComboboxGroup>
             {MENTIONABLES.map((item) => (

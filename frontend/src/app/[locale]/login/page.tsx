@@ -129,11 +129,11 @@ export default function LoginPage() {
             {/* Demo accounts card */}
             <div className="mt-margin-sm bg-surface-container/50 border border-border rounded-lg p-margin-sm flex flex-col gap-unit">
               <h3 className="font-label-sm text-label-sm text-on-surface-variant">
-                Demo accounts:
+                {t('admin.demoAccounts')}
               </h3>
               <div className="font-label-sm text-label-sm text-on-surface-variant/70 flex flex-col gap-1">
-                <p>Admin: admin / admin123</p>
-                <p>User: demo / user123</p>
+                <p>{t('admin.demoAdmin')}</p>
+                <p>{t('admin.demoUser')}</p>
               </div>
             </div>
           </CardContent>

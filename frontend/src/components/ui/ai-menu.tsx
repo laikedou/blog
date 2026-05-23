@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useTranslations } from 'next-intl';
 
 import {
   AIChatPlugin,
@@ -63,6 +64,7 @@ import { commentPlugin } from '@/components/editor/plugins/comment-kit';
 import { AIChatEditor } from './ai-chat-editor';
 
 export function AIMenu() {
+  const t = useTranslations();
   const { api, editor } = useEditorPlugin(AIChatPlugin);
   const mode = usePluginOption(AIChatPlugin, 'mode');
   const toolName = usePluginOption(AIChatPlugin, 'toolName');
@@ -228,7 +230,7 @@ export function AIMenu() {
                 }
               }}
               onValueChange={setInput}
-              placeholder="Ask AI anything..."
+              placeholder={t('editor.askAiAnything')}
               data-plate-focus
               autoFocus
             />
@@ -275,10 +277,10 @@ const AICommentIcon = () => (
   </svg>
 );
 
-const aiChatItems = {
+const getAiChatItems = (t: ReturnType<typeof useTranslations>) => ({
   accept: {
     icon: <Check />,
-    label: 'Accept',
+    label: t('editor.accept'),
     value: 'accept',
     onSelect: ({ aiEditor, editor }) => {
       const { mode, toolName } = editor.getOptions(AIChatPlugin);
@@ -295,7 +297,7 @@ const aiChatItems = {
   },
   comment: {
     icon: <AICommentIcon />,
-    label: 'Comment',
+    label: t('editor.comment'),
     value: 'comment',
     onSelect: ({ editor, input }) => {
       editor.getApi(AIChatPlugin).aiChat.submit(input, {
@@ -308,7 +310,7 @@ const aiChatItems = {
   },
   continueWrite: {
     icon: <PenLine />,
-    label: 'Continue writing',
+    label: t('editor.continueWriting'),
     value: 'continueWrite',
     onSelect: ({ editor, input }) => {
       const ancestorNode = editor.api.block({ highest: true });
@@ -331,7 +333,7 @@ Start writing a new paragraph AFTER <Document> ONLY ONE SENTENCE`
   },
   discard: {
     icon: <X />,
-    label: 'Discard',
+    label: t('editor.discard'),
     shortcut: 'Escape',
     value: 'discard',
     onSelect: ({ editor }) => {
@@ -341,7 +343,7 @@ Start writing a new paragraph AFTER <Document> ONLY ONE SENTENCE`
   },
   emojify: {
     icon: <SmileIcon />,
-    label: 'Emojify',
+    label: t('editor.emojify'),
     value: 'emojify',
     onSelect: ({ editor, input }) => {
       void editor.getApi(AIChatPlugin).aiChat.submit(input, {
@@ -353,7 +355,7 @@ Start writing a new paragraph AFTER <Document> ONLY ONE SENTENCE`
   },
   explain: {
     icon: <BadgeHelp />,
-    label: 'Explain',
+    label: t('editor.explain'),
     value: 'explain',
     onSelect: ({ editor, input }) => {
       void editor.getApi(AIChatPlugin).aiChat.submit(input, {
@@ -367,7 +369,7 @@ Start writing a new paragraph AFTER <Document> ONLY ONE SENTENCE`
   },
   fixSpelling: {
     icon: <Check />,
-    label: 'Fix spelling & grammar',
+    label: t('editor.fixSpellingGrammar'),
     value: 'fixSpelling',
     onSelect: ({ editor, input }) => {
       void editor.getApi(AIChatPlugin).aiChat.submit(input, {
@@ -379,7 +381,7 @@ Start writing a new paragraph AFTER <Document> ONLY ONE SENTENCE`
   },
   generateMarkdownSample: {
     icon: <BookOpenCheck />,
-    label: 'Generate Markdown sample',
+    label: t('editor.generateMarkdownSample'),
     value: 'generateMarkdownSample',
     onSelect: ({ editor, input }) => {
       void editor.getApi(AIChatPlugin).aiChat.submit(input, {
@@ -390,7 +392,7 @@ Start writing a new paragraph AFTER <Document> ONLY ONE SENTENCE`
   },
   generateMdxSample: {
     icon: <BookOpenCheck />,
-    label: 'Generate MDX sample',
+    label: t('editor.generateMdxSample'),
     value: 'generateMdxSample',
     onSelect: ({ editor, input }) => {
       void editor.getApi(AIChatPlugin).aiChat.submit(input, {
@@ -401,7 +403,7 @@ Start writing a new paragraph AFTER <Document> ONLY ONE SENTENCE`
   },
   improveWriting: {
     icon: <Wand />,
-    label: 'Improve writing',
+    label: t('editor.improveWriting'),
     value: 'improveWriting',
     onSelect: ({ editor, input }) => {
       void editor.getApi(AIChatPlugin).aiChat.submit(input, {
@@ -413,7 +415,7 @@ Start writing a new paragraph AFTER <Document> ONLY ONE SENTENCE`
   },
   insertBelow: {
     icon: <ListEnd />,
-    label: 'Insert below',
+    label: t('editor.insertBelow'),
     value: 'insertBelow',
     onSelect: ({ aiEditor, editor }) => {
       /** Format: 'none' Fix insert table */
@@ -424,7 +426,7 @@ Start writing a new paragraph AFTER <Document> ONLY ONE SENTENCE`
   },
   makeLonger: {
     icon: <ListPlus />,
-    label: 'Make longer',
+    label: t('editor.makeLonger'),
     value: 'makeLonger',
     onSelect: ({ editor, input }) => {
       void editor.getApi(AIChatPlugin).aiChat.submit(input, {
@@ -436,7 +438,7 @@ Start writing a new paragraph AFTER <Document> ONLY ONE SENTENCE`
   },
   makeShorter: {
     icon: <ListMinus />,
-    label: 'Make shorter',
+    label: t('editor.makeShorter'),
     value: 'makeShorter',
     onSelect: ({ editor, input }) => {
       void editor.getApi(AIChatPlugin).aiChat.submit(input, {
@@ -448,7 +450,7 @@ Start writing a new paragraph AFTER <Document> ONLY ONE SENTENCE`
   },
   replace: {
     icon: <Check />,
-    label: 'Replace selection',
+    label: t('editor.replaceSelection'),
     value: 'replace',
     onSelect: ({ aiEditor, editor }) => {
       void editor.getTransforms(AIChatPlugin).aiChat.replaceSelection(aiEditor);
@@ -456,7 +458,7 @@ Start writing a new paragraph AFTER <Document> ONLY ONE SENTENCE`
   },
   simplifyLanguage: {
     icon: <FeatherIcon />,
-    label: 'Simplify language',
+    label: t('editor.simplifyLanguage'),
     value: 'simplifyLanguage',
     onSelect: ({ editor, input }) => {
       void editor.getApi(AIChatPlugin).aiChat.submit(input, {
@@ -468,7 +470,7 @@ Start writing a new paragraph AFTER <Document> ONLY ONE SENTENCE`
   },
   summarize: {
     icon: <Album />,
-    label: 'Add a summary',
+    label: t('editor.addSummary'),
     value: 'summarize',
     onSelect: ({ editor, input }) => {
       void editor.getApi(AIChatPlugin).aiChat.submit(input, {
@@ -483,13 +485,13 @@ Start writing a new paragraph AFTER <Document> ONLY ONE SENTENCE`
   },
   tryAgain: {
     icon: <CornerUpLeft />,
-    label: 'Try again',
+    label: t('editor.tryAgain'),
     value: 'tryAgain',
     onSelect: ({ editor }) => {
       void editor.getApi(AIChatPlugin).aiChat.reload();
     },
   },
-} satisfies Record<
+}) satisfies Record<
   string,
   {
     icon: React.ReactNode;
@@ -511,54 +513,56 @@ Start writing a new paragraph AFTER <Document> ONLY ONE SENTENCE`
   }
 >;
 
-const menuStateItems: Record<
+type AiChatItem = ReturnType<typeof getAiChatItems>[keyof ReturnType<typeof getAiChatItems>];
+
+const getMenuStateItems = (items: ReturnType<typeof getAiChatItems>): Record<
   EditorChatState,
   {
-    items: (typeof aiChatItems)[keyof typeof aiChatItems][];
+    items: AiChatItem[];
     heading?: string;
   }[]
-> = {
+> => ({
   cursorCommand: [
     {
       items: [
-        aiChatItems.comment,
-        aiChatItems.generateMdxSample,
-        aiChatItems.generateMarkdownSample,
-        aiChatItems.continueWrite,
-        aiChatItems.summarize,
-        aiChatItems.explain,
+        items.comment,
+        items.generateMdxSample,
+        items.generateMarkdownSample,
+        items.continueWrite,
+        items.summarize,
+        items.explain,
       ],
     },
   ],
   cursorSuggestion: [
     {
-      items: [aiChatItems.accept, aiChatItems.discard, aiChatItems.tryAgain],
+      items: [items.accept, items.discard, items.tryAgain],
     },
   ],
   selectionCommand: [
     {
       items: [
-        aiChatItems.improveWriting,
-        aiChatItems.comment,
-        aiChatItems.emojify,
-        aiChatItems.makeLonger,
-        aiChatItems.makeShorter,
-        aiChatItems.fixSpelling,
-        aiChatItems.simplifyLanguage,
+        items.improveWriting,
+        items.comment,
+        items.emojify,
+        items.makeLonger,
+        items.makeShorter,
+        items.fixSpelling,
+        items.simplifyLanguage,
       ],
     },
   ],
   selectionSuggestion: [
     {
       items: [
-        aiChatItems.accept,
-        aiChatItems.discard,
-        aiChatItems.insertBelow,
-        aiChatItems.tryAgain,
+        items.accept,
+        items.discard,
+        items.insertBelow,
+        items.tryAgain,
       ],
     },
   ],
-};
+});
 
 export const AIMenuItems = ({
   input,
@@ -569,6 +573,7 @@ export const AIMenuItems = ({
   setInput: (value: string) => void;
   setValue: (value: string) => void;
 }) => {
+  const t = useTranslations();
   const editor = useEditorRef();
   const { messages } = usePluginOption(AIChatPlugin, 'chat');
   const aiEditor = usePluginOption(AIChatPlugin, 'aiEditor')!;
@@ -583,10 +588,10 @@ export const AIMenuItems = ({
   }, [isSelecting, messages]);
 
   const menuGroups = React.useMemo(() => {
-    const items = menuStateItems[menuState];
-
-    return items;
-  }, [menuState]);
+    const items = getAiChatItems(t);
+    const stateItems = getMenuStateItems(items);
+    return stateItems[menuState];
+  }, [menuState, t]);
 
   React.useEffect(() => {
     if (menuGroups.length > 0 && menuGroups[0].items.length > 0) {
@@ -623,6 +628,7 @@ export const AIMenuItems = ({
 };
 
 export function AILoadingBar() {
+  const t = useTranslations();
   const editor = useEditorRef();
 
   const toolName = usePluginOption(AIChatPlugin, 'toolName');
@@ -672,7 +678,7 @@ export function AILoadingBar() {
         )}
       >
         <span className="h-4 w-4 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
-        <span>{status === 'submitted' ? 'Thinking...' : 'Writing...'}</span>
+        <span>{status === 'submitted' ? t('editor.thinking') : t('editor.writing')}</span>
         <Button
           size="sm"
           variant="ghost"
@@ -705,7 +711,7 @@ export function AILoadingBar() {
               disabled={isLoading}
               onClick={() => handleComments('accept')}
             >
-              Accept
+              {t('editor.accept')}
             </Button>
 
             <Button
@@ -713,7 +719,7 @@ export function AILoadingBar() {
               disabled={isLoading}
               onClick={() => handleComments('reject')}
             >
-              Reject
+              {t('editor.reject')}
             </Button>
           </div>
         </div>

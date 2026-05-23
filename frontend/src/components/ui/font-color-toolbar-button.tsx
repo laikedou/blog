@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import React from 'react';
 
 import type {
@@ -79,6 +80,7 @@ export function FontColorToolbarButton({
   nodeType: string;
   tooltip?: string;
 } & DropdownMenuProps) {
+  const t = useTranslations();
   const editor = useEditorRef();
 
   const selectionDefined = useEditorSelector(
@@ -235,9 +237,10 @@ function PureColorPicker({
   color?: string;
   updatedColor?: string;
 }) {
+  const t = useTranslations();
   return (
     <div className={cn('flex flex-col', className)} {...props}>
-      <ToolbarMenuGroup label="Custom Colors">
+      <ToolbarMenuGroup label={t('editor.customColors')}>
         <ColorCustom
           className="px-2"
           color={color}
@@ -250,7 +253,7 @@ function PureColorPicker({
           updatedColor={updatedColor}
         />
       </ToolbarMenuGroup>
-      <ToolbarMenuGroup label="Default Colors">
+      <ToolbarMenuGroup label={t('editor.defaultColors')}>
         <ColorDropdownMenuItems
           className="px-2"
           color={color}
@@ -262,7 +265,7 @@ function PureColorPicker({
         <ToolbarMenuGroup>
           <DropdownMenuItem className="p-2" onClick={clearColor}>
             <EraserIcon />
-            <span>Clear</span>
+            <span>{t('common.clear')}</span>
           </DropdownMenuItem>
         </ToolbarMenuGroup>
       )}
@@ -301,6 +304,7 @@ function ColorCustom({
   color?: string;
   updatedColor?: string;
 } & React.ComponentPropsWithoutRef<'div'>) {
+  const t = useTranslations();
   const [value, setValue] = React.useState<string>(color || '#000000');
 
   const fullCustomColors = React.useMemo(
@@ -411,7 +415,7 @@ function ColorCustom({
               e.preventDefault();
             }}
           >
-            <span className="sr-only">Custom</span>
+            <span className="sr-only">{t('editor.customColors')}</span>
             <PlusIcon />
           </DropdownMenuItem>
         </ColorInput>

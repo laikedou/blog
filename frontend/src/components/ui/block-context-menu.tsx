@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useTranslations } from 'next-intl';
 
 import { AIChatPlugin } from '@platejs/ai/react';
 import {
@@ -31,6 +32,7 @@ import { useIsTouchDevice } from '@/hooks/use-is-touch-device';
 type Value = 'askAI' | null;
 
 export function BlockContextMenu({ children }: { children: React.ReactNode }) {
+  const t = useTranslations();
   const { api, editor } = useEditorPlugin(BlockMenuPlugin);
   const [value, setValue] = React.useState<Value>(null);
   const isTouch = useIsTouchDevice();
@@ -136,7 +138,7 @@ export function BlockContextMenu({ children }: { children: React.ReactNode }) {
               {/* <ContextMenuShortcut>⌘ + D</ContextMenuShortcut> */}
             </ContextMenuItem>
             <ContextMenuSub>
-              <ContextMenuSubTrigger>Turn into</ContextMenuSubTrigger>
+              <ContextMenuSubTrigger>{t("editor.turnInto")}</ContextMenuSubTrigger>
               <ContextMenuSubContent className="w-48">
                 <ContextMenuItem onClick={() => handleTurnInto(KEYS.p)}>
                   Paragraph
@@ -185,7 +187,7 @@ export function BlockContextMenu({ children }: { children: React.ReactNode }) {
               Outdent
             </ContextMenuItem>
             <ContextMenuSub>
-              <ContextMenuSubTrigger>Align</ContextMenuSubTrigger>
+              <ContextMenuSubTrigger>{t("editor.align")}</ContextMenuSubTrigger>
               <ContextMenuSubContent className="w-48">
                 <ContextMenuItem onClick={() => handleAlign('left')}>
                   Left

@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { animate } from 'animejs';
+import { motion } from 'framer-motion';
 import { BookOpen, Atom } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 
@@ -40,24 +40,20 @@ export default function PerspectiveCard({ experiment, index }: Props) {
   const t = useTranslations();
   const ref = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const anim = animate(el, {
-      opacity: [0, 1],
-      translateY: [20, 0],
-      easing: 'easeOutCubic',
-      duration: 500,
-      delay: index !== undefined ? index * 100 : 0,
-    });
-    return () => { (anim as any).stop?.(); };
-  }, [index]);
-
   const concept = experiment.concept || 'math';
   const gradientColor = conceptColors[concept?.toLowerCase()] || conceptColors.math;
 
   return (
-    <div ref={ref} style={{ opacity: 0 }}>
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{
+        duration: 0.5,
+        ease: [0.32, 0.72, 0, 1],
+        delay: index !== undefined ? index * 0.1 : 0,
+      }}
+    >
       <Card className="group relative border-border shadow-card hover:shadow-card-hover transition-all duration-500 overflow-hidden">
         {/* Top gradient stripe */}
         <div className={`perspective-stripe absolute top-0 left-0 right-0 bg-gradient-to-r ${gradientColor}`} />
@@ -109,6 +105,6 @@ export default function PerspectiveCard({ experiment, index }: Props) {
           </div>
         </CardContent>
       </Card>
-    </div>
+    </motion.div>
   );
 }

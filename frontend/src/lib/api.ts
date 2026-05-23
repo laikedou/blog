@@ -554,6 +554,22 @@ export const visualizations = {
   compareVersions: (id: number, fromVersionId: number, toVersionId: number) =>
     request<any>(`/visualizations/${id}/versions/compare`, { method: 'POST', body: JSON.stringify({ fromVersionId, toVersionId }) }),
 
+  // ── AI Tools ──
+  generateAiTool: (id: number, data: { toolType: string; provider?: string; language?: string; studentAnswer?: string; imageBase64?: string; mimeType?: string; gradeLevel?: string; difficulty?: string; mcqCount?: number; shortAnswerCount?: number; problemSolvingCount?: number; mcqPoints?: number; shortAnswerPoints?: number; problemSolvingPoints?: number; timeLimit?: number; topicFocus?: string }) =>
+    request<any>(`/visualizations/${id}/tools/generate`, { method: 'POST', body: JSON.stringify(data) }),
+  getAiToolContent: (id: number, toolType: string) =>
+    request<any>(`/visualizations/${id}/tools/${toolType}`),
+  updateAiToolContent: (id: number, toolType: string, data: { content: string; title?: string }) =>
+    request<any>(`/visualizations/${id}/tools/${toolType}`, { method: 'PUT', body: JSON.stringify(data) }),
+  getAiToolVersions: (id: number, toolType: string) =>
+    request<any[]>(`/visualizations/${id}/tools/${toolType}/versions`),
+  getAiToolVersionDetail: (id: number, toolType: string, versionId: number) =>
+    request<any>(`/visualizations/${id}/tools/${toolType}/versions/${versionId}`),
+  restoreAiToolVersion: (id: number, toolType: string, versionId: number, changeNote?: string) =>
+    request<any>(`/visualizations/${id}/tools/${toolType}/versions/${versionId}/restore`, { method: 'POST', body: JSON.stringify({ changeNote }) }),
+  compareAiToolVersions: (id: number, toolType: string, fromVersionId: number, toVersionId: number) =>
+    request<any>(`/visualizations/${id}/tools/${toolType}/versions/compare`, { method: 'POST', body: JSON.stringify({ fromVersionId, toVersionId }) }),
+
   // ── Topic Suggestions ──
   suggestTopics: (params?: { subject?: string; count?: number }) => {
     const sp = new URLSearchParams();

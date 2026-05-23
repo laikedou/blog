@@ -1,19 +1,19 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { motion } from 'framer-motion';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import PostCard from '@/components/PostCard';
 import { posts as postsApi } from '@/lib/api';
 import { Skeleton } from '@/components/ui/skeleton';
-import { animate, stagger } from 'animejs';
+import { staggerContainer, staggerItem } from '@/lib/animations';
 import { useTranslations } from 'next-intl';
 
 export default function TagPageClient({ slug }: { slug: string }) {
   const [posts, setPosts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const postsRef = useRef<HTMLDivElement>(null);
   const t = useTranslations();
 
   useEffect(() => {
@@ -27,15 +27,6 @@ export default function TagPageClient({ slug }: { slug: string }) {
       .finally(() => setLoading(false));
   }, [slug]);
 
-  useEffect(() => {
-    if (!loading && postsRef.current) {
-      animate(postsRef.current.children, {
-        opacity: [0, 1], translateY: [20, 0],
-        easing: 'easeOutCubic', duration: 500, delay: stagger(80),
-      });
-    }
-  }, [loading]);
-
   return (
     <>
       <Header />
@@ -48,7 +39,7 @@ export default function TagPageClient({ slug }: { slug: string }) {
           </div>
         </section>
 
-        <section className="bg-cream-200" aria-label="Tagged posts">
+        <section className="bg-cream-200" aria-label={t('common.taggedPosts')}>
           <div className="section-container py-section-sm">
             {loading ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -64,9 +55,18 @@ export default function TagPageClient({ slug }: { slug: string }) {
                 <Link href="/" className="text-clay hover:text-clay-dark text-body">{t('common.backToHome')}</Link>
               </div>
             ) : (
-              <div ref={postsRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16">
-                {posts.map(post => <PostCard key={post.id} post={post} />)}
-              </div>
+              <motion.div
+                variants={staggerContainer}
+                initial="hidden"
+                animate="visible"
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16"
+              >
+                {posts.map(post => (
+                  <motion.div key={post.id} variants={staggerItem}>
+                    <PostCard post={post} />
+                  </motion.div>
+                ))}
+              </motion.div>
             )}
           </div>
         </section>

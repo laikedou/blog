@@ -83,7 +83,7 @@ export default function RegisterPage() {
                     type="email"
                     value={form.email}
                     onChange={e => setForm({...form, email: e.target.value})}
-                    placeholder="you@example.com"
+                    placeholder={t('common.youExample')}
                     required
                     className="pl-10"
                   />

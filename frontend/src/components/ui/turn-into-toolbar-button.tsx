@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useTranslations } from 'next-intl';
 
 import type { DropdownMenuProps } from '@radix-ui/react-dropdown-menu';
 import type { TElement } from 'platejs';
@@ -40,77 +41,77 @@ import {
 
 import { ToolbarButton, ToolbarMenuGroup } from './toolbar';
 
-export const turnIntoItems = [
+const getTurnIntoItems = (t: ReturnType<typeof useTranslations>) => [
   {
     icon: <PilcrowIcon />,
     keywords: ['paragraph'],
-    label: 'Text',
+    label: t('editor.text'),
     value: KEYS.p,
   },
   {
     icon: <Heading1Icon />,
     keywords: ['title', 'h1'],
-    label: 'Heading 1',
+    label: t('editor.heading1'),
     value: 'h1',
   },
   {
     icon: <Heading2Icon />,
     keywords: ['subtitle', 'h2'],
-    label: 'Heading 2',
+    label: t('editor.heading2'),
     value: 'h2',
   },
   {
     icon: <Heading3Icon />,
     keywords: ['subtitle', 'h3'],
-    label: 'Heading 3',
+    label: t('editor.heading3'),
     value: 'h3',
   },
   {
     icon: <Heading4Icon />,
     keywords: ['subtitle', 'h4'],
-    label: 'Heading 4',
+    label: t('editor.heading4'),
     value: 'h4',
   },
   {
     icon: <Heading5Icon />,
     keywords: ['subtitle', 'h5'],
-    label: 'Heading 5',
+    label: t('editor.heading5'),
     value: 'h5',
   },
   {
     icon: <Heading6Icon />,
     keywords: ['subtitle', 'h6'],
-    label: 'Heading 6',
+    label: t('editor.heading6'),
     value: 'h6',
   },
   {
     icon: <ListIcon />,
     keywords: ['unordered', 'ul', '-'],
-    label: 'Bulleted list',
+    label: t('editor.bulletedList'),
     value: KEYS.ul,
   },
   {
     icon: <ListOrderedIcon />,
     keywords: ['ordered', 'ol', '1'],
-    label: 'Numbered list',
+    label: t('editor.numberedList'),
     value: KEYS.ol,
   },
   {
     icon: <SquareIcon />,
     keywords: ['checklist', 'task', 'checkbox', '[]'],
-    label: 'To-do list',
+    label: t('editor.toDoList'),
     value: KEYS.listTodo,
   },
   {
     icon: <ChevronRightIcon />,
     keywords: ['collapsible', 'expandable'],
-    label: 'Toggle list',
+    label: t('editor.toggleList'),
     value: KEYS.toggle,
   },
   {
     icon: <FileCodeIcon />,
     keywords: ['```'],
-    label: 'Code',
+    label: t('editor.code'),
     value: KEYS.codeBlock,
   },
   {
@@ -123,25 +124,27 @@ export const turnIntoItems = [
       'flowchart',
       'mermaid',
     ],
-    label: 'Code Drawing',
+    label: t('editor.codeDrawing'),
     value: KEYS.codeDrawing,
   },
   {
     icon: <QuoteIcon />,
     keywords: ['citation', 'blockquote', '>'],
-    label: 'Quote',
+    label: t('editor.quote'),
     value: KEYS.blockquote,
   },
   {
     icon: <Columns3Icon />,
-    label: '3 columns',
+    label: t('editor.columns3'),
     value: 'action_three_columns',
   },
 ];
 
 export function TurnIntoToolbarButton(props: DropdownMenuProps) {
+  const t = useTranslations();
   const editor = useEditorRef();
   const [open, setOpen] = React.useState(false);
+  const turnIntoItems = React.useMemo(() => getTurnIntoItems(t), [t]);
 
   const value = useSelectionFragmentProp({
     defaultValue: KEYS.p,
@@ -151,7 +154,7 @@ export function TurnIntoToolbarButton(props: DropdownMenuProps) {
     () =>
       turnIntoItems.find((item) => item.value === (value ?? KEYS.p)) ??
       turnIntoItems[0],
-    [value]
+    [value, turnIntoItems]
   );
 
   return (
@@ -160,7 +163,7 @@ export function TurnIntoToolbarButton(props: DropdownMenuProps) {
         <ToolbarButton
           className="min-w-[125px]"
           pressed={open}
-          tooltip="Turn into"
+          tooltip={t("editor.turnInto")}
           isDropdown
         >
           {selectedItem.label}
@@ -180,7 +183,7 @@ export function TurnIntoToolbarButton(props: DropdownMenuProps) {
           onValueChange={(type) => {
             setBlockType(editor, type);
           }}
-          label="Turn into"
+          label={t("editor.turnInto")}
         >
           {turnIntoItems.map(({ icon, label, value: itemValue }) => (
             <DropdownMenuRadioItem

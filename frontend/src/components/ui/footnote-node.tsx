@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useTranslations } from 'next-intl';
 
 import type { TFootnoteElement } from '@platejs/footnote';
 import { PathApi, type Path } from 'platejs';
@@ -66,10 +67,10 @@ const getNavigationAttributes = (
   } as React.CSSProperties,
 });
 
-const getFootnotePreviewLabel = (text?: string) => {
+const getFootnotePreviewLabel = (text?: string, t?: ReturnType<typeof useTranslations>) => {
   const normalized = text?.replace(/\s+/g, ' ').trim();
 
-  if (!normalized) return 'Empty footnote';
+  if (!normalized) return t?.('editor.emptyFootnote') ?? 'Empty footnote';
 
   return normalized.length > 48
     ? `${normalized.slice(0, 45).trimEnd()}...`
@@ -79,10 +80,11 @@ const getFootnotePreviewLabel = (text?: string) => {
 const getReferenceContextLabel = (
   editor: PlateEditor,
   path: Path,
-  index: number
+  index: number,
+  t?: ReturnType<typeof useTranslations>
 ) => {
   const parentEntry = editor.api.parent(path);
-  const fallback = `Reference ${index + 1}`;
+  const fallback = t?.('editor.reference', { index: index + 1 }) ?? `Reference ${index + 1}`;
 
   if (!parentEntry) return fallback;
 
@@ -99,6 +101,7 @@ const getReferenceContextLabel = (
 export function FootnoteReferenceElement(
   props: PlateElementProps<TFootnoteElement>
 ) {
+  const t = useTranslations();
   const { editor, element } = props;
   const identifier = element.identifier ?? '';
   const footnoteApi = editor.getApi(FootnoteReferencePlugin).footnote;
@@ -197,7 +200,7 @@ export function FootnoteReferenceElement(
             <div className="space-y-2">
               {isResolved ? (
                 <div className="text-sm leading-relaxed">
-                  No preview available.
+                  {t('editor.noPreviewAvailable')}
                 </div>
               ) : (
                 <Button
@@ -212,7 +215,7 @@ export function FootnoteReferenceElement(
                     setHoverOpen(false);
                   }}
                 >
-                  Create definition for [^{identifier}]
+                  {t('editor.createDefinitionFor', { identifier: `[^${identifier}]` })}
                 </Button>
               )}
             </div>
@@ -226,6 +229,7 @@ export function FootnoteReferenceElement(
 export function FootnoteDefinitionElement(
   props: PlateElementProps<TFootnoteElement>
 ) {
+  const t = useTranslations();
   const { editor, element } = props;
   const identifier = element.identifier ?? '';
   const footnoteApi = editor.getApi(FootnoteReferencePlugin).footnote;
@@ -242,7 +246,7 @@ export function FootnoteDefinitionElement(
             .references({ identifier })
             .map((entry: any, index: number) => ({
               index,
-              label: getReferenceContextLabel(editor, entry[1], index),
+              label: getReferenceContextLabel(editor, entry[1], index, t),
             }))
         : [];
 
@@ -293,7 +297,7 @@ export function FootnoteDefinitionElement(
                   hasMultipleReferences ? referencePickerOpen : undefined
                 }
                 aria-haspopup={hasMultipleReferences ? 'dialog' : undefined}
-                aria-label={`Back to reference ${identifier}`}
+                aria-label={t('common.backToReference', { identifier })}
                 className="min-w-3 cursor-pointer rounded-xs text-muted-foreground text-xs tabular-nums underline-offset-2 hover:text-foreground focus:ring-2 focus:ring-ring focus:ring-offset-1"
                 onClick={(event) => {
                   event.preventDefault();
@@ -381,7 +385,7 @@ export function FootnoteDefinitionElement(
                   });
                 }}
               >
-                Renumber to [^{duplicateReplacementIdentifier}]
+                {t('editor.renumberTo', { identifier: `[^${duplicateReplacementIdentifier}]` })}
               </Button>
             ) : null}
           </div>
@@ -393,6 +397,7 @@ export function FootnoteDefinitionElement(
 }
 
 export function FootnoteInputElement(props: PlateElementProps) {
+  const t = useTranslations();
   const { editor, element } = props;
   const [search, setSearch] = React.useState('');
   const footnoteApi = editor.getApi(FootnoteReferencePlugin).footnote;
@@ -449,7 +454,7 @@ export function FootnoteInputElement(props: PlateElementProps) {
 
         <InlineComboboxContent className="my-1.5 w-72">
           {showCreateOption || filteredIdentifiers.length > 0 ? null : (
-            <InlineComboboxEmpty>No footnotes</InlineComboboxEmpty>
+            <InlineComboboxEmpty>{t('editor.noFootnotes')}</InlineComboboxEmpty>
           )}
 
           <InlineComboboxGroup>
@@ -462,7 +467,7 @@ export function FootnoteInputElement(props: PlateElementProps) {
                   <span className="font-mono text-muted-foreground">
                     [^{proposedIdentifier}]
                   </span>
-                  <span className="truncate">: New footnote...</span>
+                  <span className="truncate">: {t('editor.newFootnote')}</span>
                 </span>
               </InlineComboboxItem>
             ) : null}
@@ -480,7 +485,8 @@ export function FootnoteInputElement(props: PlateElementProps) {
                   <span className="truncate">
                     :{' '}
                     {getFootnotePreviewLabel(
-                      footnoteApi.definitionText?.({ identifier })
+                      footnoteApi.definitionText?.({ identifier }),
+                      t
                     )}
                   </span>
                 </span>

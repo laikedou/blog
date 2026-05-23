@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useTranslations } from 'next-intl';
 
 import {
   ArrowUpToLineIcon,
@@ -48,6 +49,7 @@ import { ToolbarGroup } from './toolbar';
 import { TurnIntoToolbarButton } from './turn-into-toolbar-button';
 
 export function FixedToolbarButtons() {
+  const t = useTranslations();
   const readOnly = useEditorReadOnly();
 
   return (
@@ -106,13 +108,13 @@ export function FixedToolbarButtons() {
               <Code2Icon />
             </MarkToolbarButton>
 
-            <FontColorToolbarButton nodeType={KEYS.color} tooltip="Text color">
+            <FontColorToolbarButton nodeType={KEYS.color} tooltip={t("editor.textColor")}>
               <BaselineIcon />
             </FontColorToolbarButton>
 
             <FontColorToolbarButton
               nodeType={KEYS.backgroundColor}
-              tooltip="Background color"
+              tooltip={t("editor.backgroundColor")}
             >
               <PaintBucketIcon />
             </FontColorToolbarButton>

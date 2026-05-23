@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useTranslations } from 'next-intl';
 
 import type { DropdownMenuProps } from '@radix-ui/react-dropdown-menu';
 
@@ -81,6 +82,7 @@ export function MediaToolbarButton({
   nodeType,
   ...props
 }: DropdownMenuProps & { nodeType: string }) {
+  const t = useTranslations();
   const currentConfig = MEDIA_CONFIG[nodeType];
 
   const editor = useEditorRef();
@@ -131,11 +133,11 @@ export function MediaToolbarButton({
             <DropdownMenuGroup>
               <DropdownMenuItem onSelect={() => openFilePicker()}>
                 {currentConfig.icon}
-                Upload from computer
+                {t('editor.uploadFromComputer')}
               </DropdownMenuItem>
               <DropdownMenuItem onSelect={() => setDialogOpen(true)}>
                 <LinkIcon />
-                Insert via URL
+                {t('editor.insertViaUrl')}
               </DropdownMenuItem>
             </DropdownMenuGroup>
           </DropdownMenuContent>
@@ -169,6 +171,7 @@ function MediaUrlDialogContent({
   nodeType: string;
   setOpen: (value: boolean) => void;
 }) {
+  const t = useTranslations();
   const editor = useEditorRef();
   const [url, setUrl] = React.useState('');
 
@@ -195,7 +198,7 @@ function MediaUrlDialogContent({
           className="-translate-y-1/2 absolute top-1/2 block cursor-text px-1 text-muted-foreground/70 text-sm transition-all group-focus-within:pointer-events-none group-focus-within:top-0 group-focus-within:cursor-default group-focus-within:font-medium group-focus-within:text-foreground group-focus-within:text-xs has-[+input:not(:placeholder-shown)]:pointer-events-none has-[+input:not(:placeholder-shown)]:top-0 has-[+input:not(:placeholder-shown)]:cursor-default has-[+input:not(:placeholder-shown)]:font-medium has-[+input:not(:placeholder-shown)]:text-foreground has-[+input:not(:placeholder-shown)]:text-xs"
           htmlFor="url"
         >
-          <span className="inline-flex bg-background px-2">URL</span>
+          <span className="inline-flex bg-background px-2">{t("editor.urlLabel")}</span>
         </label>
         <Input
           id="url"
@@ -212,14 +215,14 @@ function MediaUrlDialogContent({
       </AlertDialogDescription>
 
       <AlertDialogFooter>
-        <AlertDialogCancel>Cancel</AlertDialogCancel>
+        <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
         <AlertDialogAction
           onClick={(e) => {
             e.preventDefault();
             embedMedia();
           }}
         >
-          Accept
+          {t('editor.acceptLabel')}
         </AlertDialogAction>
       </AlertDialogFooter>
     </>

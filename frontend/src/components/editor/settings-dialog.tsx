@@ -3,6 +3,7 @@
 /* DEMO ONLY, DO NOT USE IN PRODUCTION */
 
 import * as React from 'react';
+import { useTranslations } from 'next-intl';
 
 import { CopilotPlugin } from '@platejs/ai/react';
 import {
@@ -216,6 +217,7 @@ export const models: Model[] = [
 ];
 
 export function SettingsDialog() {
+  const t = useTranslations();
   const editor = useEditorRef();
 
   const [tempModel, setTempModel] = React.useState(models[7]);
@@ -339,9 +341,9 @@ export function SettingsDialog() {
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle className="text-xl">Settings</DialogTitle>
+          <DialogTitle className="text-xl">{t("editor.settings")}</DialogTitle>
           <DialogDescription>
-            Configure your API keys and preferences.
+            {t("editor.configureApiKeys")}
           </DialogDescription>
         </DialogHeader>
 
@@ -352,7 +354,7 @@ export function SettingsDialog() {
               <div className="size-8 rounded-full bg-purple-100 p-2 dark:bg-purple-900">
                 <Wand2Icon className="size-4 text-purple-600 dark:text-purple-400" />
               </div>
-              <h4 className="font-semibold">AI</h4>
+              <h4 className="font-semibold">{t("editor.aiSection")}</h4>
             </div>
 
             <div className="space-y-4">
@@ -380,8 +382,8 @@ export function SettingsDialog() {
                   </PopoverTrigger>
                   <PopoverContent className="w-full p-0">
                     <Command>
-                      <CommandInput placeholder="Search model..." />
-                      <CommandEmpty>No model found.</CommandEmpty>
+                      <CommandInput placeholder={t("editor.searchModel")} />
+                      <CommandEmpty>{t("editor.noModelFound")}</CommandEmpty>
                       <CommandList>
                         <CommandGroup>
                           {models.map((m) => (
