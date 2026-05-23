@@ -12,16 +12,19 @@ interface Props {
   onStudentAnswerChange?: (value: string) => void;
 }
 
-const TOOL_HINTS: Record<string, string> = {
-  lessonPlan: 'Generates a structured 7-section lesson plan: objectives, prerequisites, key concepts, teaching sequence, discussion questions, practice activities, and assessment checkpoints.',
-  examGen: 'Creates a balanced 100-point exam: multiple choice (30pts), short answer (42pts), problem solving (28pts), plus a complete answer key with scoring rubrics.',
-  brainstorm: 'Builds an interactive tree diagram: one central concept, 5-7 branches (### headings), sub-points as bold bullet children, and supporting details as deeper nodes. All labels are kept short for clarity.',
-  grading: 'Evaluates a student answer against reference content with a detailed rubric: accuracy (40pts), reasoning (30pts), completeness (20pts), clarity (10pts), plus strengths, improvements, corrected understanding, and recommended review.',
+const getToolHint = (t: ReturnType<typeof useTranslations>, toolType: string): string => {
+  const hints: Record<string, string> = {
+    lessonPlan: t('hints.lessonPlan'),
+    examGen: t('hints.examGen'),
+    brainstorm: t('hints.brainstorm'),
+    grading: t('hints.grading'),
+  };
+  return hints[toolType] || '';
 };
 
 export default function AIToolTabGenerate({ toolType, loading, accentColor, onGenerate, studentAnswer, onStudentAnswerChange }: Props) {
   const t = useTranslations('viz.tools');
-  const hint = TOOL_HINTS[toolType] || '';
+  const hint = getToolHint(t, toolType);
   const needsInput = toolType === 'grading';
 
   return (

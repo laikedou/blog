@@ -5,6 +5,7 @@
     "success": "操作成功",
     "cancel": "取消",
     "confirm": "确认",
+    "areYouSure": "确定吗？",
     "save": "保存",
     "delete": "删除",
     "edit": "编辑",
@@ -1265,7 +1266,19 @@
         "openFull": "查看原图",
         "analysisTitle": "详细分析"
       },
-      "clickToGenerate": "点击上方按钮，AI 将自动生成内容"
+      "clickToGenerate": "点击上方按钮，AI 将自动生成内容",
+      "hints": {
+        "lessonPlan": "生成结构化的7部分教案：教学目标、先修知识、关键概念、教学序列、讨论问题、练习活动、评估检查点。",
+        "examGen": "创建100分平衡试卷：选择题（30分）、简答题（42分）、解答题（28分），附完整答案与评分标准。",
+        "brainstorm": "构建交互式树状图：一个核心概念，5-7个分支（### 标题），粗体项目符号子节点，更深层级的支撑细节。所有标签保持简洁。",
+        "grading": "根据参考答案评估学生作答，提供详细评分：准确性（40分）、推理（30分）、完整性（20分）、清晰度（10分），以及优势、改进建议、纠正理解和推荐复习内容。"
+      },
+      "diff": {
+        "selectSecond": "选择第二个版本以比较...",
+        "selectFirst": "选择第一个版本以比较..."
+      },
+      "noDescription": "无描述",
+      "cancel": "取消"
     },
     "aiTools": {
       "title": "AI 工具",
@@ -1498,6 +1511,15 @@
     "createDefinitionFor": "为 {identifier} 创建定义",
     "renumberTo": "重新编号为 {identifier}",
     "newFootnote": "新建脚注...",
-    "reference": "引用 {index}"
+    "reference": "引用 {index}",
+    "addAudioFile": "添加音频文件",
+    "addFile": "添加文件",
+    "addImage": "添加图片",
+    "addVideo": "添加视频",
+    "turnOffSuggesting": "关闭建议模式",
+    "suggestionEdits": "建议编辑",
+    "dragToMoveColumn": "拖动以移动列",
+    "dragToMove": "拖动以移动",
+    "insertHighlightedBlock": "插入高亮块。"
   }
 }

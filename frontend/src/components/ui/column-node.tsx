@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useTranslations } from 'next-intl';
 
 import type { TColumnElement } from 'platejs';
 import type { PlateElementProps } from 'platejs/react';
@@ -100,6 +101,7 @@ export const ColumnElement = withHOC(
 );
 
 const ColumnDragHandle = React.memo(function ColumnDragHandle() {
+  const t = useTranslations();
   return (
     <TooltipProvider>
       <Tooltip>
@@ -115,7 +117,7 @@ const ColumnDragHandle = React.memo(function ColumnDragHandle() {
           </Button>
         </TooltipTrigger>
 
-        <TooltipContent>Drag to move column</TooltipContent>
+        <TooltipContent>{t('editor.dragToMoveColumn')}</TooltipContent>
       </Tooltip>
     </TooltipProvider>
   );

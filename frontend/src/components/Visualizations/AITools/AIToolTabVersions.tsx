@@ -58,10 +58,10 @@ export default function AIToolTabVersions({
         <div className="mb-3 flex items-center gap-2 px-3 py-2 rounded-lg bg-white/[0.03] border border-white/[0.06]">
           <GitCompare className="h-3.5 w-3.5 text-amber-400" />
           <span className="text-xs text-white/50">
-            {selectedForDiff ? 'Select a second version to compare...' : 'Select first version to compare...'}
+            {selectedForDiff ? t('diff.selectSecond') : t('diff.selectFirst')}
           </span>
           <button onClick={onCancelDiff} className="ml-auto text-xs text-white/30 hover:text-white/60">
-            Cancel
+            {t('cancel')}
           </button>
         </div>
       )}
@@ -111,7 +111,7 @@ export default function AIToolTabVersions({
                       )}
                     </div>
                     <p className="text-xs text-white/30 mt-0.5 truncate">
-                      {v.changeNote || 'No description'}
+                      {v.changeNote || (t('noDescription') || 'No description')}
                     </p>
                     <p className="text-[10px] text-white/20 mt-0.5">
                       {new Date(v.createdAt).toLocaleString()}

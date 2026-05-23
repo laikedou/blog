@@ -141,7 +141,7 @@ const getGroups = (t: ReturnType<typeof useTranslations>): Group[] => [
         value: KEYS.blockquote,
       },
       {
-        description: 'Insert a highlighted block.',
+        description: t('editor.insertHighlightedBlock'),
         icon: <LightbulbIcon />,
         keywords: ['note'],
         label: t('editor.callout'),

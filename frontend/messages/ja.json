@@ -5,6 +5,7 @@
     "success": "操作成功",
     "cancel": "キャンセル",
     "confirm": "確認",
+    "areYouSure": "よろしいですか？",
     "save": "保存",
     "delete": "削除",
     "edit": "編集",
@@ -1264,7 +1265,19 @@
         "openFull": "フルサイズで表示",
         "analysisTitle": "詳細分析"
       },
-      "clickToGenerate": "上のボタンをクリックすると、AIが自動的にコンテンツを生成します"
+      "clickToGenerate": "上のボタンをクリックすると、AIが自動的にコンテンツを生成します",
+      "hints": {
+        "lessonPlan": "構造化された7セクションの授業計画を生成：目標、前提知識、重要概念、指導順序、討論の質問、実践活動、評価チェックポイント。",
+        "examGen": "バランスの取れた100点満点の試験を作成：選択問題（30点）、記述問題（42点）、問題解決（28点）、完全な解答用紙と採点基準付き。",
+        "brainstorm": "インタラクティブなツリー図を作成：1つの中心概念、5〜7のブランチ（### 見出し）、太字の箇条書きサブポイント、深い階層の補足詳細。すべてのラベルは簡潔に。",
+        "grading": "参考コンテンツに対して学生の回答を評価し、詳細な採点基準を提供：正確性（40点）、推論（30点）、完全性（20点）、明瞭さ（10点）、強み、改善点、修正された理解、推奨復習内容。"
+      },
+      "diff": {
+        "selectSecond": "比較する2番目のバージョンを選択...",
+        "selectFirst": "比較する最初のバージョンを選択..."
+      },
+      "noDescription": "説明なし",
+      "cancel": "キャンセル"
     },
     "aiTools": {
       "title": "AI ツール",
@@ -1497,6 +1510,15 @@
     "createDefinitionFor": "{identifier} の定義を作成",
     "renumberTo": "{identifier} に番号を変更",
     "newFootnote": "新しい脚注...",
-    "reference": "参照 {index}"
+    "reference": "参照 {index}",
+    "addAudioFile": "音声ファイルを追加",
+    "addFile": "ファイルを追加",
+    "addImage": "画像を追加",
+    "addVideo": "動画を追加",
+    "turnOffSuggesting": "提案モードをオフ",
+    "suggestionEdits": "提案編集",
+    "dragToMoveColumn": "ドラッグして列を移動",
+    "dragToMove": "ドラッグして移動",
+    "insertHighlightedBlock": "ハイライトブロックを挿入。"
   }
 }

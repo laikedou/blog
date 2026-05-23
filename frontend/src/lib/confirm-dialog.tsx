@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Dialog,
   DialogContent,
@@ -33,6 +34,7 @@ export function useConfirm() {
 }
 
 export function ConfirmProvider({ children }: { children: ReactNode }) {
+  const t = useTranslations();
   const [state, setState] = useState<ConfirmOptions | null>(null);
   const [resolve, setResolve] = useState<((value: boolean) => void) | null>(null);
   const [open, setOpen] = useState(false);
@@ -68,22 +70,22 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
                 </div>
               )}
               <div>
-                <DialogTitle>{state?.title || 'Confirm'}</DialogTitle>
+                <DialogTitle>{state?.title || t('common.confirm')}</DialogTitle>
                 <DialogDescription className="mt-1.5">
-                  {state?.message || 'Are you sure?'}
+                  {state?.message || t('common.areYouSure')}
                 </DialogDescription>
               </div>
             </div>
           </DialogHeader>
           <DialogFooter className="gap-2 sm:gap-0">
             <Button variant="outline" onClick={handleCancel}>
-              {state?.cancelLabel || 'Cancel'}
+              {state?.cancelLabel || t('common.cancel')}
             </Button>
             <Button
               variant={state?.variant === 'destructive' ? 'destructive' : 'default'}
               onClick={handleConfirm}
             >
-              {state?.confirmLabel || 'Confirm'}
+              {state?.confirmLabel || t('common.confirm')}
             </Button>
           </DialogFooter>
         </DialogContent>

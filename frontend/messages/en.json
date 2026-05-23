@@ -5,6 +5,7 @@
     "success": "Operation successful",
     "cancel": "Cancel",
     "confirm": "Confirm",
+    "areYouSure": "Are you sure?",
     "save": "Save",
     "delete": "Delete",
     "edit": "Edit",
@@ -1268,7 +1269,19 @@
         "openFull": "Open Full",
         "analysisTitle": "Detailed Analysis"
       },
-      "clickToGenerate": "Click the button above and AI will generate content automatically"
+      "clickToGenerate": "Click the button above and AI will generate content automatically",
+      "hints": {
+        "lessonPlan": "Generates a structured 7-section lesson plan: objectives, prerequisites, key concepts, teaching sequence, discussion questions, practice activities, and assessment checkpoints.",
+        "examGen": "Creates a balanced 100-point exam: multiple choice (30pts), short answer (42pts), problem solving (28pts), plus a complete answer key with scoring rubrics.",
+        "brainstorm": "Builds an interactive tree diagram: one central concept, 5-7 branches (### headings), sub-points as bold bullet children, and supporting details as deeper nodes. All labels are kept short for clarity.",
+        "grading": "Evaluates a student answer against reference content with a detailed rubric: accuracy (40pts), reasoning (30pts), completeness (20pts), clarity (10pts), plus strengths, improvements, corrected understanding, and recommended review."
+      },
+      "diff": {
+        "selectSecond": "Select a second version to compare...",
+        "selectFirst": "Select first version to compare..."
+      },
+      "noDescription": "No description",
+      "cancel": "Cancel"
     },
     "aiTools": {
       "title": "AI Tools",
@@ -1497,6 +1510,15 @@
     "createDefinitionFor": "Create definition for {identifier}",
     "renumberTo": "Renumber to {identifier}",
     "newFootnote": "New footnote...",
-    "reference": "Reference {index}"
+    "reference": "Reference {index}",
+    "addAudioFile": "Add an audio file",
+    "addFile": "Add a file",
+    "addImage": "Add an image",
+    "addVideo": "Add a video",
+    "turnOffSuggesting": "Turn off suggesting",
+    "suggestionEdits": "Suggestion edits",
+    "dragToMoveColumn": "Drag to move column",
+    "dragToMove": "Drag to move",
+    "insertHighlightedBlock": "Insert a highlighted block."
   }
 }

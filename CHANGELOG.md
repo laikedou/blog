@@ -7,6 +7,7 @@
 - **Pattern** — Module-level arrays/objects using `t()` converted to `getXxx(t)` factory functions accepting translator parameter (applied to `aiChatItems`, `turnIntoItems`, `groups`, `languages`, `getReferenceContextLabel`, `getFootnotePreviewLabel`)
 - **New Keys** — Added 6 editor translation keys (`emptyFootnote`, `noPreviewAvailable`, `createDefinitionFor`, `renumberTo`, `newFootnote`, `reference`) across all 4 locales (en/zh-CN/zh-TW/ja)
 - **Other** — `HomePageClient`, `AIToolFooter`, and other page-level components also updated
+- **Second Pass** — Fixed additional hardcoded strings in `confirm-dialog`, `media-placeholder-node`, `suggestion-toolbar-button`, `media-toolbar-button`, `column-node`, `block-draggable`, `AIToolTabGenerate`, `AIToolTabVersions`, `slash-node`. Added 15+ new keys (`areYouSure`, `addAudioFile`, `addFile`, `addImage`, `addVideo`, `turnOffSuggesting`, `suggestionEdits`, `dragToMoveColumn`, `dragToMove`, `insertHighlightedBlock`, viz.tools hints/diff/noDescription/cancel). Build verified with Turbopack.
 
 ## 2026-05-22 — Live2D Companion Widget (Phase 1)
 
