@@ -329,7 +329,7 @@ export default function EditVisualizationPage() {
                 {activePreviewTab === 'code' && (
                   <div className="flex items-center gap-1">
                     <button
-                      onClick={() => { navigator.clipboard.writeText(code); toast.success('Code copied'); }}
+                      onClick={() => { navigator.clipboard.writeText(code); toast.success(t('viz.codeCopied')); }}
                       className="bg-transparent border border-white/20 text-on-surface-variant hover:text-on-surface hover:bg-white/5 rounded-lg px-2 py-1 text-label-sm font-label-sm transition-all flex items-center gap-1"
                     >
                       <span className="material-symbols-outlined text-[14px]">copy</span>

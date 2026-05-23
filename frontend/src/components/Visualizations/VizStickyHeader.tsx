@@ -14,7 +14,7 @@ import {
 import { Sparkles } from 'lucide-react';
 import {
   Code, Download, Maximize2, Minimize2, Users, Play,
-  GitFork, Code2, Share2, MoreHorizontal,
+  GitFork, Code2, Share2, MoreHorizontal, Loader2,
 } from 'lucide-react';
 
 interface ToolbarAction {
@@ -35,6 +35,7 @@ interface Props {
   isAuthenticated: boolean;
   classroomCreating: boolean;
   narrationGenerating: boolean;
+  forking?: boolean;
   aiGenerated?: boolean;
   version?: number;
   onBack?: () => void;
@@ -56,6 +57,7 @@ export default function VizStickyHeader({
   isAuthenticated,
   classroomCreating,
   narrationGenerating,
+  forking = false,
   aiGenerated,
   version,
   onToggleCode,
@@ -87,11 +89,11 @@ export default function VizStickyHeader({
     { key: 'download', icon: Download, label: t('viz.downloadHtml'), onClick: onDownload },
     { key: 'tutor', icon: Sparkles, label: t('viz.tutor.toggle'), onClick: onToggleTutor, active: tutorOpen },
     ...(isAuthenticated ? [
-      { key: 'classroom', icon: Users, label: t('viz.classroom.create'), onClick: onCreateClassroom, disabled: classroomCreating },
-      { key: 'narration', icon: Play, label: t('viz.narration.generate'), onClick: onGenerateNarration, disabled: narrationGenerating, loading: narrationGenerating },
+      { key: 'classroom', icon: Users, label: t('viz.classroom.create'), onClick: onCreateClassroom, loading: classroomCreating },
+      { key: 'narration', icon: Play, label: t('viz.narration.generate'), onClick: onGenerateNarration, loading: narrationGenerating },
     ] : []),
     { key: 'fullscreen', icon: fullscreen ? Minimize2 : Maximize2, label: t('viz.fullscreen'), onClick: onToggleFullscreen },
-    { key: 'fork', icon: GitFork, label: t('viz.fork'), onClick: onFork },
+    { key: 'fork', icon: GitFork, label: t('viz.fork'), onClick: onFork, loading: forking },
     { key: 'embed', icon: Code2, label: t('viz.embed'), onClick: onEmbedOpen },
     { key: 'share', icon: Share2, label: t('viz.share'), onClick: onShare },
   ];
@@ -136,15 +138,21 @@ export default function VizStickyHeader({
               variant={action.active ? 'default' : 'ghost'}
               size="sm"
               onClick={action.onClick}
-              disabled={action.disabled}
-              title={action.label}
+              disabled={action.loading || action.disabled}
+              title={action.loading ? `${action.label}...` : action.label}
               className={`relative transition-all duration-200 ${
                 action.active
                   ? 'bg-tertiary hover:bg-tertiary/90 text-surface shadow-md shadow-tertiary/20'
-                  : 'hover:bg-white/[0.06] text-on-surface-variant hover:text-on-surface'
+                  : action.loading
+                    ? 'text-clay hover:bg-white/[0.06] cursor-wait'
+                    : 'hover:bg-white/[0.06] text-on-surface-variant hover:text-on-surface'
               }`}
             >
-              <action.icon className="h-4 w-4" />
+              {action.loading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <action.icon className="h-4 w-4" />
+              )}
             </Button>
           ))}
         </div>

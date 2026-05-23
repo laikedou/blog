@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useTranslations } from 'next-intl';
 import LiteYouTubeEmbed from 'react-lite-youtube-embed';
 import { Tweet } from 'react-tweet';
 
@@ -25,6 +26,7 @@ import {
 export const MediaEmbedElement = withHOC(
   ResizableProvider,
   function MediaEmbedElement(props: PlateElementProps<TMediaEmbedElement>) {
+    const t = useTranslations();
     const {
       align = 'center',
       embed,
@@ -128,7 +130,7 @@ export const MediaEmbedElement = withHOC(
             </Resizable>
 
             <Caption style={{ width }} align={align}>
-              <CaptionTextarea placeholder="Write a caption..." />
+              <CaptionTextarea placeholder={t('editor.writeCaption')} />
             </Caption>
           </figure>
 

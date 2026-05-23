@@ -1,52 +1,42 @@
-import { animate, stagger } from 'animejs';
-import { useEffect, useRef, useCallback } from 'react';
+import type { Variants, Transition } from 'framer-motion';
 
-export function useAnimateOnMount() {
-  const ref = useRef<HTMLDivElement>(null);
+export const fadeUp: Variants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.6, ease: [0.32, 0.72, 0, 1] as const },
+  },
+};
 
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
+export const fadeUpQuick: Variants = {
+  hidden: { opacity: 0, y: 15 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.5, ease: [0.32, 0.72, 0, 1] as const },
+  },
+};
 
-    animate(el, {
-      opacity: [0, 1],
-      translateY: [20, 0],
-      easing: 'easeOutCubic',
-      duration: 600,
-    });
-  }, []);
+export const staggerContainer: Variants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.08, delayChildren: 0.1 },
+  },
+};
 
-  return ref;
-}
+export const staggerItem: Variants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.5, ease: [0.32, 0.72, 0, 1] as const },
+  },
+};
 
-export function useStaggerChildren(delay = 80) {
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const children = ref.current?.children;
-    if (!children) return;
-
-    animate(children, {
-      opacity: [0, 1],
-      translateY: [20, 0],
-      easing: 'easeOutCubic',
-      duration: 500,
-      delay: stagger(delay),
-    });
-  }, [delay]);
-
-  return ref;
-}
-
-export function useScaleOnClick() {
-  const handleClick = useCallback((e: React.MouseEvent<HTMLElement>) => {
-    const target = e.currentTarget;
-    animate(target, {
-      scale: [1, 0.95, 1],
-      easing: 'easeOutCubic',
-      duration: 200,
-    });
-  }, []);
-
-  return handleClick;
-}
+export const springTransition: Transition = {
+  type: 'spring',
+  stiffness: 400,
+  damping: 30,
+};

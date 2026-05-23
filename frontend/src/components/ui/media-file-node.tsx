@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useTranslations } from 'next-intl';
 
 import type { TFileElement } from 'platejs';
 import type { PlateElementProps } from 'platejs/react';
@@ -16,6 +17,7 @@ import { Caption, CaptionTextarea } from './caption';
 export const FileElement = withHOC(
   ResizableProvider,
   function FileElement(props: PlateElementProps<TFileElement>) {
+    const t = useTranslations();
     const readOnly = useReadOnly();
     const { name, unsafeUrl } = useMediaState();
 
@@ -41,7 +43,7 @@ export const FileElement = withHOC(
             <CaptionTextarea
               className="text-left"
               readOnly={readOnly}
-              placeholder="Write a caption..."
+              placeholder={t('editor.writeCaption')}
             />
           </Caption>
         </a>

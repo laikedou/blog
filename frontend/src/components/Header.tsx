@@ -48,7 +48,7 @@ export default function Header() {
         <div className="flex items-center justify-between h-16">
           {/* Logo + Nav */}
           <div className="flex items-center gap-8">
-            <Link href="/" className="font-display text-display-sm text-ink tracking-tight hover:text-clay transition-colors" aria-label={`${siteTitle} Home`}>
+            <Link href="/" className="font-display text-display-sm text-ink tracking-tight hover:text-clay transition-colors" aria-label={t('common.siteTitleHome', { siteTitle })}>
               {config.logoUrl ? (
                 <img src={config.logoUrl} alt={siteTitle} className="h-8 w-auto" />
               ) : (
@@ -116,7 +116,7 @@ export default function Header() {
 
       {/* Mobile navigation */}
       {mobileOpen && (
-        <nav className="md:hidden bg-cream-100 border-t border-border px-6 py-5 space-y-3" aria-label="Mobile navigation">
+        <nav className="md:hidden bg-cream-100 border-t border-border px-6 py-5 space-y-3" aria-label={t('common.mobileNavigation')}>
           {NAV_ITEMS.map(item => (
             <Link key={item.href} href={item.href} className="block text-body text-ink-soft hover:text-ink py-1.5" onClick={() => setMobileOpen(false)}>
               {item.label}

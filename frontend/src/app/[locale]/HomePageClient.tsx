@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
+import { motion } from 'framer-motion';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import PostCard from '@/components/PostCard';
@@ -10,7 +11,7 @@ import BannerCarousel from '@/components/BannerCarousel';
 import { posts as postsApi, categories as categoriesApi } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { animate, stagger } from 'animejs';
+import { staggerContainer, staggerItem } from '@/lib/animations';
 import { ArrowRight, Sparkles, Cpu, Globe, Database, ChevronRight, ChevronDown } from 'lucide-react';
 
 const TOPIC_SLUGS = [
@@ -34,6 +35,7 @@ function ScrollProgress() {
 }
 
 function BackToTop() {
+  const t = useTranslations();
   const [visible, setVisible] = useState(false);
   useEffect(() => {
     const handler = () => setVisible(window.scrollY > 500);
@@ -44,7 +46,7 @@ function BackToTop() {
     <button
       className={`back-to-top ${visible ? 'visible' : ''}`}
       onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-      aria-label="Back to top"
+      aria-label={t('common.backToTop')}
     >
       <span className="material-symbols-outlined text-[20px] text-clay">keyboard_arrow_up</span>
     </button>
@@ -52,23 +54,16 @@ function BackToTop() {
 }
 
 function SectionReveal({ children }: { children: React.ReactNode }) {
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          animate(el, { opacity: [0, 1], translateY: [24, 0], easing: 'easeOutCubic', duration: 600 });
-          observer.disconnect();
-        }
-      },
-      { threshold: 0.15 }
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
-  return <div ref={ref} style={{ opacity: 0 }}>{children}</div>;
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 24 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: '-15% 0px' }}
+      transition={{ duration: 0.6, ease: [0.32, 0.72, 0, 1] }}
+    >
+      {children}
+    </motion.div>
+  );
 }
 
 export default function HomePageClient() {
@@ -80,7 +75,6 @@ export default function HomePageClient() {
   const [totalPages, setTotalPages] = useState(1);
   const [featuredPosts, setFeaturedPosts] = useState<any[]>([]);
   const [topicPosts, setTopicPosts] = useState<Record<string, any[]>>({});
-  const postsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     Promise.all([
@@ -106,18 +100,6 @@ export default function HomePageClient() {
       }
     });
   }, [categories]);
-
-  useEffect(() => {
-    if (!loading && postsRef.current) {
-      animate(postsRef.current.children, {
-        opacity: [0, 1],
-        translateY: [20, 0],
-        easing: 'easeOutCubic',
-        duration: 600,
-        delay: stagger(80),
-      });
-    }
-  }, [loading, page]);
 
   const topicMeta: Record<string, { label: string; desc: string }> = {
     ai: { label: t('home.sectionAiLabel'), desc: t('home.sectionAiDesc') },
@@ -205,7 +187,7 @@ export default function HomePageClient() {
                 {t('home.heroDescription')}
               </p>
 
-              <nav className="flex items-center gap-4 justify-center lg:justify-start" aria-label="Homepage actions">
+              <nav className="flex items-center gap-4 justify-center lg:justify-start" aria-label={t('common.homepageActions')}>
                 <Link href="#posts">
                   <Button size="lg" className="magnetic-btn group relative overflow-hidden bg-gradient-to-r from-primary to-primary-container hover:from-primary-container hover:to-primary">
                     <span className="relative z-10 text-primary-foreground">{t('home.browseArticles')}</span>
@@ -231,7 +213,7 @@ export default function HomePageClient() {
             <button
               onClick={() => document.getElementById('posts')?.scrollIntoView({ behavior: 'smooth' })}
               className="flex flex-col items-center gap-2 text-ink-muted hover:text-clay transition-colors animate-bounce"
-              aria-label="Scroll to content"
+              aria-label={t('common.scrollToContent')}
             >
               <span className="text-caption-sm">{t('home.scrollDown')}</span>
               <ChevronDown className="h-5 w-5" />
@@ -360,11 +342,19 @@ export default function HomePageClient() {
             </div>
           ) : (
             <>
-              <div ref={postsRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16">
+              <motion.div
+                key={page}
+                variants={staggerContainer}
+                initial="hidden"
+                animate="visible"
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16"
+              >
                 {posts.map((post, idx) => (
-                  <PostCard key={post.id} post={post} index={idx} />
+                  <motion.div key={post.id} variants={staggerItem}>
+                    <PostCard post={post} index={idx} />
+                  </motion.div>
                 ))}
-              </div>
+              </motion.div>
               {totalPages > page && (
                 <div className="flex justify-center mt-12 md:hidden">
                   <Button variant="outline" size="lg" onClick={() => setPage(p => p + 1)} className="group">

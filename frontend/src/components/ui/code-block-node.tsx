@@ -11,6 +11,7 @@ import {
   PlateElement,
   PlateLeaf,
 } from 'platejs/react';
+import { useTranslations } from 'next-intl';
 import { useEditorRef, useElement, useReadOnly } from 'platejs/react';
 
 import { Button } from '@/components/ui/button';
@@ -30,6 +31,7 @@ import {
 import { cn } from '@/lib/utils';
 
 export function CodeBlockElement(props: PlateElementProps<TCodeBlockElement>) {
+  const t = useTranslations();
   const { editor, element } = props;
 
   return (
@@ -52,7 +54,7 @@ export function CodeBlockElement(props: PlateElementProps<TCodeBlockElement>) {
               variant="ghost"
               className="size-6 text-xs"
               onClick={() => formatCodeBlock(editor, { element })}
-              title="Format code"
+              title={t('editor.formatCode')}
             >
               <BracesIcon className="!size-3.5 text-muted-foreground" />
             </Button>
@@ -73,6 +75,7 @@ export function CodeBlockElement(props: PlateElementProps<TCodeBlockElement>) {
 }
 
 function CodeBlockCombobox() {
+  const t = useTranslations();
   const [open, setOpen] = React.useState(false);
   const readOnly = useReadOnly();
   const editor = useEditorRef();
@@ -82,7 +85,7 @@ function CodeBlockCombobox() {
 
   const items = React.useMemo(
     () =>
-      languages.filter(
+      getLanguages(t).filter(
         (language) =>
           !searchValue ||
           language.label.toLowerCase().includes(searchValue.toLowerCase())
@@ -102,8 +105,8 @@ function CodeBlockCombobox() {
           aria-expanded={open}
           role="combobox"
         >
-          {languages.find((language) => language.value === value)?.label ??
-            'Plain Text'}
+          {getLanguages(t).find((language) => language.value === value)?.label ??
+            t('editor.plainText')}
         </Button>
       </PopoverTrigger>
       <PopoverContent
@@ -115,9 +118,9 @@ function CodeBlockCombobox() {
             className="h-9"
             value={searchValue}
             onValueChange={(value) => setSearchValue(value)}
-            placeholder="Search language..."
+            placeholder={t('editor.searchLanguage')}
           />
-          <CommandEmpty>No language found.</CommandEmpty>
+          <CommandEmpty>{t('editor.noLanguageFound')}</CommandEmpty>
 
           <CommandList className="h-[344px] overflow-y-auto">
             <CommandGroup>
@@ -158,6 +161,7 @@ function CopyButton({
   React.ComponentProps<typeof Button>,
   'value'
 >) {
+  const t = useTranslations();
   const [hasCopied, setHasCopied] = React.useState(false);
 
   React.useEffect(() => {
@@ -176,7 +180,7 @@ function CopyButton({
       }}
       {...props}
     >
-      <span className="sr-only">Copy</span>
+      <span className="sr-only">{t('common.copy')}</span>
       {hasCopied ? (
         <CheckIcon className="!size-3" />
       ) : (
@@ -196,9 +200,9 @@ export function CodeSyntaxLeaf(props: PlateLeafProps<TCodeSyntaxLeaf>) {
   return <PlateLeaf className={tokenClassName} {...props} />;
 }
 
-const languages: { label: string; value: string }[] = [
-  { label: 'Auto', value: 'auto' },
-  { label: 'Plain Text', value: 'plaintext' },
+const getLanguages = (t: ReturnType<typeof useTranslations>): { label: string; value: string }[] => [
+  { label: t('editor.auto'), value: 'auto' },
+  { label: t('editor.plainText'), value: 'plaintext' },
   { label: 'ABAP', value: 'abap' },
   { label: 'Agda', value: 'agda' },
   { label: 'Arduino', value: 'arduino' },

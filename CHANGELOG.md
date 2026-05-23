@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-05-23 — Editor i18n Hardcoded String Cleanup
+
+### Changes
+- **Editor Components** — Replaced all hardcoded English strings in 20+ editor/UI components with i18n translation keys. Updated files: `block-context-menu`, `ai-menu`, `slash-node`, `insert-toolbar-button`, `turn-into-toolbar-button`, `table-toolbar-button`, `table-node`, `equation-node`, `equation-toolbar-button`, `mode-toolbar-button`, `media-toolbar`, `media-toolbar-button`, `media-audio-node`, `media-embed-node`, `media-file-node`, `media-image-node`, `media-video-node`, `block-suggestion`, `code-block-node`, `code-drawing-node`, `comment`, `emoji-node`, `emoji-toolbar-button`, `mention-node`, `font-color-toolbar-button`, `fixed-toolbar-buttons`, `line-height-toolbar-button`, `link-toolbar`, `footnote-node`, `sheet`, `settings-dialog`
+- **Pattern** — Module-level arrays/objects using `t()` converted to `getXxx(t)` factory functions accepting translator parameter (applied to `aiChatItems`, `turnIntoItems`, `groups`, `languages`, `getReferenceContextLabel`, `getFootnotePreviewLabel`)
+- **New Keys** — Added 6 editor translation keys (`emptyFootnote`, `noPreviewAvailable`, `createDefinitionFor`, `renumberTo`, `newFootnote`, `reference`) across all 4 locales (en/zh-CN/zh-TW/ja)
+- **Other** — `HomePageClient`, `AIToolFooter`, and other page-level components also updated
+
 ## 2026-05-22 — Live2D Companion Widget (Phase 1)
 
 ### Features

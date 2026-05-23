@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useTranslations } from 'next-intl';
 
 import { acceptSuggestion, rejectSuggestion } from '@platejs/suggestion';
 import { SuggestionPlugin } from '@platejs/suggestion/react';
@@ -29,6 +30,7 @@ export function BlockSuggestionCard({
   isLast: boolean;
   suggestion: ResolvedSuggestion;
 }) {
+  const t = useTranslations();
   const { api, editor } = useEditorPlugin(SuggestionPlugin);
 
   const userInfo = usePluginOption(discussionPlugin, 'user', suggestion.userId);
@@ -48,22 +50,22 @@ export function BlockSuggestionCard({
   const [hovering, setHovering] = React.useState(false);
 
   const suggestionText2Array = (text: string) => {
-    if (text === BLOCK_SUGGESTION_TOKEN) return ['line breaks'];
+    if (text === BLOCK_SUGGESTION_TOKEN) return [t('editor.lineBreaks')];
 
     return text.split(BLOCK_SUGGESTION_TOKEN).filter(Boolean);
   };
 
   const getRemoveSummaryItems = (text: string) => {
     const items = suggestionText2Array(text).map((item) => {
-      if (item === 'column_group') return 'Column';
-      if (item === 'code_block') return 'Code Block';
+      if (item === 'column_group') return t('editor.column');
+      if (item === 'code_block') return t('editor.codeBlock');
 
       return item;
     });
 
-    if (items.includes('Table')) return ['Table'];
-    if (items.includes('Code Block')) return ['Code Block'];
-    if (items.includes('Column')) return ['Column'];
+    if (items.includes(t('editor.table'))) return [t('editor.table')];
+    if (items.includes(t('editor.codeBlock'))) return [t('editor.codeBlock')];
+    if (items.includes(t('editor.column'))) return [t('editor.column')];
 
     return items;
   };
@@ -99,7 +101,7 @@ export function BlockSuggestionCard({
             {suggestion.type === 'remove' &&
               getRemoveSummaryItems(suggestion.text!).map((text, index) => (
                 <div key={index} className="flex items-center gap-2">
-                  <span className="text-muted-foreground text-sm">Delete:</span>
+                  <span className="text-muted-foreground text-sm">{t('editor.deleteBlock')}</span>
 
                   <span key={index} className="text-sm">
                     {text}
@@ -110,10 +112,10 @@ export function BlockSuggestionCard({
             {suggestion.type === 'insert' &&
               suggestionText2Array(suggestion.newText!).map((text, index) => (
                 <div key={index} className="flex items-center gap-2">
-                  <span className="text-muted-foreground text-sm">Add:</span>
+                  <span className="text-muted-foreground text-sm">{t('editor.addBlock')}</span>
 
                   <span key={index} className="text-sm">
-                    {text || 'line breaks'}
+                    {text || t('editor.lineBreaks')}
                   </span>
                 </div>
               ))}
@@ -127,8 +129,8 @@ export function BlockSuggestionCard({
                         key={index}
                         className="flex items-start gap-2 text-brand/80"
                       >
-                        <span className="text-sm">with:</span>
-                        <span className="text-sm">{text || 'line breaks'}</span>
+                        <span className="text-sm">{t('editor.withBlock')}</span>
+                        <span className="text-sm">{text || t('editor.lineBreaks')}</span>
                       </div>
                     </React.Fragment>
                   )
@@ -138,9 +140,9 @@ export function BlockSuggestionCard({
                   <React.Fragment key={index}>
                     <div key={index} className="flex items-start gap-2">
                       <span className="text-muted-foreground text-sm">
-                        {index === 0 ? 'Replace:' : 'Delete:'}
+                        {index === 0 ? t('editor.replaceDelete') : t('editor.deleteBlock')}
                       </span>
-                      <span className="text-sm">{text || 'line breaks'}</span>
+                      <span className="text-sm">{text || t('editor.lineBreaks')}</span>
                     </div>
                   </React.Fragment>
                 ))}

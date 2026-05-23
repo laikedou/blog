@@ -125,11 +125,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
           <Link href="/" className="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-white/5 transition-colors text-sm">
             <span className="material-symbols-outlined text-[18px]">open_in_new</span>
-            <span className="font-body-sm">View Site</span>
+            <span className="font-body-sm">{t('nav.viewSite')}</span>
           </Link>
           <button onClick={logout} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-error/80 hover:text-error hover:bg-error/10 transition-colors text-sm">
             <span className="material-symbols-outlined text-[18px]">logout</span>
-            <span className="font-body-sm">Logout</span>
+            <span className="font-body-sm">{t('nav.signOut')}</span>
           </button>
         </div>
       </aside>

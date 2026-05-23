@@ -77,7 +77,7 @@ export default function PostSidebar({ post, contentSelector = '.prose-editorial'
     <aside className="space-y-6">
       {/* Table of Contents */}
       {toc.length > 0 && (
-        <nav className="bg-surface-container/50 border border-outline-variant/30 rounded-xl p-5" aria-label="Table of Contents">
+        <nav className="bg-surface-container/50 border border-outline-variant/30 rounded-xl p-5" aria-label={t('posts.tableOfContents')}>
           <h4 className="text-label-sm font-label-sm text-ink-muted uppercase tracking-wider mb-3">{t('posts.tableOfContents')}</h4>
           <ul className="space-y-1">
             {toc.map(item => (

@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useTranslations } from 'next-intl';
 
 import type { CreatePlateEditorOptions } from 'platejs/react';
 
@@ -423,6 +424,7 @@ export function CommentCreateForm({
   discussionId?: string;
   focusOnMount?: boolean;
 }) {
+  const t = useTranslations();
   const discussions = usePluginOption(discussionPlugin, 'discussions');
 
   const editor = useEditorRef();
@@ -581,7 +583,7 @@ export function CommentCreateForm({
                   onAddComment();
                 }
               }}
-              placeholder="Reply..."
+              placeholder={t('common.replyPlaceholder')}
               autoComplete="off"
               autoFocus={autoFocus}
             />

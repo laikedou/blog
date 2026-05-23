@@ -13,25 +13,31 @@ import NarrationPlayer from '@/components/Visualizations/NarrationPlayer';
 import ClassroomPanel from '@/components/Visualizations/ClassroomPanel';
 import CodePreview from '@/components/Visualizations/CodePreview';
 import VizStickyHeader from '@/components/Visualizations/VizStickyHeader';
-import VizMetadataSection from '@/components/Visualizations/VizMetadataSection';
+import VizCoverSection from '@/components/Visualizations/VizCoverSection';
 import VizRendererCard from '@/components/Visualizations/VizRendererCard';
 import VizContentTabs from '@/components/Visualizations/VizContentTabs';
 import VisualizationComments from '@/components/Visualizations/VisualizationComments';
 import RelatedVisualizations from '@/components/Visualizations/RelatedVisualizations';
 import VizMobileBottomBar from '@/components/Visualizations/VizMobileBottomBar';
 import VisualizationLikeButton from '@/components/Visualizations/VisualizationLikeButton';
+import VizStatsPanel from '@/components/Visualizations/VizStatsPanel';
+
+import VizAITools from '@/components/Visualizations/VizAITools';
+import { VizAIToolsDialog } from '@/components/Visualizations/AITools';
+import { CelebrationEffect } from '@/components/Visualizations/CelebrationEffect';
 import { useAITutor } from '@/hooks/useAITutor';
 import { useNarrationPlayer } from '@/hooks/useNarrationPlayer';
 import { useAudioNarrationPlayer } from '@/hooks/useAudioNarrationPlayer';
 import { useClassroomSocket } from '@/hooks/useClassroomSocket';
 import { useLivekitClassroom } from '@/hooks/useLivekitClassroom';
+import { useCelebration } from '@/hooks/useCelebration';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   ChevronLeft, BarChart3, Sparkles, Users, Play,
   Share2, Code, Download, Maximize2, Minimize2, GitFork, Code2,
-  MessageSquare, Layers,
+  MessageSquare, Layers, Loader2, PenLine, Lightbulb, BookOpen, FileText,
 } from 'lucide-react';
 import { useTranslations, useLocale } from 'next-intl';
 import { toast } from 'sonner';
@@ -54,6 +60,9 @@ export default function VisualizationDetailPage() {
   // AI Tutor (Feature 1)
   const tutor = useAITutor({ visualizationId: id, language: locale });
 
+  // Celebration effect
+  const { celebrationRef, celebrate } = useCelebration();
+
   // Difficulty switching (Feature 4)
   const [difficultyLevel, setDifficultyLevel] = useState<string>('beginner');
   const [difficultyVariants, setDifficultyVariants] = useState<Record<string, any> | null>(null);
@@ -68,6 +77,12 @@ export default function VisualizationDetailPage() {
   // Classroom (Feature 2)
   const [classroomCreating, setClassroomCreating] = useState(false);
   const [classroomCreated, setClassroomCreated] = useState<any>(null);
+
+  // Fork loading
+  const [forking, setForking] = useState(false);
+
+  // Quiz generation
+  const [quizGenerating, setQuizGenerating] = useState(false);
 
   const classroomSocketData = classroomCreated ? { classroomId: classroomCreated.id, joinCode: classroomCreated.joinCode } : null;
   const classroomSocket = useClassroomSocket(classroomSocketData || { classroomId: 0, joinCode: '' });
@@ -93,6 +108,7 @@ export default function VisualizationDetailPage() {
       const result = await visualizations.generateNarration(id, locale);
       setNarration({ segments: result.segments, fullText: result.fullText, locale: locale, audioUrl: result.audioUrl || null });
       toast.success(t('viz.narration.generate') + ' ✓');
+      celebrate();
     } catch {
       toast.error(t('viz.narration.failed'));
     } finally {
@@ -109,10 +125,29 @@ export default function VisualizationDetailPage() {
       const link = `${window.location.origin}/classroom/${classroom.joinCode}`;
       await navigator.clipboard.writeText(link);
       toast.success(t('viz.classroom.copyLink'));
+      celebrate();
     } catch {
       toast.error(t('viz.classroom.createFailed'));
     } finally {
       setClassroomCreating(false);
+    }
+  };
+
+  const handleGenerateQuiz = async () => {
+    setQuizGenerating(true);
+    try {
+      const result = await visualizations.generateArticleQuiz(id, locale);
+      const quizData = result.quiz;
+      setViz((prev: any) => ({
+        ...prev,
+        quiz: typeof quizData === 'string' ? quizData : JSON.stringify(quizData),
+      }));
+      toast.success(t('viz.quiz.generated'));
+      celebrate();
+    } catch {
+      toast.error(t('viz.quiz.generateFailed'));
+    } finally {
+      setQuizGenerating(false);
     }
   };
 
@@ -148,6 +183,7 @@ export default function VisualizationDetailPage() {
       toast.success(t('viz.linkCopied'));
     }
     visualizations.recordStat(id, 'share').catch(() => {});
+    celebrate();
   };
 
   const handleFullscreen = () => {
@@ -168,6 +204,7 @@ export default function VisualizationDetailPage() {
     a.click();
     URL.revokeObjectURL(url);
     toast.success(t('viz.downloaded'));
+    celebrate();
   };
 
   const handleFork = async () => {
@@ -175,24 +212,29 @@ export default function VisualizationDetailPage() {
       toast.error(t('viz.signInToLike'));
       return;
     }
+    setForking(true);
     try {
       const forked = await visualizations.fork(id);
       toast.success(t('viz.forked'));
+      celebrate();
       router.push(`/admin/visualizations/${forked.id}/edit`);
     } catch {
       toast.error(t('viz.forkFailed'));
+      setForking(false);
     }
   };
 
   const handleCopyCode = () => {
     navigator.clipboard.writeText(viz.htmlContent);
     toast.success(t('common.copied'));
+    celebrate();
   };
 
   const handleCopyEmbed = () => {
-    const code = `<iframe src="${window.location.origin}/embed/${id}" width="100%" height="600" style="border:0" allow="fullscreen" title="${viz?.title || 'Visualization'}"></iframe>`;
+    const code = `<iframe src="${window.location.origin}/embed/${id}" width="100%" height="600" style="border:0" allow="fullscreen" title="${viz?.title || t('common.visualization')}"></iframe>`;
     navigator.clipboard.writeText(code);
     toast.success(t('viz.linkCopied'));
+    celebrate();
   };
 
   const handleCombinedInteraction = useCallback((payload: any) => {
@@ -200,7 +242,9 @@ export default function VisualizationDetailPage() {
     handleInteractionForClassroom(payload);
   }, [tutor.sendInteraction, handleInteractionForClassroom]);
 
-  const [sidebarTab, setSidebarTab] = useState<'tutor' | 'classroom'>('tutor');
+  const [sidebarTab, setSidebarTab] = useState<'stats' | 'classroom'>('stats');
+  const [aiToolsOpen, setAiToolsOpen] = useState(false);
+  const [aiToolsDefault, setAiToolsDefault] = useState<'lessonPlan' | 'examGen' | 'brainstorm' | 'grading'>('lessonPlan');
 
   if (loading) {
     return (
@@ -249,13 +293,14 @@ export default function VisualizationDetailPage() {
   // Action buttons for the toolbar
   const primaryActions = [
     { key: 'tutor', icon: Sparkles, label: t('viz.tutor.title'), onClick: tutor.toggle, active: tutor.open, primary: true },
+    { key: 'quiz', icon: MessageSquare, label: t('viz.quiz.generate'), loadingLabel: t('viz.quiz.generating'), onClick: handleGenerateQuiz, loading: quizGenerating, primary: true },
     ...(isAuthenticated ? [
-      { key: 'classroom', icon: Users, label: t('viz.classroom.create'), onClick: handleCreateClassroom, disabled: classroomCreating, primary: true },
-      { key: 'narration', icon: Play, label: t('viz.narration.generate'), onClick: handleGenerateNarration, disabled: narrationGenerating, primary: true },
+      { key: 'classroom', icon: Users, label: t('viz.classroom.create'), loadingLabel: t('viz.classroom.creating'), onClick: handleCreateClassroom, loading: classroomCreating, primary: true },
+      { key: 'narration', icon: Play, label: t('viz.narration.generate'), loadingLabel: t('viz.narration.generating'), onClick: handleGenerateNarration, loading: narrationGenerating, primary: true },
     ] : []),
     { key: 'source', icon: Code, label: t('viz.viewSource'), onClick: () => setSourceOpen(true) },
     { key: 'fullscreen', icon: fullscreen ? Minimize2 : Maximize2, label: t('viz.fullscreen'), onClick: handleFullscreen },
-    { key: 'fork', icon: GitFork, label: t('viz.fork'), onClick: handleFork },
+    { key: 'fork', icon: GitFork, label: t('viz.fork'), loadingLabel: t('viz.forking'), onClick: handleFork, loading: forking },
     { key: 'embed', icon: Code2, label: t('viz.embed'), onClick: () => setEmbedOpen(true) },
     { key: 'share', icon: Share2, label: t('viz.share'), onClick: handleShare },
     { key: 'download', icon: Download, label: t('viz.downloadHtml'), onClick: handleDownload },
@@ -271,6 +316,7 @@ export default function VisualizationDetailPage() {
           isAuthenticated={isAuthenticated}
           classroomCreating={classroomCreating}
           narrationGenerating={narrationGenerating}
+          forking={forking}
           aiGenerated={viz.aiGenerated}
           version={viz.version}
           onToggleCode={() => setSourceOpen(true)}
@@ -285,7 +331,7 @@ export default function VisualizationDetailPage() {
         />
 
         <div className="max-w-grid mx-auto px-3 sm:px-6 py-section-sm">
-          <VizMetadataSection viz={viz} visualizationId={id} onShare={handleShare} />
+          <VizCoverSection viz={viz} visualizationId={id} onShare={handleShare} />
 
           {difficultyVariants && (
             <div className="animate-fade-up" style={{ animationDelay: '0.1s' }}>
@@ -321,23 +367,40 @@ export default function VisualizationDetailPage() {
                       <Card className="border-0 bg-surface-container-high/60 backdrop-blur-sm shadow-sm">
                         <CardContent className="p-3 sm:p-4">
                           <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
-                            {primaryActions.map((action, i) => (
-                              <button
-                                key={action.key}
-                                onClick={action.onClick}
-                                disabled={(action as any).disabled}
-                                className={`shrink-0 inline-flex items-center gap-2 px-3.5 py-2 rounded-editorial-xs text-body-sm font-medium transition-all duration-200 ${
-                                  action.active
-                                    ? 'bg-clay text-surface shadow-md shadow-clay/20'
-                                    : action.primary
-                                      ? 'bg-surface-container-high border border-outline-variant/40 text-on-surface hover:bg-surface-container-highest hover:border-outline-variant hover:shadow-md active:scale-[0.97]'
-                                      : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high active:scale-[0.97]'
-                                } disabled:opacity-30 disabled:cursor-not-allowed`}
-                              >
-                                <action.icon className="h-4 w-4" />
-                                <span className="hidden sm:inline">{action.label}</span>
-                              </button>
-                            ))}
+                            {primaryActions.map((action, i) => {
+                              const isLoading = (action as any).loading;
+                              return (
+                                <button
+                                  key={action.key}
+                                  onClick={action.onClick}
+                                  disabled={isLoading}
+                                  className={`shrink-0 inline-flex items-center gap-2 px-3.5 py-2 rounded-editorial-xs text-body-sm font-medium transition-all duration-200 relative overflow-hidden ${
+                                    action.active
+                                      ? 'bg-clay text-surface shadow-md shadow-clay/20'
+                                      : isLoading
+                                        ? 'bg-surface-container-high border border-clay/40 text-clay shadow-md shadow-clay/10 cursor-wait'
+                                        : action.primary
+                                          ? 'bg-surface-container-high border border-outline-variant/40 text-on-surface hover:bg-surface-container-highest hover:border-outline-variant hover:shadow-md active:scale-[0.97]'
+                                          : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high active:scale-[0.97]'
+                                  }`}
+                                >
+                                  {/* Shimmer sweep during loading */}
+                                  {isLoading && (
+                                    <span className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_ease-in-out_infinite] bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+                                  )}
+                                  {isLoading ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <action.icon className="h-4 w-4" />
+                                  )}
+                                  <span className="hidden sm:inline">
+                                    {isLoading && (action as any).loadingLabel
+                                      ? (action as any).loadingLabel
+                                      : action.label}
+                                  </span>
+                                </button>
+                              );
+                            })}
                             {/* Like button integrated */}
                             <div className="shrink-0 ml-auto">
                               <VisualizationLikeButton visualizationId={id} initialLikes={viz.likesCount || 0} />
@@ -387,51 +450,77 @@ export default function VisualizationDetailPage() {
               </div>
             </div>
 
-            {/* Right column: Tabbed side panel (Classroom + AI Tutor) */}
-            <div className="hidden lg:block">
-              <div className="sticky top-20 animate-fade-up" style={{ animationDelay: '0.2s' }}>
+            {/* Right column: AI Tools triggers + Tabbed side panel */}
+            <div className="hidden lg:block space-y-4">
+              {/* AI Tools — trigger buttons */}
+              <div className="animate-fade-up" style={{ animationDelay: '0.2s' }}>
                 <Card className="border-0 bg-surface-container-high/80 backdrop-blur-xl shadow-card overflow-hidden">
-                  <div className="flex border-b border-outline-variant/30">
-                    <button
-                      onClick={() => setSidebarTab('tutor')}
-                      className={`flex-1 flex items-center justify-center gap-1.5 px-4 py-3 text-body-sm font-medium transition-all duration-200 relative ${
-                        sidebarTab === 'tutor'
-                          ? 'text-clay'
-                          : 'text-on-surface-variant/60 hover:text-on-surface-variant'
-                      }`}
-                    >
-                      <Sparkles className="h-4 w-4" />
-                      {t('viz.tutor.title')}
-                      {sidebarTab === 'tutor' && (
-                        <div className="absolute bottom-0 left-2 right-2 h-[2px] bg-gradient-to-r from-clay to-tertiary rounded-full" />
-                      )}
-                    </button>
-                    <button
-                      onClick={() => setSidebarTab('classroom')}
-                      className={`flex-1 flex items-center justify-center gap-1.5 px-4 py-3 text-body-sm font-medium transition-all duration-200 relative ${
-                        sidebarTab === 'classroom'
-                          ? 'text-clay'
-                          : 'text-on-surface-variant/60 hover:text-on-surface-variant'
-                      }`}
-                    >
-                      <Users className="h-4 w-4" />
-                      {t('viz.classroom.create')}
-                      {sidebarTab === 'classroom' && (
-                        <div className="absolute bottom-0 left-2 right-2 h-[2px] bg-gradient-to-r from-clay to-tertiary rounded-full" />
-                      )}
-                    </button>
+                  <div className="px-4 py-3 border-b border-outline-variant/20">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="h-4 w-4 text-clay" />
+                      <h3 className="font-display text-display-xs text-on-surface">{t('viz.aiTools.title')}</h3>
+                    </div>
+                    <p className="text-caption-xs text-on-surface-variant/45 mt-0.5">{t('viz.aiTools.subtitle')}</p>
+                  </div>
+                  <div className="p-3.5 space-y-2.5">
+                    {([
+                      { key: 'lessonPlan' as const, icon: BookOpen, color: '#38bdf8', label: t('viz.tools.lessonPlan.title'), desc: t('viz.tools.lessonPlan.description') },
+                      { key: 'examGen' as const, icon: FileText, color: '#f59e0b', label: t('viz.tools.examGen.title'), desc: t('viz.tools.examGen.description') },
+                      { key: 'brainstorm' as const, icon: Lightbulb, color: '#a78bfa', label: t('viz.tools.brainstorm.title'), desc: t('viz.tools.brainstorm.description') },
+                      { key: 'grading' as const, icon: PenLine, color: '#34d399', label: t('viz.tools.grading.title'), desc: t('viz.tools.grading.description') },
+                    ]).map(btn => (
+                      <button
+                        key={btn.key}
+                        onClick={() => { setAiToolsDefault(btn.key); setAiToolsOpen(true); }}
+                        className="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl border border-outline-variant/15 bg-surface-container-high/40 hover:bg-surface-container-high/60 hover:border-outline-variant/30 hover:shadow-sm transition-all duration-200 text-left group"
+                      >
+                        <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: `${btn.color}15`, border: `1px solid ${btn.color}20` }}>
+                          <btn.icon className="h-4.5 w-4.5" style={{ color: btn.color }} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-body-sm font-medium text-on-surface group-hover:text-clay transition-colors">{btn.label}</p>
+                          <p className="text-caption-xs text-on-surface-variant/45 truncate">{btn.desc}</p>
+                        </div>
+                        <Sparkles className="h-3.5 w-3.5 text-white/20 group-hover:text-white/40 transition-colors shrink-0" />
+                      </button>
+                    ))}
+                  </div>
+                </Card>
+              </div>
+
+              {/* Tabbed side panel: Stats + Grading + Classroom */}
+              <div className="sticky top-20 animate-fade-up" style={{ animationDelay: '0.25s' }}>
+                <Card className="border-0 bg-surface-container-high/80 backdrop-blur-xl shadow-card overflow-hidden">
+                  <div className="flex border-b border-outline-variant/30 overflow-x-auto scrollbar-hide">
+                    {([
+                      { key: 'stats' as const, icon: BarChart3, label: t('viz.stats.title') },
+                      { key: 'classroom' as const, icon: Users, label: t('viz.classroom.shortLabel') },
+                    ]).map(tab => (
+                      <button
+                        key={tab.key}
+                        onClick={() => setSidebarTab(tab.key)}
+                        className={`flex-1 flex items-center justify-center gap-1 px-2 py-3 text-body-sm font-medium transition-all duration-200 relative whitespace-nowrap ${
+                          sidebarTab === tab.key
+                            ? 'text-clay'
+                            : 'text-on-surface-variant/60 hover:text-on-surface-variant'
+                        }`}
+                      >
+                        <tab.icon className="h-3.5 w-3.5 shrink-0" />
+                        <span className="text-caption-xs">{tab.label}</span>
+                        {sidebarTab === tab.key && (
+                          <div className="absolute bottom-0 left-1 right-1 h-[2px] bg-gradient-to-r from-clay to-tertiary rounded-full" />
+                        )}
+                      </button>
+                    ))}
                   </div>
 
                   <div className="animate-fade-up" key={sidebarTab}>
-                    {sidebarTab === 'tutor' && (
-                      <AITutorSidebar
-                        open={true}
-                        onClose={() => {}}
-                        messages={tutor.messages}
-                        loading={tutor.loading}
-                        onAskQuestion={tutor.askQuestion}
-                        onClearHistory={tutor.clearHistory}
-                        variant="inline"
+                    {sidebarTab === 'stats' && (
+                      <VizStatsPanel
+                        visualizationId={id}
+                        viewCount={viz.viewCount || 0}
+                        interactCount={viz.interactCount || 0}
+                        likesCount={viz.likesCount || 0}
                       />
                     )}
                     {sidebarTab === 'classroom' && (
@@ -552,7 +641,7 @@ export default function VisualizationDetailPage() {
             {t('viz.embedDescription')}
           </p>
           <div className="bg-surface-container-high rounded-lg p-3 font-mono text-[13px] text-on-surface overflow-x-auto">
-            {`<iframe src="${typeof window !== 'undefined' ? window.location.origin : ''}/embed/${id}" width="100%" height="600" style="border:0" allow="fullscreen" title="${viz?.title || 'Visualization'}"></iframe>`}
+            {`<iframe src="${typeof window !== 'undefined' ? window.location.origin : ''}/embed/${id}" width="100%" height="600" style="border:0" allow="fullscreen" title="${viz?.title || t('common.visualization')}"></iframe>`}
           </div>
           <Button
             onClick={handleCopyEmbed}
@@ -563,6 +652,19 @@ export default function VisualizationDetailPage() {
         </DialogContent>
       </Dialog>
 
+      {/* AI Tools Dialog */}
+      <VizAIToolsDialog
+        open={aiToolsOpen}
+        onOpenChange={setAiToolsOpen}
+        visualizationId={id}
+        visualizationTitle={viz?.title || ''}
+        visualizationSubject={viz?.subject || ''}
+        knowledgeSummary={viz?.knowledgeSummary}
+        detailedExplanation={viz?.detailedExplanation}
+        language={locale}
+        defaultTool={aiToolsDefault}
+      />
+
       {/* Mobile bottom bar */}
       <VizMobileBottomBar
         visualizationId={id}
@@ -572,6 +674,9 @@ export default function VisualizationDetailPage() {
         onToggleNarration={activePlayer.isPlaying ? activePlayer.pause : activePlayer.play}
         hasNarration={!!narration}
       />
+
+      {/* Celebration effect overlay */}
+      <CelebrationEffect ref={celebrationRef} />
     </>
   );
 }

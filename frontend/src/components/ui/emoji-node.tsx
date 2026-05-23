@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useTranslations } from 'next-intl';
 
 import type { PlateElementProps } from 'platejs/react';
 
@@ -22,6 +23,7 @@ import {
 const TRAILING_COLON_REGEX = /:$/;
 
 export function EmojiInputElement(props: PlateElementProps) {
+  const t = useTranslations();
   const { children, editor, element } = props;
   const data = usePluginOption(EmojiPlugin, 'data')!;
   const [value, setValue] = React.useState('');
@@ -49,7 +51,7 @@ export function EmojiInputElement(props: PlateElementProps) {
         <InlineComboboxInput />
 
         <InlineComboboxContent>
-          {!isPending && <InlineComboboxEmpty>No results</InlineComboboxEmpty>}
+          {!isPending && <InlineComboboxEmpty>{t('editor.noResults')}</InlineComboboxEmpty>}
 
           <InlineComboboxGroup>
             {filteredEmojis.map((emoji) => (

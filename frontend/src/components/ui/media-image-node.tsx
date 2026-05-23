@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useTranslations } from 'next-intl';
 
 import type { TImageElement } from 'platejs';
 import type { PlateElementProps } from 'platejs/react';
@@ -23,6 +24,7 @@ import {
 export const ImageElement = withHOC(
   ResizableProvider,
   function ImageElement(props: PlateElementProps<TImageElement>) {
+    const t = useTranslations();
     const { align = 'center', focused, readOnly, selected } = useMediaState();
     const width = useResizableValue('width');
 
@@ -71,7 +73,7 @@ export const ImageElement = withHOC(
                 onFocus={(e) => {
                   e.preventDefault();
                 }}
-                placeholder="Write a caption..."
+                placeholder={t('editor.writeCaption')}
               />
             </Caption>
           </figure>

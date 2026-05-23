@@ -18,7 +18,7 @@ export default function VizMetadataSection({ viz, visualizationId, onShare }: Pr
   return (
     <div className="mb-6 animate-fade-up">
       {/* Breadcrumb */}
-      <nav className="flex items-center gap-1.5 text-caption-sm mb-4" aria-label="Breadcrumb">
+      <nav className="flex items-center gap-1.5 text-caption-sm mb-4" aria-label={t('common.breadcrumb')}>
         <Link
           href="/visualizations"
           className="text-on-surface-variant/60 hover:text-on-surface transition-colors"

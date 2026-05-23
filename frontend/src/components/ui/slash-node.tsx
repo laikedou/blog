@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useTranslations } from 'next-intl';
 
 import type { PlateEditor, PlateElementProps } from 'platejs/react';
 
@@ -57,9 +58,9 @@ type Group = {
   }[];
 };
 
-const groups: Group[] = [
+const getGroups = (t: ReturnType<typeof useTranslations>): Group[] => [
   {
-    group: 'AI',
+    group: t('editor.ai'),
     items: [
       {
         focusEditor: false,
@@ -72,78 +73,78 @@ const groups: Group[] = [
     ],
   },
   {
-    group: 'Basic blocks',
+    group: t('editor.basicBlocks'),
     items: [
       {
         icon: <PilcrowIcon />,
         keywords: ['paragraph'],
-        label: 'Text',
+        label: t('editor.text'),
         value: KEYS.p,
       },
       {
         icon: <Heading1Icon />,
         keywords: ['title', 'h1'],
-        label: 'Heading 1',
+        label: t('editor.heading1'),
         value: KEYS.h1,
       },
       {
         icon: <Heading2Icon />,
         keywords: ['subtitle', 'h2'],
-        label: 'Heading 2',
+        label: t('editor.heading2'),
         value: KEYS.h2,
       },
       {
         icon: <Heading3Icon />,
         keywords: ['subtitle', 'h3'],
-        label: 'Heading 3',
+        label: t('editor.heading3'),
         value: KEYS.h3,
       },
       {
         icon: <ListIcon />,
         keywords: ['unordered', 'ul', '-'],
-        label: 'Bulleted list',
+        label: t('editor.bulletedList'),
         value: KEYS.ul,
       },
       {
         icon: <ListOrdered />,
         keywords: ['ordered', 'ol', '1'],
-        label: 'Numbered list',
+        label: t('editor.numberedList'),
         value: KEYS.ol,
       },
       {
         icon: <Square />,
         keywords: ['checklist', 'task', 'checkbox', '[]'],
-        label: 'To-do list',
+        label: t('editor.toDoList'),
         value: KEYS.listTodo,
       },
       {
         icon: <ChevronRightIcon />,
         keywords: ['collapsible', 'expandable'],
-        label: 'Toggle',
+        label: t('editor.toggle'),
         value: KEYS.toggle,
       },
       {
         icon: <Code2 />,
         keywords: ['```'],
-        label: 'Code Block',
+        label: t('editor.codeBlock'),
         value: KEYS.codeBlock,
       },
       {
         icon: <Table />,
-        label: 'Table',
+        label: t('editor.table'),
         value: KEYS.table,
       },
       {
         icon: <Quote />,
         keywords: ['citation', 'blockquote', 'quote', '>'],
-        label: 'Blockquote',
+        label: t('editor.blockquote'),
         value: KEYS.blockquote,
       },
       {
         description: 'Insert a highlighted block.',
         icon: <LightbulbIcon />,
         keywords: ['note'],
-        label: 'Callout',
+        label: t('editor.callout'),
         value: KEYS.callout,
       },
     ].map((item) => ({
@@ -154,29 +155,29 @@ const groups: Group[] = [
     })),
   },
   {
-    group: 'Advanced blocks',
+    group: t('editor.advancedBlocks'),
     items: [
       {
         icon: <TableOfContentsIcon />,
         keywords: ['toc'],
-        label: 'Table of contents',
+        label: t('editor.tableOfContents'),
         value: KEYS.toc,
       },
       {
         icon: <Columns3Icon />,
-        label: '3 columns',
+        label: t('editor.columns3'),
         value: 'action_three_columns',
       },
       {
         focusEditor: false,
         icon: <RadicalIcon />,
-        label: 'Equation',
+        label: t('editor.equation'),
         value: KEYS.equation,
       },
       {
         icon: <PenToolIcon />,
         keywords: ['excalidraw'],
-        label: 'Excalidraw',
+        label: t('editor.excalidraw'),
         value: KEYS.excalidraw,
       },
       {
@@ -189,7 +190,7 @@ const groups: Group[] = [
           'flowchart',
           'mermaid',
         ],
-        label: 'Code Drawing',
+        label: t('editor.codeDrawing'),
         value: KEYS.codeDrawing,
       },
     ].map((item) => ({
@@ -200,26 +201,26 @@ const groups: Group[] = [
     })),
   },
   {
-    group: 'Inline',
+    group: t('editor.inline'),
     items: [
       {
         focusEditor: true,
         icon: <CalendarIcon />,
         keywords: ['time'],
-        label: 'Date',
+        label: t('editor.date'),
         value: KEYS.date,
       },
       {
         focusEditor: true,
         icon: <SuperscriptIcon />,
         keywords: ['citation', 'fn', 'footnote', '[^]'],
-        label: 'Footnote',
+        label: t('editor.footnote'),
         value: 'action_footnote',
       },
       {
         focusEditor: false,
         icon: <RadicalIcon />,
-        label: 'Inline Equation',
+        label: t('editor.inlineEquation'),
         value: KEYS.inlineEquation,
       },
     ].map((item) => ({
@@ -234,7 +235,9 @@ const groups: Group[] = [
 export function SlashInputElement(
   props: PlateElementProps<TComboboxInputElement>
 ) {
+  const t = useTranslations();
   const { editor, element } = props;
+  const groups = React.useMemo(() => getGroups(t), [t]);
 
   return (
     <PlateElement {...props} as="span">
@@ -242,7 +245,7 @@ export function SlashInputElement(
         <InlineComboboxInput />
 
         <InlineComboboxContent>
-          <InlineComboboxEmpty>No results</InlineComboboxEmpty>
+          <InlineComboboxEmpty>{t('editor.noResults')}</InlineComboboxEmpty>
 
           {groups.map(({ group, items }) => (
             <InlineComboboxGroup key={group}>

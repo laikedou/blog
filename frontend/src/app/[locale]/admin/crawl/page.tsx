@@ -295,7 +295,7 @@ export default function CrawlPage() {
                               size="icon"
                               onClick={() => runSource(s.id)}
                               disabled={runId === s.id}
-                              title="Run crawl now"
+                              title={t('admin.crawlRunNow')}
                             >
                               {runId === s.id ? (
                                 <span className="material-symbols-outlined text-[20px] animate-spin">progress_activity</span>
@@ -307,7 +307,7 @@ export default function CrawlPage() {
                               variant="ghost"
                               size="icon"
                               onClick={() => deleteSource(s.id)}
-                              title="Delete source"
+                              title={t('admin.crawlDeleteSource')}
                             >
                               <span className="material-symbols-outlined text-[20px] text-on-surface-variant hover:text-error">delete</span>
                             </Button>
@@ -362,7 +362,7 @@ export default function CrawlPage() {
                               </div>
                             </div>
                             <div className="flex items-center gap-1 shrink-0">
-                              <a href={a.sourceUrl} target="_blank" rel="noopener noreferrer" title="Open original">
+                              <a href={a.sourceUrl} target="_blank" rel="noopener noreferrer" title={t('admin.crawlOpenOriginal')}>
                                 <Button variant="ghost" size="icon">
                                   <span className="material-symbols-outlined text-[20px]">open_in_new</span>
                                 </Button>
@@ -373,7 +373,7 @@ export default function CrawlPage() {
                                   size="icon"
                                   onClick={() => publishArticle(a.id)}
                                   disabled={pubId === a.id}
-                                  title="Publish as draft"
+                                  title={t('admin.crawlPublishAsDraft')}
                                 >
                                   {pubId === a.id ? (
                                     <span className="material-symbols-outlined text-[20px] animate-spin">progress_activity</span>
@@ -386,7 +386,7 @@ export default function CrawlPage() {
                                 variant="ghost"
                                 size="icon"
                                 onClick={() => deleteArticle(a.id)}
-                                title="Delete article"
+                                title={t('admin.crawlDeleteArticle')}
                               >
                                 <span className="material-symbols-outlined text-[20px]">delete</span>
                               </Button>
@@ -399,7 +399,7 @@ export default function CrawlPage() {
 
                   {/* Pagination */}
                   {articleTotalPages > 1 && (
-                    <nav className="flex items-center justify-center gap-3 mt-6" aria-label="Article pagination">
+                    <nav className="flex items-center justify-center gap-3 mt-6" aria-label={t('common.articlePagination')}>
                       <Button
                         variant="outline"
                         size="sm"

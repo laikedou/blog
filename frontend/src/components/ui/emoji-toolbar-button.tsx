@@ -2,6 +2,7 @@
 /* eslint-disable react-hooks/refs */
 
 import * as React from 'react';
+import { useTranslations } from 'next-intl';
 
 import type { Emoji } from '@emoji-mart/data';
 
@@ -366,6 +367,7 @@ function EmojiPickerSearchBar({
 }: {
   children: React.ReactNode;
 } & Pick<UseEmojiPickerType, 'i18n' | 'searchValue' | 'setSearch'>) {
+  const t = useTranslations();
   return (
     <div className="flex items-center px-2">
       <div className="relative flex grow items-center">
@@ -374,7 +376,7 @@ function EmojiPickerSearchBar({
           value={searchValue}
           onChange={(event) => setSearch(event.target.value)}
           placeholder={i18n.search}
-          aria-label="Search"
+          aria-label={t('common.search')}
           autoComplete="off"
           type="text"
           autoFocus
@@ -390,6 +392,7 @@ function EmojiPickerSearchAndClear({
   i18n,
   searchValue,
 }: Pick<UseEmojiPickerType, 'clearSearch' | 'i18n' | 'searchValue'>) {
+  const t = useTranslations();
   return (
     <div className="flex items-center text-foreground">
       <div
@@ -408,7 +411,7 @@ function EmojiPickerSearchAndClear({
           )}
           onClick={clearSearch}
           title={i18n.clear}
-          aria-label="Clear"
+          aria-label={t('common.clear')}
           type="button"
         >
           {emojiSearchIcons.delete}

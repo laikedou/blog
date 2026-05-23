@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useTranslations } from 'next-intl';
 
 import { SuggestionPlugin } from '@platejs/suggestion/react';
 import {
@@ -25,6 +26,7 @@ import {
 import { ToolbarButton } from './toolbar';
 
 export function ModeToolbarButton(props: DropdownMenuProps) {
+  const t = useTranslations();
   const editor = useEditorRef();
   const readOnly = useEditorReadOnly();
   const [open, setOpen] = React.useState(false);
@@ -40,22 +42,22 @@ export function ModeToolbarButton(props: DropdownMenuProps) {
   const item: Record<string, { icon: React.ReactNode; label: string }> = {
     editing: {
       icon: <PenIcon />,
-      label: 'Editing',
+      label: t('editor.editing'),
     },
     suggestion: {
       icon: <PencilLineIcon />,
-      label: 'Suggestion',
+      label: t('editor.suggestion'),
     },
     viewing: {
       icon: <EyeIcon />,
-      label: 'Viewing',
+      label: t('editor.viewing'),
     },
   };
 
   return (
     <DropdownMenu open={open} onOpenChange={setOpen} modal={false} {...props}>
       <DropdownMenuTrigger asChild>
-        <ToolbarButton pressed={open} tooltip="Editing mode" isDropdown>
+        <ToolbarButton pressed={open} tooltip={t("editor.editingMode")} isDropdown>
           {item[value].icon}
           <span className="hidden lg:inline">{item[value].label}</span>
         </ToolbarButton>

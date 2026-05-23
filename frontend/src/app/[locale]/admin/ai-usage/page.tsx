@@ -272,10 +272,10 @@ export default function AdminAiUsagePage() {
               <SelectContent>
                 <SelectItem value="__all">{t('admin.aiUsageAll')}</SelectItem>
                 <SelectItem value="deepseek">DeepSeek</SelectItem>
-                <SelectItem value="openai">OpenAI</SelectItem>
-                <SelectItem value="claude">Claude</SelectItem>
-                <SelectItem value="gemini">Gemini</SelectItem>
-                <SelectItem value="grok">Grok</SelectItem>
+                <SelectItem value="openai">{t('admin.aiUsageProviderOpenai')}</SelectItem>
+                <SelectItem value="claude">{t('admin.aiUsageProviderClaude')}</SelectItem>
+                <SelectItem value="gemini">{t('admin.aiUsageProviderGemini')}</SelectItem>
+                <SelectItem value="grok">{t('admin.aiUsageProviderGrok')}</SelectItem>
               </SelectContent>
             </Select>
 
@@ -286,8 +286,8 @@ export default function AdminAiUsagePage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="__all">{t('admin.aiUsageAll')}</SelectItem>
-                <SelectItem value="success">Success</SelectItem>
-                <SelectItem value="error">Error</SelectItem>
+                <SelectItem value="success">{t('admin.aiUsageStatusSuccess')}</SelectItem>
+                <SelectItem value="error">{t('admin.aiUsageStatusError')}</SelectItem>
               </SelectContent>
             </Select>
           </div>

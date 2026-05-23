@@ -1,19 +1,19 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
-import { animate, stagger } from 'animejs';
+import { motion } from 'framer-motion';
 import { stats as statsApi } from '@/lib/api';
 import { PostsTimelineChart, CategoryPieChart, TopPostsChart } from '@/components/DashboardCharts';
 import { VisualizationStatsOverview } from '@/components/Visualizations/VisualizationStats';
 import { Card, CardContent } from '@/components/ui/card';
+import { staggerContainer, staggerItem } from '@/lib/animations';
 
 export default function AdminDashboard() {
   const t = useTranslations();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const cardsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     statsApi.dashboard()
@@ -21,18 +21,6 @@ export default function AdminDashboard() {
       .catch(console.error)
       .finally(() => setLoading(false));
   }, []);
-
-  useEffect(() => {
-    if (!loading && cardsRef.current) {
-      animate(cardsRef.current.children, {
-        opacity: [0, 1],
-        translateY: [15, 0],
-        easing: 'easeOutCubic',
-        duration: 500,
-        delay: stagger(80),
-      });
-    }
-  }, [loading]);
 
   if (loading) return (
     <div className="space-y-6">
@@ -101,31 +89,38 @@ export default function AdminDashboard() {
       <h1 className="font-headline-lg text-headline-lg text-on-surface">{t('admin.dashboard')}</h1>
 
       {/* Stats cards */}
-      <div ref={cardsRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-gutter">
+      <motion.div
+        variants={staggerContainer}
+        initial="hidden"
+        animate="visible"
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-gutter"
+      >
         {statCards.map(card => (
-          <Link key={card.label} href={card.href} className="block group">
-            <Card className="relative overflow-hidden">
-              <CardContent className="p-6">
-                <div className="flex justify-between items-start mb-4 relative z-10">
-                  <div>
-                    <p className="text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">{card.label}</p>
-                    <h3 className="text-display-lg font-display-lg text-on-surface mt-2">{card.value ?? '—'}</h3>
+          <motion.div key={card.label} variants={staggerItem}>
+            <Link href={card.href} className="block group">
+              <Card className="relative overflow-hidden">
+                <CardContent className="p-6">
+                  <div className="flex justify-between items-start mb-4 relative z-10">
+                    <div>
+                      <p className="text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">{card.label}</p>
+                      <h3 className="text-display-lg font-display-lg text-on-surface mt-2">{card.value ?? '—'}</h3>
+                    </div>
+                    <div className={`p-2.5 rounded-lg ${card.iconBg}`}>
+                      <span className="material-symbols-outlined">{card.icon}</span>
+                    </div>
                   </div>
-                  <div className={`p-2.5 rounded-lg ${card.iconBg}`}>
-                    <span className="material-symbols-outlined">{card.icon}</span>
+                  {/* Decorative SVG chart */}
+                  <div className="absolute bottom-0 left-0 w-full h-16 opacity-20 group-hover:opacity-40 transition-opacity pointer-events-none">
+                    <svg className={`w-full h-full ${card.svgClass} fill-current stroke-current`} preserveAspectRatio="none" viewBox="0 0 100 30">
+                      <path d={card.path} fillOpacity="0.2" strokeWidth="1" />
+                    </svg>
                   </div>
-                </div>
-                {/* Decorative SVG chart */}
-                <div className="absolute bottom-0 left-0 w-full h-16 opacity-20 group-hover:opacity-40 transition-opacity pointer-events-none">
-                  <svg className={`w-full h-full ${card.svgClass} fill-current stroke-current`} preserveAspectRatio="none" viewBox="0 0 100 30">
-                    <path d={card.path} fillOpacity="0.2" strokeWidth="1" />
-                  </svg>
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
+                </CardContent>
+              </Card>
+            </Link>
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
 
       {/* Charts row 1: Posts Timeline + Category Distribution */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-gutter">

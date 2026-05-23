@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
+import { motion } from 'framer-motion';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import PostHero from '@/components/PostHero';
@@ -18,7 +19,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { markdownComponents } from '@/lib/markdown';
 import CommentLikeButton from '@/components/CommentLikeButton';
-import { animate, stagger } from 'animejs';
+import { staggerContainer, staggerItem } from '@/lib/animations';
 import { MessageSquare, Heart, ChevronDown, ChevronUp, Send } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -49,20 +50,6 @@ export default function PostDetailClient({ post: initialPost, notFound: initialN
       .catch(() => setNotFound(true))
       .finally(() => setLoading(false));
   }, [initialPost]);
-
-  // Staggered entrance animation for content
-  useEffect(() => {
-    if (!loading && post && contentRef.current) {
-      const els = contentRef.current.querySelectorAll('.prose-editorial > *');
-      animate(els, {
-        opacity: [0, 1],
-        translateY: [20, 0],
-        easing: 'easeOutCubic',
-        duration: 600,
-        delay: stagger(50, { start: 200 }),
-      });
-    }
-  }, [loading, post]);
 
   const handleComment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -142,7 +129,13 @@ export default function PostDetailClient({ post: initialPost, notFound: initialN
             {/* Main content */}
             <div className="min-w-0" ref={contentRef}>
               {/* Article content */}
-              <div className="prose-editorial-enhanced" dangerouslySetInnerHTML={{ __html: post.content }} />
+              <motion.div
+                variants={staggerContainer}
+                initial="hidden"
+                animate="visible"
+                className="prose-editorial-enhanced"
+                dangerouslySetInnerHTML={{ __html: post.content }}
+              />
 
               {/* Tags */}
               {post.tags?.length > 0 && (

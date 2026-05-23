@@ -51,13 +51,13 @@ function SortableBannerCard({ banner, isFirst, isLast, onMove, onEdit, onDelete 
           <div className={`absolute left-0 top-0 bottom-0 w-1 ${banner.isActive ? 'bg-tertiary' : 'bg-outline-variant'}`} />
 
           <div className="flex flex-col items-center gap-0.5 shrink-0">
-            <Button variant="ghost" size="icon" onClick={() => onMove(banner.id, 'up')} disabled={isFirst} className="!w-5 !h-5" title="Move up">
+            <Button variant="ghost" size="icon" onClick={() => onMove(banner.id, 'up')} disabled={isFirst} className="!w-5 !h-5" title={t('common.moveUp')}>
               <span className="material-symbols-outlined text-[16px]">keyboard_arrow_up</span>
             </Button>
-            <button {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing p-0.5 text-outline-variant/50 hover:text-outline-variant transition-colors select-none" title="Drag to reorder">
+            <button {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing p-0.5 text-outline-variant/50 hover:text-outline-variant transition-colors select-none" title={t('common.dragToReorder')}>
               <span className="material-symbols-outlined text-[20px]">drag_indicator</span>
             </button>
-            <Button variant="ghost" size="icon" onClick={() => onMove(banner.id, 'down')} disabled={isLast} className="!w-5 !h-5" title="Move down">
+            <Button variant="ghost" size="icon" onClick={() => onMove(banner.id, 'down')} disabled={isLast} className="!w-5 !h-5" title={t('common.moveDown')}>
               <span className="material-symbols-outlined text-[16px]">keyboard_arrow_down</span>
             </Button>
           </div>
@@ -70,7 +70,7 @@ function SortableBannerCard({ banner, isFirst, isLast, onMove, onEdit, onDelete 
             <div className="flex items-center gap-3 mb-1">
               <h3 className="font-headline-md text-headline-md text-on-surface truncate">{banner.title || t('admin.bannerUntitled')}</h3>
               {banner.isActive ? (
-                <Badge variant="outline" className="bg-tertiary/10 text-tertiary border-tertiary/20 shrink-0">Active</Badge>
+                <Badge variant="outline" className="bg-tertiary/10 text-tertiary border-tertiary/20 shrink-0">{t('admin.active')}</Badge>
               ) : (
                 <Badge variant="outline" className="text-on-surface-variant shrink-0">{t('admin.bannerInactive')}</Badge>
               )}
@@ -104,7 +104,7 @@ function SortableBannerCard({ banner, isFirst, isLast, onMove, onEdit, onDelete 
               <span className="material-symbols-outlined text-[20px]">edit</span>
             </Button>
             <div className="w-px h-6 bg-border mx-1" />
-            <Button variant="ghost" size="icon" onClick={() => onDelete(banner.id)} title="Delete" className="text-outline-variant hover:text-error">
+            <Button variant="ghost" size="icon" onClick={() => onDelete(banner.id)} title={t('common.delete')} className="text-outline-variant hover:text-error">
               <span className="material-symbols-outlined text-[20px]">delete</span>
             </Button>
           </div>
@@ -361,7 +361,7 @@ export default function AdminBannersPage() {
                   <Input
                     value={form.imageUrl}
                     onChange={e => handleChange('imageUrl', e.target.value)}
-                    placeholder="https://..."
+                    placeholder={t('admin.featuredImageUrl')}
                     required
                     className="flex-1"
                   />
@@ -400,7 +400,7 @@ export default function AdminBannersPage() {
                   <Input
                     value={form.linkUrl}
                     onChange={e => handleChange('linkUrl', e.target.value)}
-                    placeholder="https://..."
+                    placeholder={t('admin.featuredImageUrl')}
                   />
                 </div>
                 <div>
@@ -450,10 +450,10 @@ export default function AdminBannersPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="hero">Hero (main carousel)</SelectItem>
-                    <SelectItem value="sidebar">Sidebar</SelectItem>
-                    <SelectItem value="inline">Inline (between sections)</SelectItem>
-                    <SelectItem value="footer">Footer (above footer)</SelectItem>
+                    <SelectItem value="hero">{t('admin.zoneHero')}</SelectItem>
+                    <SelectItem value="sidebar">{t('admin.zoneSidebar')}</SelectItem>
+                    <SelectItem value="inline">{t('admin.zoneInline')}</SelectItem>
+                    <SelectItem value="footer">{t('admin.zoneFooter')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

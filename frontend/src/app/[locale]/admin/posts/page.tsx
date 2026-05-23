@@ -104,11 +104,11 @@ export default function AdminPostsPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="font-semibold">Title</TableHead>
-                      <TableHead className="font-semibold">Author</TableHead>
-                      <TableHead className="font-semibold">Date</TableHead>
-                      <TableHead className="font-semibold">Status</TableHead>
-                      <TableHead className="font-semibold text-right">Actions</TableHead>
+                      <TableHead className="font-semibold">{t('admin.tableTitle')}</TableHead>
+                      <TableHead className="font-semibold">{t('admin.tableAuthor')}</TableHead>
+                      <TableHead className="font-semibold">{t('admin.tableDate')}</TableHead>
+                      <TableHead className="font-semibold">{t('admin.tableStatus')}</TableHead>
+                      <TableHead className="font-semibold text-right">{t('admin.tableActions')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
